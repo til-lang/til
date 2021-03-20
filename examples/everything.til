@@ -1,0 +1,95 @@
+run std {import std}
+run struct {import struct}
+run dict {import dict}
+run math {import math}
+run iterators {import iterators}
+run functions {import functions}
+run context {import context}
+
+extend {
+    std:{import std}
+    struct:{import struct}
+    dict:{import dict}
+}
+
+# Strings:
+set first_name "Cléber"
+set last_name "Zavadniak"
+run full_name {fill "$first_name $last_name"}
+
+# Basic math:
+set x 1.234
+set y 4.321
+run z1 {fill {math.run $x + $y}}
+run z2 {$x + $y > fill > math.run}
+
+# These 2 are equivalent:
+exec {fill {std.out "z:$z"}}
+# (Every value is a "function" that returns itself)
+"z:$z" > fill > std.out
+
+# Expand the list as arguments:
+a b c d e < std.out
+
+# Lists:
+run l {list.create {a b c d e f}}
+run c {list.index $l 2}
+run c {$l > list.index 2}
+
+# Structs:
+run coordinates {struct.create
+    name
+    x:float
+    y:float
+    z:float
+    index:int32
+}
+
+# Dictionaries:
+set dicio ${dict.create
+    name:Cléber Zavadniak
+    birth_year:1986
+    programming_languages:{list.create
+        C D Python Tcl {Shell Script}
+    }
+}
+
+# Functions:
+run fs {functions.create {}
+    return "fs was called!"
+}
+fs > std.out
+
+run f {functions.create {x} {
+    # return aways calls scope.fill
+    # (but not scope.run!)
+    # so all functions are actually LAZY.
+    return {$x + 1 > math.run}
+}
+set inc 1
+run x {$inc > fill > f}
+$x > fill > std.out
+fill {std.out $x}
+run {fill {std.out $x}}
+run:fill {std.out $x}
+
+run g {functions.create {x} {
+    math.assert {$x > 100} {
+        iterators.foreach i {list.range 1 $x} {
+            std.out {fill $i}
+        }
+    } else {
+        std.out $x
+    }
+}
+
+# Assertions:
+math.assert {$inc == 1} || std.fatal("$inc != 1", 1)
+math.assert {$x == 2} || std.fatal("$x != 2", 1)
+math.assert {${f 0} == 1} || std.fatal("${f 0} != 1", 1)
+
+# Functions calls:
+# Nested calls are kind of ugly...
+set result ${f ${g ${h ${i ${j $x}}}}}
+# So we provide some syntatic sugar for that:
+set result ${$x > j  > i > h > g > f}

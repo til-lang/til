@@ -1,0 +1,15 @@
+.dub
+docs.json
+__dummy.html
+docs/
+/til
+til.so
+til.dylib
+til.dll
+til.a
+til.lib
+til-test-*
+*.exe
+*.o
+*.obj
+*.lst
