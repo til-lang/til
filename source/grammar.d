@@ -1,6 +1,7 @@
 module til.grammar;
 
 import std.stdio;
+import std.conv;
 
 import pegged.grammar;
 
@@ -13,6 +14,7 @@ void execute(ParseTree p)
     {
         case "Til":
             auto sub = executeTil(p);
+            sub.run();
             break;
         default:
             writeln("execute: Not recognized: " ~ p.name);
@@ -43,6 +45,7 @@ SubProgram executeProgram(ParseTree p)
         {
             case "Til.SubProgram":
                 auto sub = executeSubProgram(child);
+                writeln("> Program:\n" ~ to!string(sub));
                 return sub;
             default:
                 writeln("Til.Program.child: " ~ child.name);
@@ -105,12 +108,14 @@ ForwardExpression executeForwardExpression(ParseTree p)
                 break;
             case "Til.ForwardPipe":
                 // TODO: use it to validate the expression!
+                writeln("> ForwardPipe");
                 break;
             default:
                 writeln("Til.ForwardExpression: " ~ child.name);
         }
     }
-    return new ForwardExpression(expressions);
+    auto fe = new ForwardExpression(expressions);
+    return fe;
 }
 
 ExpansionExpression executeExpansionExpression(ParseTree p)
@@ -127,6 +132,7 @@ ExpansionExpression executeExpansionExpression(ParseTree p)
                 break;
             case "Til.ExpansionPipe":
                 // TODO: use it to validate the expression!
+                writeln("> ExpansionPipe");
                 break;
             default:
                 writeln("Til.ExpansionExpression: " ~ child.name);
@@ -212,6 +218,6 @@ ColonList executeColonList(ParseTree p)
 
 Atom executeAtom(ParseTree p)
 {
-    writeln("> Til.Atom: " ~ p.matches[0]);
+    writeln("> Atom: " ~ p.matches[0]);
     return new Atom(p.matches[0]);
 }

@@ -15,8 +15,8 @@ void main()
         SubProgram          <- [ \n]* Expression* ("\n" [ \n]* Expression)* [ \n]*
         Expression          <- ForwardExpression / ExpansionExpression / List
         ForwardExpression   <- Expression ForwardPipe Expression
-        ForwardPipe         <- " > "
         ExpansionExpression <- Expression ExpansionPipe Expression
+        ForwardPipe         <- " > "
         ExpansionPipe       <- " < "
         List                <- ListItem (' ' ListItem)*
         ListItem            <- "{" SubProgram "}" / DotList
@@ -39,7 +39,8 @@ void main()
     foreach (index, line; code)
     {
         auto tree = Til(line);
-        writeln(index, ": ", line, " :\n", tree);
+        writeln(index, ": ", line);
+        // writeln(index, ": ", line, " :\n", tree);
         execute(tree);
         writeln("==============");
     }
