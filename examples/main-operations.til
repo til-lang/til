@@ -1,0 +1,3 @@
+set x 1
+run result {"$x" > fill}
+return result

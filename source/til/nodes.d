@@ -174,22 +174,32 @@ class SubProgram
         // This is a new SubProgram, so we should
         // create our own scope:
         Escopo escopo = new Escopo(parentEscopo);
+        SubProgram returned = null;
 
         foreach(expression; _expressions)
         {
-            writeln("SubProgram.run> " ~ to!string(expression));
+            writeln("SubProgram.run-expression> " ~ to!string(expression));
             // XXX: fill "firstArguments" with "argv", maybe...
-            SubProgram returnValue = expression.run(escopo, null);
-            writeln("SubProgram.returnValue " ~ to!string(returnValue));
+            returned = expression.run(escopo, null);
+            writeln(" - returned: " ~ to!string(returned));
 
-            if (returnValue) {
-                return returnValue;
+            if (returned !is null) {
+                if (returned.returnValue) {
+                    return returned.returnValue;
+                }
             }
         }
 
-        // STUB:
-        Expression[] expressions;
-        return new SubProgram(expressions);
+        if (_expressions.length == 1)
+        {
+            // Returns whatever was the result of the last Expression,
+            // but only for a SubProgram composed of only one Expression:
+            return returned;
+        }
+        else
+        {
+            return null;
+        }
     }
 }
 
@@ -370,7 +380,6 @@ class List
 
         if (firstArguments !is null)
         {
-            writeln("_items.length: " ~ to!string(_items.length));
             arguments = firstArguments ~ _items[1..$];
         }
         else
