@@ -109,15 +109,15 @@ class DotList
             switch(to!string(this))
             {
                 case "set":
-                    return escopo.set(escopo, arguments);
+                    return escopo.set(arguments);
                 case "run":
-                    return escopo.run(escopo, arguments);
+                    return escopo.run(arguments);
                 case "fill":
-                    return escopo.fill(escopo, arguments);
+                    return escopo.fill(arguments);
                 case "return":
-                    return escopo.retorne(escopo, arguments);
+                    return escopo.retorne(arguments);
                 default:
-                    return escopo.run_command(escopo, this, arguments);
+                    return escopo.run_command(this, arguments);
             }
         }
         // TODO: user-created commands:

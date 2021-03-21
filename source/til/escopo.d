@@ -17,31 +17,31 @@ class BaseEscopo
         this.parent = parent;
     }
 
-    SubProgram set(Escopo escopo, ListItem[] arguments)
+    SubProgram set(ListItem[] arguments)
     {
         writeln("STUB:SET " ~ to!string(arguments));
         return null;
     }
 
-    SubProgram run(Escopo escopo, ListItem[] arguments)
+    SubProgram run(ListItem[] arguments)
     {
         writeln("STUB:RUN " ~ to!string(arguments));
         return null;
     }
 
-    SubProgram fill(Escopo escopo, ListItem[] arguments)
+    SubProgram fill(ListItem[] arguments)
     {
         writeln("STUB:FILL " ~ to!string(arguments));
         return null;
     }
 
-    SubProgram retorne(Escopo escopo, ListItem[] arguments)
+    SubProgram retorne(ListItem[] arguments)
     {
         writeln("STUB:RETORNE " ~ to!string(arguments));
         return null;
     }
 
-    SubProgram run_command(Escopo escopo, DotList cmd, ListItem[] arguments)
+    SubProgram run_command(DotList cmd, ListItem[] arguments)
     {
         writeln(
             "STUB:RUN_COMMAND " ~ to!string(cmd) ~ " " ~ to!string(arguments)
