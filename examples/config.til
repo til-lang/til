@@ -1,0 +1,12 @@
+# Config files should not need to import anything.
+
+set font.family "Fira Code"
+set font.size 14
+set theme.name "Industrial"
+
+run hour {time.current.hour}
+if {$hour >= 6 && $hour < 18} {
+    set theme.mode "light"
+} else {
+    set theme.mode "dark"
+}

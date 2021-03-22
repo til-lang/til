@@ -1,59 +1,78 @@
 module til.escopo;
 
+import std.array;
 import std.conv : to;
 import std.stdio : writeln;
-import std.array;
+import std.string : strip;
 
+import til.grammar;
 import til.nodes;
+import til.til;
 
-
-alias Arguments = ListItem[];
 
 class BaseEscopo
 {
-    ListItem[][string] variables;
+    List[string] variables;
     // string[] freeVariables;
     Escopo parent;
 
-    void setVariable(string name, Arguments value)
+    void setVariable(string name, List value)
     {
         variables[name] = value;
         writeln(name ~ " ← " ~ to!string(value));
     }
 
+    this()
+    {
+        this.parent = null;
+    }
     this(Escopo parent)
     {
         this.parent = parent;
     }
 
-    SubProgram set(Arguments arguments)
+    List set(List arguments)
     {
         writeln("STUB:SET " ~ to!string(arguments));
         return null;
     }
 
-    SubProgram run(Arguments arguments)
+    List run(List arguments)
     {
         writeln("STUB:RUN " ~ to!string(arguments));
         return null;
     }
 
-    SubProgram fill(Arguments arguments)
+    List fill(List arguments)
     {
         writeln("STUB:FILL " ~ to!string(arguments));
         return null;
     }
 
-    SubProgram retorne(Arguments arguments)
+    List retorne(List arguments)
     {
         writeln("STUB:RETORNE " ~ to!string(arguments));
         return null;
     }
 
-    SubProgram run_command(DotList cmd, ListItem[] arguments)
+    List run_command(string strCmd, List arguments)
     {
+        switch(strCmd)
+        {
+            case "set":
+                return this.set(arguments);
+            case "run":
+                return this.run(arguments);
+            case "fill":
+                return this.fill(arguments);
+            case "return":
+                return this.retorne(arguments);
+            default:
+                break;
+        }
+
         writeln(
-            "STUB:RUN_COMMAND " ~ to!string(cmd) ~ " " ~ to!string(arguments)
+            "STUB:RUN_COMMAND " ~ strCmd ~ " " ~ to!string(arguments)
         );
         return null;
     }
@@ -61,6 +80,11 @@ class BaseEscopo
 
 class Escopo : BaseEscopo
 {
+    this()
+    {
+        this(null);
+    }
+
     this(Escopo parent)
     {
         super(parent);
@@ -75,65 +99,78 @@ class Escopo : BaseEscopo
         }
     }
 
-    override SubProgram set(Arguments arguments)
+    override List set(List arguments)
     {
         string varName = to!string(arguments[0]);
-        ListItem[] value = arguments[1..$];
+        auto value = new List(arguments[1..$]);
         setVariable(varName, value);
 
-        // TESTE:
-        auto expressions = new Expression[1];
-        auto list = new List(value);
-        expressions[0] = new Expression(list);
-        auto sp = new SubProgram(expressions);
-        return sp;
+        return value;
     }
 
-    override SubProgram run(Arguments arguments)
+    override List run(List arguments)
     {
         string varName = to!string(arguments[0]);
+        List value;
 
-        SubProgram sp = arguments[1].subProgram;
-        SubProgram value = sp.run(this);
+        ListItem sp = arguments[1];
+        if (sp.type == ListItemType.SubProgram)
+        {
+            writeln("run: it is a subprogram! " ~ to!string(sp));
+            auto tree = Til(to!string(sp));
+            writeln(tree);
+            value = execute(this, tree);
+        }
+        else
+        {
+            value = new List(arguments[1..$]);
+        }
 
-        auto li = new ListItem(value);
-        auto list = new ListItem[1];
-        list[0] = li;
-        setVariable(varName, list);
-        return null;
+        setVariable(varName, value);
+        return value;
     }
 
-    override SubProgram fill(Arguments arguments)
+    override List fill(List arguments)
     {
         writeln("FILL! " ~ to!string(variables));
 
-        string result = to!string(arguments);
+        ListItem target = arguments[0];
+        string result = to!string(arguments[0]);
+
+        if (target.type == ListItemType.SubProgram)
+        {
+            auto tree = Til(result);
+            writeln(tree);
+            auto value = execute(this, tree);
+            return fill(value);
+        }
+
+        if (target.type == ListItemType.String)
+        {
+            result = result.strip("\"");
+        }
+        writeln("  - result: ", result, " : ", to!string(target.type));
 
         foreach(varName, value; variables)
         {
             string key = "$" ~ varName;
             result = result.replace(key, to!string(value));
+            writeln("  value: ", value, " ", to!string(value));
         }
 
-        auto expressions = new Expression[1];
-        expressions[0] = new Expression(result);
-        auto sp = new SubProgram(expressions);
-        writeln(" - filled: " ~ to!string(sp));
-        return sp;
+        writeln(" - fill.result: ", result);
+        auto li = new ListItem(result, ListItemType.SubProgram);
+        auto items = new ListItem[1];
+        items[0] = li;
+        auto list = new List(items);
+        writeln(" - filled: " ~ to!string(list));
+        return list;
     }
 
-    override SubProgram retorne(Arguments arguments)
+    override List retorne(List arguments)
     {
-        auto varName = to!string(arguments[0]);
-        auto value = variables[varName];
-
-        auto expressions = new Expression[1];
-        auto list = new List(value);
-        expressions[0] = new Expression(list);
-        auto sp = new SubProgram(expressions);
-        // XXX: A subprogram returning itself? WEIRD!
-        sp.returnValue = sp;
-
-        return sp;
+        auto newList = new List();
+        newList.scopeExit = ScopeExitCodes.Success;
+        return newList;
     }
 }

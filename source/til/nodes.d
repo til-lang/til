@@ -8,157 +8,29 @@ import til.escopo;
 import til.exceptions;
 
 
-class Atom {
-    private string _repr;
-    @property string repr()
-    {
-        return _repr;
-    }
-    @property void repr(string s)
-    {
-        _repr = s;
-    }
-    private int _integer;
-    @property int integer()
-    {
-        return _integer;
-    }
-    private float _floating_point;
-    @property float floating_point()
-    {
-        return _floating_point;
-    }
-
-    this(string s)
-    {
-        repr = s;
-    }
-
-    override string toString()
-    {
-        return _repr;
-    }
+enum ListItemType
+{
+    Undefined,
+    SubProgram,
+    String,
+    Name,
+    Atom
 }
 
-class ListItem
+class Program
 {
-    SubProgram _subProgram;
-    DotList _dotList;
+    Escopo escopo;
+    Expression[] expressions;
 
-    this(SubProgram sp)
+    this(Escopo escopo, Expression[] expressions)
     {
-        _subProgram = sp;
-    }
-    this(DotList dl)
-    {
-        _dotList = dl;
-    }
-
-    bool isSubProgram()
-    {
-        return _subProgram !is null;
-    }
-
-    @property SubProgram subProgram()
-    {
-        return _subProgram;
+        this.escopo = escopo;
+        this.expressions = expressions;
     }
 
     override string toString()
     {
-        if (_subProgram) {
-            return to!string(_subProgram);
-        } else {
-            return to!string(_dotList);
-        }
-    }
-
-    SubProgram run(Escopo escopo, ListItem[] arguments)
-    {
-        writeln("Running: " ~ to!string(this) ~ "  " ~ to!string(arguments));
-        if (this.isSubProgram)
-        {
-            throw new InvalidException("ListItem: Cannot execute SubProgram");
-        }
-        return _dotList.run(escopo, arguments);
-    }
-}
-
-class DotList
-{
-    ColonList[] _colonLists;
-
-    this(ColonList[] colonLists)
-    {
-        _colonLists = colonLists;
-    }
-
-    override string toString()
-    {
-        auto list = _colonLists
-            .map!(x => to!string(x))
-            .joiner(".");
-        return to!string(list);
-    }
-
-    SubProgram run(Escopo escopo, ListItem[] arguments)
-    {
-        // Only scope.* names have length=1:
-        if (_colonLists.length == 1)
-        {
-            switch(to!string(this))
-            {
-                case "set":
-                    return escopo.set(arguments);
-                case "run":
-                    return escopo.run(arguments);
-                case "fill":
-                    return escopo.fill(arguments);
-                case "return":
-                    return escopo.retorne(arguments);
-                default:
-                    return escopo.run_command(this, arguments);
-            }
-        }
-        // TODO: user-created commands:
-        else
-        {
-        }
-
-        throw new NotFound("Command not found: " ~ to!string(this));
-    }
-}
-
-class ColonList
-{
-    Atom[] _atoms;
-    this(Atom[] atoms)
-    {
-        _atoms = atoms;
-    }
-
-    override string toString()
-    {
-        auto list = _atoms
-            .map!(x => to!string(x))
-            .joiner("-colon-");
-        return to!string(list);
-    }
-}
-
-class SubProgram
-{
-    Expression[] _expressions;
-    SubProgram returnValue = null;
-
-    this(Expression[] expressions)
-    {
-        _expressions = expressions;
-    }
-
-    override string toString()
-    {
-        auto list = _expressions
+        auto list = expressions
             .map!(x => to!string(x))
             .joiner("\n");
         return to!string(list);
@@ -166,40 +38,33 @@ class SubProgram
 
     ulong length()
     {
-        return _expressions.length;
+        return expressions.length;
     }
 
-    SubProgram run(Escopo parentEscopo)
+    List run()
     {
-        // This is a new SubProgram, so we should
-        // create our own scope:
-        Escopo escopo = new Escopo(parentEscopo);
-        SubProgram returned = null;
+        List returned;
+        List lastValidReturn;
 
-        foreach(expression; _expressions)
+        foreach(expression; expressions)
         {
-            writeln("SubProgram.run-expression> " ~ to!string(expression));
+            writeln("Program.run-expression> " ~ to!string(expression));
             // XXX: fill "firstArguments" with "argv", maybe...
             returned = expression.run(escopo, null);
             writeln(" - returned: " ~ to!string(returned));
-
-            if (returned !is null) {
-                if (returned.returnValue) {
-                    return returned.returnValue;
-                }
+            if (returned !is null && returned.scopeExit != ScopeExitCodes.Continue)
+            {
+                break;
+            }
+            else
+            {
+                lastValidReturn = returned;
             }
         }
 
-        if (_expressions.length == 1)
-        {
-            // Returns whatever was the result of the last Expression,
-            // but only for a SubProgram composed of only one Expression:
-            return returned;
-        }
-        else
-        {
-            return null;
-        }
+        // Returns whatever was the result of the last Expression,
+        writeln(" - lastValidReturn: " ~ to!string(lastValidReturn));
+        return lastValidReturn;
     }
 }
 
@@ -229,21 +94,18 @@ class Expression
 
     override string toString()
     {
-        string x = {
-            if (_forwardExpression) {
-                return to!string(_forwardExpression);
-            } else if (_expansionExpression) {
-                return to!string(_expansionExpression);
-            } else if (_list) {
-                return to!string(_list);
-            } else {
-                return _string;
-            }
-        }();
-        return x;
+        if (_forwardExpression) {
+            return to!string(_forwardExpression);
+        } else if (_expansionExpression) {
+            return to!string(_expansionExpression);
+        } else if (_list) {
+            return to!string(_list);
+        } else {
+            return _string;
+        }
     }
 
-    SubProgram run(Escopo escopo, ListItem[] firstArguments)
+    List run(Escopo escopo, List firstArguments)
     {
         if (_forwardExpression) {
             return _forwardExpression.run(escopo, firstArguments);
@@ -252,22 +114,20 @@ class Expression
         } else if (_list) {
             return _list.run(escopo, firstArguments);
         } else {
-            // XXX: this is WEIRD!
-            auto expressions = new Expression[1];
-            expressions[0] = this;
-            auto sp = new SubProgram(expressions);
-            return sp;
+            writeln("Expression returning: " ~ _string);
+            auto newItems = new ListItem[1];
+            newItems[0] = new ListItem(_string, ListItemType.String);
+            return new List(newItems);
         }
     }
 }
 
-
 class ExpressionSet
 {
-    Expression[] _expressions;
+    Expression[] expressions;
     this(Expression[] expressions)
     {
-        _expressions = expressions;
+        this.expressions = expressions;
     }
 }
 
@@ -280,33 +140,29 @@ class ForwardExpression : ExpressionSet
 
     override string toString()
     {
-        auto exp1 = to!string(_expressions[0]);
-        auto exp2 = to!string(_expressions[1]);
-        return "f(" ~ exp1 ~ " > " ~ exp2 ~ ")f";
+        writeln(expressions);
+        string r = "f(" ~ to!string(expressions[0]);
+        foreach(expression; expressions[1..$])
+        {
+            r ~= " > " ~ to!string(expression);
+        }
+        r ~= ")f";
+        return r;
     }
 
-    SubProgram run(Escopo escopo, ListItem[] firstArguments)
+    List run(Escopo escopo, List firstArguments)
     {
-        SubProgram returned = null;
+        List returned = null;
+        auto feedback = new ListItem[1];
 
-        foreach(expression; _expressions)
+        foreach(expression; expressions)
         {
             writeln("ForwardExpression.run> " ~ to!string(expression));
             returned = expression.run(escopo, firstArguments);
-            if (returned !is null)
-            {
-                if (returned.returnValue)
-                {
-                    return returned.returnValue;
-                }
-                // update firstArguments:
-                firstArguments = new ListItem[1];
-                firstArguments[0] = new ListItem(returned);
-            }
-            else
-            {
-                firstArguments = null;
-            }
+
+            auto subProgram = to!string(returned);
+            feedback[0] = new ListItem(subProgram, ListItemType.SubProgram);
+            firstArguments = new List(feedback);
         }
         return returned;
     }
@@ -321,88 +177,115 @@ class ExpansionExpression : ExpressionSet
 
     override string toString()
     {
-        auto exp1 = to!string(_expressions[0]);
-        auto exp2 = to!string(_expressions[1]);
-        return "e(" ~ exp1 ~ " < " ~ exp2 ~ ")e";
-    }
-
-    SubProgram run(Escopo escopo, ListItem[] firstArguments)
-    {
-        SubProgram returned = null;
-
-        foreach(expression; _expressions)
+        string r = "f(" ~ to!string(expressions[0]);
+        foreach(expression; expressions[1..$])
         {
-            returned = expression.run(escopo, firstArguments);
-            if (returned !is null)
-            {
-                if (returned.returnValue) {
-                    return returned.returnValue;
-                }
-
-                // update firstArguments:
-                // XXX: CHUNCHO
-                auto returnedExpression = returned._expressions[0];
-                auto returnedList = returnedExpression._list;
-                firstArguments = returnedList._items;
-            }
-            else
-            {
-                firstArguments = null;
-            }
+            r ~= " < " ~ to!string(expression);
         }
-        return returned;
+        r ~= ")f";
+        return r;
     }
+
+    List run(Escopo escopo, List firstArguments)
+    {
+        foreach(expression; expressions)
+        {
+            writeln("ExpansionExpression.run> " ~ to!string(expression));
+            firstArguments = expression.run(escopo, firstArguments);
+        }
+        return firstArguments;
+    }
+}
+
+enum ScopeExitCodes
+{
+    Continue,
+    Success,
+    Failure,
 }
 
 class List
 {
-    ListItem[] _items;
+    ListItem[] items;
+    ScopeExitCodes scopeExit = ScopeExitCodes.Continue;
 
+    this()
+    {
+    }
     this(ListItem[] items)
     {
-        _items = items;
-        Expression[] expressions;
+        this.items = items;
     }
 
     override string toString()
     {
-        auto list = _items
+        auto list = items
             .map!(x => to!string(x))
             .joiner(" , ");
-        return "[" ~ to!string(list) ~ "]";
+        return to!string(list);
+    }
+    ListItem opIndex(int i)
+    {
+        return items[i];
+    }
+    ListItem[] opSlice(ulong start, ulong end)
+    {
+        return items[start..end];
+    }
+    ulong length()
+    {
+        return items.length;
+    }
+    @property ulong opDollar()
+    {
+        return this.length;
     }
 
-    SubProgram run(Escopo escopo, ListItem[] firstArguments)
+    List run(Escopo escopo, List firstArguments)
     {
         // std.out 1 2 3
-        ListItem command = _items[0];
-        ListItem[] arguments;
+        ListItem command = items[0];
+        List arguments;
 
         if (firstArguments !is null)
         {
-            arguments = firstArguments ~ _items[1..$];
+            arguments = new List(firstArguments.items ~ items[1..$]);
         }
         else
         {
-            arguments = _items[1..$];
+            arguments = new List(items[1..$]);
         }
 
-        if (command.isSubProgram)
+        // lists.order 3 4 1 2 > std.out
+        if (command.type == ListItemType.Name)
         {
-            // It is NOT a "SubProgram", actually, but simply a string.
-
-            if (arguments.length > 0)
-            {
-                throw new InvalidException(
-                    "Cannot use a SubProgram as if it was a command"
-                );
-            }
-            return command.subProgram;
+            auto strCmd = to!string(command);
+            return escopo.run_command(strCmd, arguments);
         }
-
-        auto strArguments = arguments
-            .map!(x => to!string(x))
-            .joiner(" , ");
-        return command.run(escopo, arguments);
+        // {lists.order} $my_lists < lists.map
+        else
+        {
+            // SubPrograms, Strings and Atoms just return themselves.
+            return this;
+        }
     }
 }
+
+class ListItem
+{
+    string repr;
+    ListItemType type = ListItemType.Undefined;
+
+    this(string s, ListItemType type)
+    {
+        this.repr = s;
+        this.type = type;
+    }
+
+    override string toString()
+    {
+        return this.repr;
+    }
+}
+
+

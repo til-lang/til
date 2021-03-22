@@ -5,53 +5,40 @@ import std.stdio : writeln;
 
 import pegged.grammar;
 
+import til.escopo;
 import til.exceptions;
 import til.nodes;
-import til.escopo;
+import til.til;
 
 
-mixin(grammar(`
-    Til:
-        Program             <- blank* SubProgram endOfInput
-        SubProgram          <- Expression* (eol blank* Expression)* blank*
-        Expression          <- ForwardExpression / ExpansionExpression / List / String
-        ForwardExpression   <- Expression ForwardPipe Expression
-        ExpansionExpression <- Expression ExpansionPipe Expression
-        ForwardPipe         <- " > "
-        ExpansionPipe       <- " < "
-        List                <- ListItem (' ' ListItem)*
-        ListItem            <- "{" SubProgram "}" / DotList
-        String              <~ doublequote (!doublequote .)* doublequote
-        DotList             <- ColonList ('.' ColonList)*
-        ColonList           <- Atom (':' Atom)*
-        Atom                <~ [A-z0-9\-+_$]+
-    `));
-
-
-void execute(ParseTree p)
+List execute(ParseTree p)
 {
-    auto masterScope = new Escopo(null);
+    auto escopo = new Escopo();
+    return execute(escopo, p);
+}
 
+List execute(Escopo escopo, ParseTree p)
+{
     switch(p.name)
     {
         case "Til":
-            auto sub = executeTil(p);
-            sub.run(masterScope);
-            break;
+            auto program = executeTil(escopo, p);
+            return program.run();
         default:
             writeln("execute: Not recognized: " ~ p.name);
     }
+    assert(0);
 }
 
-SubProgram executeTil(ParseTree p)
+Program executeTil(Escopo escopo, ParseTree p)
 {
     foreach(child; p.children)
     {
         switch(child.name)
         {
             case "Til.Program":
-                auto sub = executeProgram(child);
-                return sub;
+                auto program = executeProgram(escopo, child);
+                return program;
             default:
                 writeln("executeTil: Not recognized: " ~ child.name);
         }
@@ -59,27 +46,10 @@ SubProgram executeTil(ParseTree p)
     throw new InvalidException("Program seems invalid");
 }
 
-SubProgram executeProgram(ParseTree p)
-{
-    foreach(child; p.children)
-    {
-        switch(child.name)
-        {
-            case "Til.SubProgram":
-                auto sub = executeSubProgram(child);
-                writeln("> Program:\n" ~ to!string(sub));
-                return sub;
-            default:
-                writeln("Til.Program.child: " ~ child.name);
-                writeln(child);
-        }
-    }
-    throw new InvalidException("Program seems invalid");
-}
-
-SubProgram executeSubProgram(ParseTree p)
+Program executeProgram(Escopo escopo, ParseTree p)
 {
     Expression[] expressions;
+
     foreach(child; p.children)
     {
         switch(child.name)
@@ -89,15 +59,16 @@ SubProgram executeSubProgram(ParseTree p)
                 expressions ~= e;
                 break;
             default:
-                writeln("Til.SubProgram: " ~ p.name);
+                writeln("Til.Program.child: " ~ child.name);
+                writeln(child);
+                throw new InvalidException("Program seems invalid");
         }
     }
-    return new SubProgram(expressions);
+    return new Program(escopo, expressions);
 }
 
 Expression executeExpression(ParseTree p)
 {
-
     foreach(child; p.children)
     {
         switch(child.name)
@@ -111,9 +82,6 @@ Expression executeExpression(ParseTree p)
             case "Til.List":
                 auto l = executeList(child);
                 return new Expression(l);
-            case "Til.String":
-                auto s = executeString(child);
-                return new Expression(s);
             default:
                 writeln("Til.Expression: " ~ child.name);
         }
@@ -145,9 +113,16 @@ ForwardExpression executeForwardExpression(ParseTree p)
     if (pipeCounter != 1)
     {
         throw new InvalidException(
-            "ExpansionExpression has more than 1 pipe!"
+            "ForwardExpression has more than 1 pipe!"
         );
     }
+    if (expressions.length < 2)
+    {
+        throw new InvalidException(
+            "ForwardExpression has not enough Expressions!"
+        );
+    }
+    writeln("ForwardExpression has ", expressions.length, " Expressions");
     auto fe = new ForwardExpression(expressions);
     return fe;
 }
@@ -209,52 +184,30 @@ ListItem executeListItem(ParseTree p)
         {
             case "Til.SubProgram":
                 auto sp = executeSubProgram(child);
-                return new ListItem(sp);
-            case "Til.DotList":
-                auto dl = executeDotList(child);
-                return new ListItem(dl);
-            default:
-                writeln("Til.ListItem: " ~ child.name);
-        }
-    }
-    throw new InvalidException("List seems invalid");
-}
-
-DotList executeDotList(ParseTree p)
-{
-    ColonList[] colonLists;
-
-    foreach(child; p.children)
-    {
-        switch(child.name)
-        {
-            case "Til.ColonList":
-                auto c = executeColonList(child);
-                colonLists ~= c;
-                break;
-            default:
-                writeln("Til.DotList: " ~ child.name);
-        }
-    }
-    return new DotList(colonLists);
-}
-
-ColonList executeColonList(ParseTree p)
-{
-    Atom [] atoms;
-    foreach(child; p.children)
-    {
-        switch(child.name)
-        {
+                return new ListItem(sp, ListItemType.SubProgram);
+            case "Til.String":
+                auto s = executeString(child);
+                return new ListItem(s, ListItemType.String);
+            case "Til.Name":
+                auto n = executeName(child);
+                return new ListItem(n, ListItemType.Name);
             case "Til.Atom":
                 auto a = executeAtom(child);
-                atoms ~= a;
-                break;
+                return new ListItem(a, ListItemType.Atom);
             default:
-                writeln("Til.ColonList: " ~ child.name);
+                writeln("Til.ListItem: " ~ child.name);
+                throw new InvalidException("ListItem seems invalid: " ~ to!string(child.matches));
         }
     }
-    return new ColonList(atoms);
+    assert(0);
+}
+
+// Strings:
+
+string executeSubProgram(ParseTree p)
+{
+    writeln("> SubProgram: " ~ p.matches[0]);
+    return p.matches[0];
 }
 
 string executeString(ParseTree p)
@@ -263,8 +216,14 @@ string executeString(ParseTree p)
     return p.matches[0];
 }
 
-Atom executeAtom(ParseTree p)
+string executeName(ParseTree p)
+{
+    writeln("> Name: " ~ p.matches[0]);
+    return p.matches[0];
+}
+
+string executeAtom(ParseTree p)
 {
     writeln("> Atom: " ~ p.matches[0]);
-    return new Atom(p.matches[0]);
+    return p.matches[0];
 }

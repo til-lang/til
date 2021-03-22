@@ -1,0 +1,31 @@
+run functions {import "functions"}
+
+# A simple callback to check for permissions
+run edit_group {functions.create {request db}
+    run user_id {request.user_id}
+    run group_id {request.id}
+
+    # Find user groups
+    run user_group {db
+        select group_id
+        from users_groups
+        where user_id=$user_id
+    }
+
+
+    # Get permissions
+    run has_permission {db
+        select count(id)
+        from groups_permissions
+        where
+            operation = "edit_group"
+            and target = $group_id
+            and group_id = $user_group
+    }
+
+    if {has_permission == 0} {
+        return 0
+    } else {
+        return 1
+    }
+}

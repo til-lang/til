@@ -6,12 +6,6 @@ run iterators {import iterators}
 run functions {import functions}
 run context {import context}
 
-extend {
-    std:{import std}
-    struct:{import struct}
-    dict:{import dict}
-}
-
 # Strings:
 set first_name "Cléber"
 set last_name "Zavadniak"
@@ -47,9 +41,9 @@ run coordinates {struct.create
 
 # Dictionaries:
 set dicio ${dict.create
-    name:Cléber Zavadniak
-    birth_year:1986
-    programming_languages:{list.create
+    name "Cléber Zavadniak"
+    birth_year 1986
+    programming_languages {list.create
         C D Python Tcl {Shell Script}
     }
 }
