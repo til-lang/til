@@ -5,82 +5,109 @@ import std.stdio : writeln;
 
 import pegged.grammar;
 
-import til.escopo;
 import til.exceptions;
 import til.nodes;
 import til.til;
 
 
-List execute(ParseTree p)
-{
-    auto escopo = new Escopo();
-    return execute(escopo, p);
-}
-
-List execute(Escopo escopo, ParseTree p)
+Program analyse(ParseTree p)
 {
     switch(p.name)
     {
         case "Til":
-            auto program = executeTil(escopo, p);
-            return program.run();
+            return analyseTil(p);
         default:
-            writeln("execute: Not recognized: " ~ p.name);
+            writeln("analyse: Not recognized: " ~ p.name);
     }
     assert(0);
 }
 
-Program executeTil(Escopo escopo, ParseTree p)
+Program analyseTil(ParseTree p)
 {
     foreach(child; p.children)
     {
         switch(child.name)
         {
             case "Til.Program":
-                auto program = executeProgram(escopo, child);
+                auto program = analyseProgram(child);
                 return program;
             default:
-                writeln("executeTil: Not recognized: " ~ child.name);
+                writeln("analyseTil: Not recognized: " ~ child.name);
         }
     }
     throw new InvalidException("Program seems invalid");
 }
 
-Program executeProgram(Escopo escopo, ParseTree p)
+Program analyseProgram(ParseTree p)
+{
+    SubProgram subprogram;
+
+    foreach(child; p.children)
+    {
+        switch(child.name)
+        {
+            case "Til.SubProgram":
+                subprogram = analyseSubProgram(child);
+                break;
+            default:
+                writeln("Til.Program.child: " ~ child.name);
+                throw new InvalidException("Program seems invalid");
+        }
+    }
+    return new Program(subprogram);
+}
+
+ParseTree extractSubProgram(ParseTree p)
+{
+    foreach(child; p.children)
+    {
+        switch(child.name)
+        {
+            case "Til.SubProgram":
+                return child;
+            default:
+                throw new InvalidException("extractSubProgram: Program seems invalid: " ~ child.name);
+        }
+    }
+    throw new InvalidException("extractSubProgram: Program seems invalid.");
+}
+
+SubProgram analyseSubProgram(ParseTree p)
 {
     Expression[] expressions;
+    // Pre-allocate some memory:
+    expressions.reserve(p.children.length);
 
     foreach(child; p.children)
     {
         switch(child.name)
         {
             case "Til.Expression":
-                auto e = executeExpression(child);
+                auto e = analyseExpression(child);
                 expressions ~= e;
                 break;
             default:
-                writeln("Til.Program.child: " ~ child.name);
-                writeln(child);
+                writeln("Til.SubProgram.child: " ~ child.name);
                 throw new InvalidException("Program seems invalid");
         }
     }
-    return new Program(escopo, expressions);
+    return new SubProgram(expressions);
 }
 
-Expression executeExpression(ParseTree p)
+Expression analyseExpression(ParseTree p)
 {
     foreach(child; p.children)
     {
         switch(child.name)
         {
             case "Til.ForwardExpression":
-                auto fe = executeForwardExpression(child);
+                auto fe = analyseForwardExpression(child);
                 return new Expression(fe);
             case "Til.ExpansionExpression":
-                auto ee = executeExpansionExpression(child);
+                auto ee = analyseExpansionExpression(child);
                 return new Expression(ee);
             case "Til.List":
-                auto l = executeList(child);
+                auto l = analyseList(child);
                 return new Expression(l);
             default:
                 writeln("Til.Expression: " ~ child.name);
@@ -89,7 +116,7 @@ Expression executeExpression(ParseTree p)
     throw new InvalidException("Expression seems invalid");
 }
 
-ForwardExpression executeForwardExpression(ParseTree p)
+ForwardExpression analyseForwardExpression(ParseTree p)
 {
     Expression[] expressions;
     int pipeCounter = 0;
@@ -99,7 +126,7 @@ ForwardExpression executeForwardExpression(ParseTree p)
         switch(child.name)
         {
             case "Til.Expression":
-                auto e = executeExpression(child);
+                auto e = analyseExpression(child);
                 expressions ~= e;
                 break;
             case "Til.ForwardPipe":
@@ -127,7 +154,7 @@ ForwardExpression executeForwardExpression(ParseTree p)
     return fe;
 }
 
-ExpansionExpression executeExpansionExpression(ParseTree p)
+ExpansionExpression analyseExpansionExpression(ParseTree p)
 {
     Expression[] expressions;
     int pipeCounter = 0;
@@ -137,7 +164,7 @@ ExpansionExpression executeExpansionExpression(ParseTree p)
         switch(child.name)
         {
             case "Til.Expression":
-                auto e = executeExpression(child);
+                auto e = analyseExpression(child);
                 expressions ~= e;
                 break;
             case "Til.ExpansionPipe":
@@ -157,7 +184,7 @@ ExpansionExpression executeExpansionExpression(ParseTree p)
     return new ExpansionExpression(expressions);
 }
 
-List executeList(ParseTree p)
+List analyseList(ParseTree p)
 {
     ListItem[] listItems;
 
@@ -166,7 +193,7 @@ List executeList(ParseTree p)
         switch(child.name)
         {
             case "Til.ListItem":
-                auto li = executeListItem(child);
+                auto li = analyseListItem(child);
                 listItems ~= li;
                 break;
             default:
@@ -176,24 +203,24 @@ List executeList(ParseTree p)
     return new List(listItems);
 }
 
-ListItem executeListItem(ParseTree p)
+ListItem analyseListItem(ParseTree p)
 {
     foreach(child; p.children)
     {
         switch(child.name)
         {
-            case "Til.SubProgram":
-                auto sp = executeSubProgram(child);
-                return new ListItem(sp, ListItemType.SubProgram);
+            case "Til.StringProgram":
+                auto sp = extractSubProgram(child).analyseSubProgram;
+                return new ListItem(sp, false);
+            case "Til.SubProgramCall":
+                auto sp = extractSubProgram(child).analyseSubProgram;
+                return new ListItem(sp, true);
             case "Til.String":
-                auto s = executeString(child);
-                return new ListItem(s, ListItemType.String);
-            case "Til.Name":
-                auto n = executeName(child);
-                return new ListItem(n, ListItemType.Name);
+                auto s = analyseString(child);
+                return new ListItem(s);
             case "Til.Atom":
-                auto a = executeAtom(child);
-                return new ListItem(a, ListItemType.Atom);
+                auto a = analyseAtom(child);
+                return new ListItem(a);
             default:
                 writeln("Til.ListItem: " ~ child.name);
                 throw new InvalidException("ListItem seems invalid: " ~ to!string(child.matches));
@@ -203,27 +230,14 @@ ListItem executeListItem(ParseTree p)
 }
 
 // Strings:
-
-string executeSubProgram(ParseTree p)
-{
-    writeln("> SubProgram: " ~ p.matches[0]);
-    return p.matches[0];
-}
-
-string executeString(ParseTree p)
+string analyseString(ParseTree p)
 {
     writeln("> String: " ~ p.matches[0]);
     return p.matches[0];
 }
 
-string executeName(ParseTree p)
-{
-    writeln("> Name: " ~ p.matches[0]);
-    return p.matches[0];
-}
-
-string executeAtom(ParseTree p)
+Atom analyseAtom(ParseTree p)
 {
     writeln("> Atom: " ~ p.matches[0]);
-    return p.matches[0];
+    return new Atom(p.matches[0]);
 }

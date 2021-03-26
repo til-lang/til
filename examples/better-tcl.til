@@ -1,0 +1,39 @@
+import "sys"
+import "stdio" as std
+import "functions"
+import "socket"
+
+
+proc connections_handler {connection} {
+    alias conn $connection
+
+    conn.read nonewline: > {
+        "received:$1" > $connection.write
+    }
+}
+
+proc serve {host:localhost port:8080} {
+    socket.serve connections_handler $host $port
+
+    set server ${socket.serve connections_handler \
+        host:$host port:$port
+    }
+    return server
+}
+
+# Main:
+set port [sys.argv 1]
+set host [sys.argv 2]
+
+set server [serve $host $port]
+
+
+###########################
+# Simple dictionaries:
+set coordinates [dict {
+    set x 10
+    set y 11
+    set index 0
+}]
+
+"$coordinates.index:($coordinates.x $coordinates.y)" > std.out

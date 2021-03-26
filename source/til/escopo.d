@@ -10,7 +10,7 @@ import til.nodes;
 import til.til;
 
 
-class BaseEscopo
+class Escopo
 {
     List[string] variables;
     // string[] freeVariables;
@@ -31,21 +31,16 @@ class BaseEscopo
         this.parent = parent;
     }
 
+    List run(Program program)
+    {
+        auto returnedValue = program.run(this);
+        return returnedValue;
+    }
+
+    // Commands
     List set(List arguments)
     {
         writeln("STUB:SET " ~ to!string(arguments));
-        return null;
-    }
-
-    List run(List arguments)
-    {
-        writeln("STUB:RUN " ~ to!string(arguments));
-        return null;
-    }
-
-    List fill(List arguments)
-    {
-        writeln("STUB:FILL " ~ to!string(arguments));
         return null;
     }
 
@@ -61,10 +56,6 @@ class BaseEscopo
         {
             case "set":
                 return this.set(arguments);
-            case "run":
-                return this.run(arguments);
-            case "fill":
-                return this.fill(arguments);
             case "return":
                 return this.retorne(arguments);
             default:
@@ -78,7 +69,7 @@ class BaseEscopo
     }
 }
 
-class Escopo : BaseEscopo
+class DefaultEscopo : Escopo
 {
     this()
     {
@@ -99,6 +90,12 @@ class Escopo : BaseEscopo
         }
     }
 
+    override List run(Program program)
+    {
+        return super.run(program);
+    }
+
+    // Commands:
     override List set(List arguments)
     {
         string varName = to!string(arguments[0]);
@@ -108,7 +105,9 @@ class Escopo : BaseEscopo
         return value;
     }
 
-    override List run(List arguments)
+    // TODO: rename it properly
+    /*
+    List dollar(List arguments)
     {
         string varName = to!string(arguments[0]);
         List value;
@@ -119,7 +118,7 @@ class Escopo : BaseEscopo
             writeln("run: it is a subprogram! " ~ to!string(sp));
             auto tree = Til(to!string(sp));
             writeln(tree);
-            value = execute(this, tree);
+            value = analyse(tree);
         }
         else
         {
@@ -129,8 +128,10 @@ class Escopo : BaseEscopo
         setVariable(varName, value);
         return value;
     }
+    */
 
-    override List fill(List arguments)
+    /*
+    List fill(List arguments)
     {
         writeln("FILL! " ~ to!string(variables));
 
@@ -141,7 +142,7 @@ class Escopo : BaseEscopo
         {
             auto tree = Til(result);
             writeln(tree);
-            auto value = execute(this, tree);
+            auto value = analyse(tree);
             return fill(value);
         }
 
@@ -166,6 +167,7 @@ class Escopo : BaseEscopo
         writeln(" - filled: " ~ to!string(list));
         return list;
     }
+    */
 
     override List retorne(List arguments)
     {

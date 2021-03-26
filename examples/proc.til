@@ -1,0 +1,8 @@
+import "stdio" as std
+
+
+proc efe {x y z} {
+    return $x
+}
+
+set x [efe 10]

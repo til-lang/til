@@ -1,4 +1,0 @@
-set x 1
-run y {"$x" > fill}
-run z {fill "$y"}
-return

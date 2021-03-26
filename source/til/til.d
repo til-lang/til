@@ -4,16 +4,17 @@ import pegged.grammar;
 
 mixin(grammar(`
     Til:
-        Program             <- blank* Expression* (eol blank* Expression)* blank* endOfInput
+        Program             <- SubProgram endOfInput
+        SubProgram          <- blank* Expression? (eol blank* Expression)* blank*
         Expression          <- ForwardExpression / ExpansionExpression / List
         ForwardExpression   <- Expression ForwardPipe Expression
         ExpansionExpression <- Expression ExpansionPipe Expression
-        ForwardPipe         <- " > "
-        ExpansionPipe       <- " < "
-        List                <- ListItem (' ' ListItem)*
-        ListItem            <- "{" SubProgram "}" / String / Name / Atom
-        SubProgram          <~ blank* Expression* (eol blank* Expression)* blank*
+        ForwardPipe         <- " "+ ">" " "+
+        ExpansionPipe       <- " "+ "<" " "+
+        List                <- ListItem (" "+ ListItem)*
+        ListItem            <- SubProgramCall / StringProgram / String / Atom
+        SubProgramCall      <- "[" SubProgram "]"
+        StringProgram       <- "{" SubProgram "}"
         String              <~ doublequote (!doublequote .)* doublequote
-        Name                <~ [A-z0-9_] [.:A-z0-9\-+_]*
-        Atom                <~ [$-+]? [A-z0-9\_]+
+        Atom                <~ [$A-Za-z0-9_] [.:A-Za-z0-9\-+_]*
     `));

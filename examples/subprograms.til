@@ -1,0 +1,23 @@
+set x 123
+import "socket"
+import "stdio" as std
+
+
+proc f {x y z} {
+    foreach i {0 $x} {
+        $x > std.out
+    }
+}
+
+f 5
+
+proc callback {connection} {
+    alias conn $connection
+    conn.read > std.out
+    conn.write "pong"
+}
+
+
+set port 8080
+set host localhost
+set server [socket.server "$host:$port" callback]

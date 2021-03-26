@@ -6,26 +6,40 @@ import std.algorithm.iteration : map, joiner;
 
 import til.escopo;
 import til.exceptions;
+import til.grammar;
 
 
-enum ListItemType
-{
-    Undefined,
-    SubProgram,
-    String,
-    Name,
-    Atom
-}
+alias Value = string;
+
 
 class Program
 {
-    Escopo escopo;
+    SubProgram subprogram;
+
+    this(SubProgram subprogram)
+    {
+        this.subprogram = subprogram;
+    }
+
+    List run(Escopo escopo)
+    {
+        return this.subprogram.run(escopo);
+    }
+}
+
+class SubProgram
+{
     Expression[] expressions;
 
-    this(Escopo escopo, Expression[] expressions)
+    this(Expression[] expressions)
     {
-        this.escopo = escopo;
         this.expressions = expressions;
+    }
+    this(List list)
+    {
+        // Create a Expression to contain the List:
+        Expression e = new Expression(list);
+        this.expressions ~= e;
     }
 
     override string toString()
@@ -41,7 +55,7 @@ class Program
         return expressions.length;
     }
 
-    List run()
+    List run(Escopo escopo)
     {
         List returned;
         List lastValidReturn;
@@ -66,58 +80,54 @@ class Program
         writeln(" - lastValidReturn: " ~ to!string(lastValidReturn));
         return lastValidReturn;
     }
+
+    // How to "resolve" an entire program into an value???
+    Value resolve(Escopo escopo)
+    {
+        List returned = this.run(escopo);
+        // TODO: handle "null" properly.
+        return to!string(returned);
+    }
 }
 
 class Expression
 {
-    ForwardExpression _forwardExpression;
-    ExpansionExpression _expansionExpression;
-    List _list;
-    string _string;
+    ForwardExpression forwardExpression;
+    ExpansionExpression expansionExpression;
+    List list;
 
     this(ForwardExpression expr)
     {
-        _forwardExpression = expr;
+        this.forwardExpression = expr;
     }
     this(ExpansionExpression expr)
     {
-        _expansionExpression = expr;
+        this.expansionExpression = expr;
     }
     this(List l)
     {
-        _list = l;
-    }
-    this(string s)
-    {
-        _string = s;
+        this.list = l;
     }
 
     override string toString()
     {
-        if (_forwardExpression) {
-            return to!string(_forwardExpression);
-        } else if (_expansionExpression) {
-            return to!string(_expansionExpression);
-        } else if (_list) {
-            return to!string(_list);
+        if (forwardExpression) {
+            return to!string(forwardExpression);
+        } else if (expansionExpression) {
+            return to!string(expansionExpression);
         } else {
-            return _string;
+            return to!string(list);
         }
     }
 
     List run(Escopo escopo, List firstArguments)
     {
-        if (_forwardExpression) {
-            return _forwardExpression.run(escopo, firstArguments);
-        } else if (_expansionExpression) {
-            return _expansionExpression.run(escopo, firstArguments);
-        } else if (_list) {
-            return _list.run(escopo, firstArguments);
+        if (forwardExpression) {
+            return forwardExpression.run(escopo, firstArguments);
+        } else if (expansionExpression) {
+            return expansionExpression.run(escopo, firstArguments);
         } else {
-            writeln("Expression returning: " ~ _string);
-            auto newItems = new ListItem[1];
-            newItems[0] = new ListItem(_string, ListItemType.String);
-            return new List(newItems);
+            return list.run(escopo, firstArguments);
         }
     }
 }
@@ -153,16 +163,15 @@ class ForwardExpression : ExpressionSet
     List run(Escopo escopo, List firstArguments)
     {
         List returned = null;
-        auto feedback = new ListItem[1];
 
         foreach(expression; expressions)
         {
             writeln("ForwardExpression.run> " ~ to!string(expression));
             returned = expression.run(escopo, firstArguments);
 
-            auto subProgram = to!string(returned);
-            feedback[0] = new ListItem(subProgram, ListItemType.SubProgram);
-            firstArguments = new List(feedback);
+            // SubPrograms are valid ListItems:
+            auto sp = new SubProgram(returned);
+            firstArguments = new List(sp, false);
         }
         return returned;
     }
@@ -216,6 +225,10 @@ class List
     {
         this.items = items;
     }
+    this(SubProgram sp, bool execute)
+    {
+        this.items ~= new ListItem(sp, execute);
+    }
 
     override string toString()
     {
@@ -257,10 +270,10 @@ class List
         }
 
         // lists.order 3 4 1 2 > std.out
-        if (command.type == ListItemType.Name)
+        if (command.type == ListItemType.Atom)
         {
-            auto strCmd = to!string(command);
-            return escopo.run_command(strCmd, arguments);
+            auto cmd = command.resolve(escopo);
+            return escopo.run_command(cmd, arguments);
         }
         // {lists.order} $my_lists < lists.map
         else
@@ -271,21 +284,67 @@ class List
     }
 }
 
+enum ListItemType
+{
+    Undefined,
+    Atom,
+    String,
+    SubProgram,
+}
+
 class ListItem
 {
-    string repr;
-    ListItemType type = ListItemType.Undefined;
+    Atom atom;
+    string str;
+    SubProgram subprogram;
+    bool execute;
+    ListItemType type;
 
-    this(string s, ListItemType type)
+    this(Atom a)
     {
-        this.repr = s;
-        this.type = type;
+        this.atom = a;
+        this.type = ListItemType.Atom;
+    }
+    this(string s)
+    {
+        this.str = s;
+        this.type = ListItemType.String;
+    }
+    this(SubProgram s, bool execute)
+    {
+        this.subprogram = s;
+        this.type = ListItemType.SubProgram;
+        this.execute = execute;
     }
 
-    override string toString()
+    Value resolve(Escopo escopo)
+    {
+        switch(this.type)
+        {
+            case ListItemType.Atom:
+                return this.atom.resolve(escopo);
+            case ListItemType.String:
+                return this.str;
+            case ListItemType.SubProgram:
+                return this.subprogram.resolve(escopo);
+            default:
+                throw new Exception("wut?");
+        }
+        assert(0);
+    }
+}
+
+class Atom
+{
+    string repr;
+
+    this(string s)
+    {
+        this.repr = s;
+    }
+
+    Value resolve(Escopo escopo)
     {
         return this.repr;
     }
 }
-
-
