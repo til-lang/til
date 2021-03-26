@@ -6,7 +6,8 @@ mixin(grammar(`
     Til:
         Program             <- SubProgram endOfInput
         SubProgram          <- blank* Expression? (eol blank* Expression)* blank*
-        Expression          <- ForwardExpression / ExpansionExpression / List
+        Expression          <- Comment / ForwardExpression / ExpansionExpression / List
+        Comment             <~ "#" (!eol .)*
         ForwardExpression   <- Expression ForwardPipe Expression
         ExpansionExpression <- Expression ExpansionPipe Expression
         ForwardPipe         <- " "+ ">" " "+

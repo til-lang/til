@@ -84,6 +84,7 @@ SubProgram analyseSubProgram(ParseTree p)
         {
             case "Til.Expression":
                 auto e = analyseExpression(child);
+                if (e is null) continue;
                 expressions ~= e;
                 break;
             default:
@@ -109,6 +110,9 @@ Expression analyseExpression(ParseTree p)
             case "Til.List":
                 auto l = analyseList(child);
                 return new Expression(l);
+            case "Til.Comment":
+                writeln("Til.Expression: Comment: " ~ child.matches[0]);
+                return null;
             default:
                 writeln("Til.Expression: " ~ child.name);
         }
