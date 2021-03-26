@@ -15,6 +15,7 @@ class Escopo
     List[string] variables;
     // string[] freeVariables;
     Escopo parent;
+    List delegate(List arguments)[string] commands;
 
     void setVariable(string name, List value)
     {
@@ -24,11 +25,17 @@ class Escopo
 
     this()
     {
-        this.parent = null;
+        this(cast(Escopo) null);
     }
     this(Escopo parent)
     {
         this.parent = parent;
+        this.loadCommands();
+    }
+    void loadCommands()
+    {
+        this.commands["set"] = &this.set;
+        this.commands["return"] = &this.retorne;
     }
 
     List run(Program program)
@@ -52,20 +59,19 @@ class Escopo
 
     List run_command(string strCmd, List arguments)
     {
-        switch(strCmd)
+        List delegate(List arguments) handler = this.commands.get(strCmd, null);
+        if (handler is null)
         {
-            case "set":
-                return this.set(arguments);
-            case "return":
-                return this.retorne(arguments);
-            default:
-                break;
+            writeln(
+                "STUB:RUN_COMMAND " ~ strCmd ~ " : " ~ to!string(arguments)
+            );
+            return null;
         }
-
-        writeln(
-            "STUB:RUN_COMMAND " ~ strCmd ~ " " ~ to!string(arguments)
-        );
-        return null;
+        else
+        {
+            writeln("handler=" ~ to!string(handler));
+            return handler(arguments);
+        }
     }
 }
 
@@ -80,14 +86,27 @@ class DefaultEscopo : Escopo
     {
         super(parent);
 
-        // Copy all parent variables:
-        if (parent !is null)
-        {
-            foreach(varName, value; parent.variables)
-            {
-                variables[varName] = value;
-            }
-        }
+        /*
+        We could take two different ways, here:
+
+        1- Copy all the parent variables
+        That would work very fine, but the copying  process
+        could end up being very expensive.
+        (O(n) on every new scope creation).
+
+        2- Create a "linked list" of sorts, where failture
+        to find a name in current scope would trigger a
+        search in parent scope.
+        That would make the new scope creation operation
+        much cheaper and also searching for a name inside
+        the local scope, but searching on parent scopes
+        would obey a linear cost.
+        (O(n) for searching parent scopes).
+
+        We prefer the second option.
+        So, actually, nothing to do, here. :)
+        GO AWAY, NOW!!!
+        */
     }
 
     override List run(Program program)

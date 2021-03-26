@@ -317,6 +317,21 @@ class ListItem
         this.execute = execute;
     }
 
+    override string toString()
+    {
+        switch(this.type)
+        {
+            case ListItemType.Atom:
+                return to!string(this.atom);
+            case ListItemType.String:
+                return this.str;
+            case ListItemType.SubProgram:
+                return to!string(this.subprogram);
+            default:
+                return "ListItem: UNKNOWN TYPE: " ~ to!string(this.type);
+        }
+    }
+
     Value resolve(Escopo escopo)
     {
         switch(this.type)
@@ -344,6 +359,11 @@ class Atom
     }
 
     Value resolve(Escopo escopo)
+    {
+        return this.repr;
+    }
+
+    override string toString()
     {
         return this.repr;
     }
