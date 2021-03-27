@@ -17,12 +17,6 @@ class Escopo
     Escopo parent;
     List delegate(List arguments)[string] commands;
 
-    void setVariable(string name, List value)
-    {
-        variables[name] = value;
-        writeln(name ~ " ← " ~ to!string(value));
-    }
-
     this()
     {
         this(cast(Escopo) null);
@@ -38,10 +32,34 @@ class Escopo
         this.commands["return"] = &this.retorne;
     }
 
+    // Variables manipulation
+    void setVariable(string name, List value)
+    {
+        variables[name] = value;
+        writeln(name ~ " ← " ~ to!string(value));
+    }
+
+    // Execution
     List run(Program program)
     {
         auto returnedValue = program.run(this);
         return returnedValue;
+    }
+
+    // Operators
+    List opIndex(string name)
+    {
+        return this.variables.get(name, null);
+    }
+    override string toString()
+    {
+        string r = "scope:\n";
+        foreach(name, value; variables)
+        {
+            r ~= "  " ~ name ~ "=<" ~ to!string(value) ~ ">\n";
+        }
+        r ~= ".";
+        return r;
     }
 
     // Commands
@@ -69,7 +87,6 @@ class Escopo
         }
         else
         {
-            writeln("handler=" ~ to!string(handler));
             return handler(arguments);
         }
     }
@@ -109,11 +126,6 @@ class DefaultEscopo : Escopo
         */
     }
 
-    override List run(Program program)
-    {
-        return super.run(program);
-    }
-
     // Commands:
     override List set(List arguments)
     {
@@ -129,16 +141,5 @@ class DefaultEscopo : Escopo
         auto newList = new List();
         newList.scopeExit = ScopeExitCodes.Success;
         return newList;
-    }
-
-    override string toString()
-    {
-        string r = "scope:\n";
-        foreach(name, value; variables)
-        {
-            r ~= "  " ~ name ~ "=<" ~ to!string(value) ~ ">\n";
-        }
-        r ~= ".";
-        return r;
     }
 }

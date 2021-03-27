@@ -260,6 +260,18 @@ class List
         ListItem command = items[0];
         List arguments;
 
+        // Evaluate all strings in this List:
+        foreach(item; items)
+        {
+            if (item.type == ListItemType.String)
+            {
+                // String resolution returns its value
+                // but must also be an in-place operation:
+                item.resolve(escopo);
+            }
+        }
+
+        // Prepend firstArguments:
         if (firstArguments !is null)
         {
             arguments = new List(firstArguments.items ~ items[1..$]);
@@ -281,6 +293,15 @@ class List
             // SubPrograms, Strings and Atoms just return themselves.
             return this;
         }
+    }
+
+    // resolve should never "run" a List. It's safe
+    // to suppose someone else has already run it.
+    Value resolve(Escopo escopo)
+    {
+        return to!string(this.items
+            .map!(x => x.resolve(escopo))
+            .joiner(" "));
     }
 }
 
@@ -363,11 +384,47 @@ class String
 
     string resolve(Escopo escopo)
     {
-        // First draft: simply do not substitute...
-        return this.toString();
+        if (this.repr !is null)
+        {
+            return this.repr;
+        }
+
+        string result;
+        string subst;
+        Value value;
+        foreach(index, part;parts)
+        {
+            subst = this.substitutions.get(cast(int)index, null);
+            if (subst is null)
+            {
+                value = part;
+            }
+            else
+            {
+                List l = escopo[subst];
+                if (l is null)
+                {
+                    value = "";
+                }
+                else {
+                    value = l.resolve(escopo);
+                }
+            }
+            result ~= value;
+        }
+
+        writeln("resolving " ~ to!string(this) ~ " = " ~ result);
+        this.repr = result;
+        return result;
     }
     override string toString()
     {
+        // If it was already resolved...
+        if (this.repr !is null)
+        {
+            return this.repr;
+        }
+        // Or else:
         return to!string(this.parts
             .map!(x => to!string(x))
             .joiner(""));

@@ -239,13 +239,12 @@ String analyseString(ParseTree p)
     string[] parts;
     string[int] substitutions;
 
-    int index = 0;
-    foreach(child; p.children)
+    foreach(index, child; p.children)
     {
         final switch(child.name)
         {
             case "Til.Substitution":
-                substitutions[index++] = child.matches[0][1..$];
+                substitutions[cast(int)index] = child.matches[0][1..$];
                 // fallthrough:
             case "Til.NotSubstitution":
                 parts ~= child.matches[0];

@@ -2,7 +2,7 @@ import "stdio" as std
 
 # efe: a "function" (or procedure)
 proc efe {x y z} {
-    return $x
+    return "$x $y $z"
 }
 
 set x [efe 10]
