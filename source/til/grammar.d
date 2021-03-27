@@ -234,10 +234,25 @@ ListItem analyseListItem(ParseTree p)
 }
 
 // Strings:
-string analyseString(ParseTree p)
+String analyseString(ParseTree p)
 {
-    writeln("> String: " ~ p.matches[0]);
-    return p.matches[0];
+    string[] parts;
+    string[int] substitutions;
+
+    int index = 0;
+    foreach(child; p.children)
+    {
+        final switch(child.name)
+        {
+            case "Til.Substitution":
+                substitutions[index++] = child.matches[0][1..$];
+                // fallthrough:
+            case "Til.NotSubstitution":
+                parts ~= child.matches[0];
+        }
+        writeln(" " ~ child.name ~ ":", child.matches[0]);
+    }
+    return new String(parts, substitutions);
 }
 
 Atom analyseAtom(ParseTree p)

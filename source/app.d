@@ -31,4 +31,5 @@ void main()
     auto escopo = new DefaultEscopo();
     auto returnedValue = escopo.run(program);
     writeln("returnedValue: ", returnedValue);
+    writeln(escopo);
 }

@@ -124,74 +124,21 @@ class DefaultEscopo : Escopo
         return value;
     }
 
-    // TODO: rename it properly
-    /*
-    List dollar(List arguments)
-    {
-        string varName = to!string(arguments[0]);
-        List value;
-
-        ListItem sp = arguments[1];
-        if (sp.type == ListItemType.SubProgram)
-        {
-            writeln("run: it is a subprogram! " ~ to!string(sp));
-            auto tree = Til(to!string(sp));
-            writeln(tree);
-            value = analyse(tree);
-        }
-        else
-        {
-            value = new List(arguments[1..$]);
-        }
-
-        setVariable(varName, value);
-        return value;
-    }
-    */
-
-    /*
-    List fill(List arguments)
-    {
-        writeln("FILL! " ~ to!string(variables));
-
-        ListItem target = arguments[0];
-        string result = to!string(arguments[0]);
-
-        if (target.type == ListItemType.SubProgram)
-        {
-            auto tree = Til(result);
-            writeln(tree);
-            auto value = analyse(tree);
-            return fill(value);
-        }
-
-        if (target.type == ListItemType.String)
-        {
-            result = result.strip("\"");
-        }
-        writeln("  - result: ", result, " : ", to!string(target.type));
-
-        foreach(varName, value; variables)
-        {
-            string key = "$" ~ varName;
-            result = result.replace(key, to!string(value));
-            writeln("  value: ", value, " ", to!string(value));
-        }
-
-        writeln(" - fill.result: ", result);
-        auto li = new ListItem(result, ListItemType.SubProgram);
-        auto items = new ListItem[1];
-        items[0] = li;
-        auto list = new List(items);
-        writeln(" - filled: " ~ to!string(list));
-        return list;
-    }
-    */
-
     override List retorne(List arguments)
     {
         auto newList = new List();
         newList.scopeExit = ScopeExitCodes.Success;
         return newList;
+    }
+
+    override string toString()
+    {
+        string r = "scope:\n";
+        foreach(name, value; variables)
+        {
+            r ~= "  " ~ name ~ "=<" ~ to!string(value) ~ ">\n";
+        }
+        r ~= ".";
+        return r;
     }
 }

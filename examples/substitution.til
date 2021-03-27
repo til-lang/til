@@ -1,0 +1,3 @@
+set first_name "Cléber"
+set last_name "Zavadniak"
+set name "$name $last_name"

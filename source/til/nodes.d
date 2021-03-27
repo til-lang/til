@@ -295,7 +295,7 @@ enum ListItemType
 class ListItem
 {
     Atom atom;
-    string str;
+    String str;
     SubProgram subprogram;
     bool execute;
     ListItemType type;
@@ -305,7 +305,7 @@ class ListItem
         this.atom = a;
         this.type = ListItemType.Atom;
     }
-    this(string s)
+    this(String s)
     {
         this.str = s;
         this.type = ListItemType.String;
@@ -324,7 +324,7 @@ class ListItem
             case ListItemType.Atom:
                 return to!string(this.atom);
             case ListItemType.String:
-                return this.str;
+                return to!string(this.str);
             case ListItemType.SubProgram:
                 return to!string(this.subprogram);
             default:
@@ -339,13 +339,38 @@ class ListItem
             case ListItemType.Atom:
                 return this.atom.resolve(escopo);
             case ListItemType.String:
-                return this.str;
+                return this.str.resolve(escopo);
             case ListItemType.SubProgram:
                 return this.subprogram.resolve(escopo);
             default:
                 throw new Exception("wut?");
         }
         assert(0);
+    }
+}
+
+class String
+{
+    string repr;
+    string[] parts;
+    string[int] substitutions;
+
+    this(string[] parts, string[int] substitutions)
+    {
+        this.parts = parts;
+        this.substitutions = substitutions;
+    }
+
+    string resolve(Escopo escopo)
+    {
+        // First draft: simply do not substitute...
+        return this.toString();
+    }
+    override string toString()
+    {
+        return to!string(this.parts
+            .map!(x => to!string(x))
+            .joiner(""));
     }
 }
 

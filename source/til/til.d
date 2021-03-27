@@ -2,6 +2,7 @@ module til.til;
 
 import pegged.grammar;
 
+
 mixin(grammar(`
     Til:
         Program             <- SubProgram endOfInput
@@ -16,6 +17,8 @@ mixin(grammar(`
         ListItem            <- SubProgramCall / StringProgram / String / Atom
         SubProgramCall      <- "[" SubProgram "]"
         StringProgram       <- "{" SubProgram "}"
-        String              <~ doublequote (!doublequote .)* doublequote
+        String              <- ["] (Substitution / NotSubstitution)* ["]
+        Substitution        <~ "$" [A-Za-z0-9_.]+
+        NotSubstitution     <~ (!doublequote !"$" .)*
         Atom                <~ [$A-Za-z0-9_] [.:A-Za-z0-9\-+_]*
     `));
