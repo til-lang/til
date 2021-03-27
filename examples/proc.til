@@ -1,5 +1,3 @@
-import "stdio" as std
-
 # efe: a "function" (or procedure)
 proc efe {x y z} {
     return "$x $y $z"

@@ -62,7 +62,7 @@ class SubProgram
 
         foreach(expression; expressions)
         {
-            writeln("Program.run-expression> " ~ to!string(expression));
+            writeln("run-expression> " ~ to!string(expression));
             // XXX: fill "firstArguments" with "argv", maybe...
             returned = expression.run(escopo, null);
             writeln(" - returned: " ~ to!string(returned));
@@ -261,13 +261,33 @@ class List
         List arguments;
 
         // Evaluate all strings in this List:
-        foreach(item; items)
+        foreach(index, item; items)
         {
-            if (item.type == ListItemType.String)
+            switch(item.type)
             {
-                // String resolution returns its value
-                // but must also be an in-place operation:
-                item.resolve(escopo);
+                // Strings resolution:
+                case ListItemType.String:
+                    // String resolution returns its value
+                    // but must also be an in-place operation:
+                    item.resolve(escopo);
+                    break;
+                // [subprograms resolution]
+                case ListItemType.SubProgram:
+                    // If the subprogram should be executed,
+                    // then execute and replace itself with
+                    // another subprogram that needs no
+                    // further execution:
+                    if (item.execute)
+                    {
+                        writeln("Running subprogram: " ~ to!string(item));
+                        List tempResult = item.run(escopo);
+                        SubProgram tempSP = new SubProgram(tempResult);
+                        this.items[index] = new ListItem(tempSP, false);
+                    }
+                    break;
+                // TODO: atoms should be resolved, too.
+                default:
+                    break;
             }
         }
 
@@ -351,6 +371,17 @@ class ListItem
             default:
                 return "ListItem: UNKNOWN TYPE: " ~ to!string(this.type);
         }
+    }
+
+    List run(Escopo escopo)
+    {
+        if (this.type != ListItemType.SubProgram)
+        {
+            throw new Exception(
+                "ListItem: Cannot run a " ~ to!string(this.type)
+            );
+        }
+        return this.subprogram.run(escopo);
     }
 
     Value resolve(Escopo escopo)

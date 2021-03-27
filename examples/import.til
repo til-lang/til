@@ -1,0 +1,3 @@
+import "stdio" as std
+
+"Hello, world!" > std.out
