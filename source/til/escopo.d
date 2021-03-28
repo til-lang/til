@@ -7,6 +7,7 @@ import std.string : strip;
 
 import til.grammar;
 import til.nodes;
+import til.procedures;
 import til.til;
 
 
@@ -15,7 +16,7 @@ class Escopo
     List[string] variables;
     // string[] freeVariables;
     Escopo parent;
-    List delegate(List arguments)[string] commands;
+    List delegate(string, List)[string] commands;
 
     this()
     {
@@ -28,8 +29,6 @@ class Escopo
     }
     void loadCommands()
     {
-        this.commands["set"] = &this.set;
-        this.commands["return"] = &this.retorne;
     }
 
     // Variables manipulation
@@ -63,21 +62,9 @@ class Escopo
     }
 
     // Commands
-    List set(List arguments)
-    {
-        writeln("STUB:SET " ~ to!string(arguments));
-        return null;
-    }
-
-    List retorne(List arguments)
-    {
-        writeln("STUB:RETORNE " ~ to!string(arguments));
-        return null;
-    }
-
     List run_command(string strCmd, List arguments)
     {
-        List delegate(List arguments) handler = this.commands.get(strCmd, null);
+        List delegate(string, List arguments) handler = this.commands.get(strCmd, null);
         if (handler is null)
         {
             writeln(
@@ -87,13 +74,15 @@ class Escopo
         }
         else
         {
-            return handler(arguments);
+            return handler(strCmd, arguments);
         }
     }
 }
 
 class DefaultEscopo : Escopo
 {
+    Procedure[string] procedures;
+
     this()
     {
         this(null);
@@ -126,8 +115,15 @@ class DefaultEscopo : Escopo
         */
     }
 
+    override void loadCommands()
+    {
+        this.commands["set"] = &this.set;
+        this.commands["proc"] = &this.proc;
+        this.commands["return"] = &this.retorne;
+    }
+
     // Commands:
-    override List set(List arguments)
+    List set(string cmd, List arguments)
     {
         string varName = to!string(arguments[0]);
         auto value = new List(arguments[1..$]);
@@ -136,7 +132,39 @@ class DefaultEscopo : Escopo
         return value;
     }
 
-    override List retorne(List arguments)
+    List proc(string cmd, List arguments)
+    {
+        // proc name {parameters} {body}
+        string name = arguments[0].resolve(this);
+        ListItem parameters = arguments[1];
+        ListItem body = arguments[2];
+
+        this.procedures[name] = new Procedure(
+            name,
+            parameters.values(this),
+            // TODO: check if it is really a SubProgram type:
+            body.subprogram
+        );
+
+        // Make the procedure available:
+        this.commands[name] = &this.runProc;
+
+        auto result = new List(arguments[0..1]);
+        return result;
+    }
+
+    List runProc(string cmdName, List arguments)
+    {
+        auto proc = this.procedures.get(cmdName, null);
+        if (proc is null) {
+            throw new Exception(
+                "Trying to call " ~ cmdName ~ "but procedure is gone"
+            );
+        }
+        return proc.run(this, cmdName, arguments);
+    }
+
+    List retorne(string cmd, List arguments)
     {
         auto newList = new List();
         newList.scopeExit = ScopeExitCodes.Success;

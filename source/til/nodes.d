@@ -88,6 +88,28 @@ class SubProgram
         // TODO: handle "null" properly.
         return to!string(returned);
     }
+
+    Value[] values(Escopo escopo)
+    {
+        // TODO: return a list of values
+        // It's safe to assume this program
+        // is not to be executed and it's
+        // simply a common list of values already.
+        Value[] theList;
+
+        // Normal situation: only one Expression.
+        // If there is more than one, maybe the
+        // user is just being funny, like
+        // proc {
+        //  a b
+        //  c d
+        // } {body}
+        foreach(expression; expressions)
+        {
+            theList ~= expression.values(escopo);
+        }
+        return theList;
+    }
 }
 
 class Expression
@@ -129,6 +151,23 @@ class Expression
         } else {
             return list.run(escopo, firstArguments);
         }
+    }
+
+    Value[] values(Escopo escopo)
+    {
+        if (forwardExpression) {
+            throw new Exception("forwardExpression.values: not implemented");
+        } else if (expansionExpression) {
+            throw new Exception("expansionExpression.values: not implemented");
+        }
+
+        Value[] theList;
+        // Not sure if this is enough:
+        foreach(item; this.list.items)
+        {
+            theList ~= item.resolve(escopo);
+        }
+        return theList;
     }
 }
 
@@ -358,9 +397,10 @@ class ListItem
         this.execute = execute;
     }
 
+    // Operators:
     override string toString()
     {
-        switch(this.type)
+        final switch(this.type)
         {
             case ListItemType.Atom:
                 return to!string(this.atom);
@@ -368,9 +408,40 @@ class ListItem
                 return to!string(this.str);
             case ListItemType.SubProgram:
                 return to!string(this.subprogram);
-            default:
-                return "ListItem: UNKNOWN TYPE: " ~ to!string(this.type);
+            case ListItemType.Undefined:
+                return "UNDEFINED!";
         }
+    }
+
+    //
+    Value[] values(Escopo escopo)
+    {
+
+        final switch(this.type)
+        {
+            case ListItemType.Atom:
+                Value[] theList = new Value[1];
+                theList[0] = this.atom.resolve(escopo);
+                return theList;
+
+            case ListItemType.String:
+                Value[] theList = new Value[1];
+                theList[0] = this.str.resolve(escopo);
+                return theList;
+
+            case ListItemType.SubProgram:
+                // theList[0] = this.str.resolve();
+                // (it's not this way.)
+                // TODO: think about it...
+                if (this.execute) {
+                    throw new Exception("Not implemented (SubProgram)");
+                }
+                return this.subprogram.values(escopo);
+
+            case ListItemType.Undefined:
+                throw new Exception("Not implemented (Undefined)");
+        }
+        assert(0);
     }
 
     List run(Escopo escopo)

@@ -246,6 +246,7 @@ String analyseString(ParseTree p)
             case "Til.Substitution":
                 substitutions[cast(int)index] = child.matches[0][1..$];
                 // fallthrough:
+                goto case;
             case "Til.NotSubstitution":
                 parts ~= child.matches[0];
         }
