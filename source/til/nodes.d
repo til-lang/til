@@ -58,7 +58,6 @@ class SubProgram
     List run(Escopo escopo)
     {
         List returned;
-        List lastValidReturn;
 
         foreach(expression; expressions)
         {
@@ -70,15 +69,11 @@ class SubProgram
             {
                 break;
             }
-            else
-            {
-                lastValidReturn = returned;
-            }
         }
 
         // Returns whatever was the result of the last Expression,
-        writeln(" - lastValidReturn: " ~ to!string(lastValidReturn));
-        return lastValidReturn;
+        writeln(" - returned: " ~ to!string(returned));
+        return returned;
     }
 
     // How to "resolve" an entire program into an value???

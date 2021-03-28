@@ -62,19 +62,40 @@ class Escopo
     }
 
     // Commands
-    List run_command(string strCmd, List arguments)
+    List delegate(string, List arguments) getCommand(string cmdName)
     {
-        List delegate(string, List arguments) handler = this.commands.get(strCmd, null);
+        List delegate(string, List arguments) handler = this.commands.get(cmdName, null);
+        if (handler is null)
+        {
+            if (this.parent is null)
+            {
+                return null;
+            }
+            else
+            {
+                return this.parent.getCommand(cmdName);
+            }
+        }
+        else
+        {
+            return handler;
+        }
+    }
+
+    List run_command(string cmdName, List arguments)
+    {
+        auto handler = this.getCommand(cmdName);
         if (handler is null)
         {
             writeln(
-                "STUB:RUN_COMMAND " ~ strCmd ~ " : " ~ to!string(arguments)
+                "COMMAND NOT FOUND: <" ~ cmdName ~ "> : "
+                ~ to!string(arguments)
             );
             return null;
         }
         else
         {
-            return handler(strCmd, arguments);
+            return handler(cmdName, arguments);
         }
     }
 }
@@ -164,10 +185,10 @@ class DefaultEscopo : Escopo
         return proc.run(this, cmdName, arguments);
     }
 
-    List retorne(string cmd, List arguments)
+    List retorne(string cmdName, List arguments)
     {
-        auto newList = new List();
-        newList.scopeExit = ScopeExitCodes.Success;
-        return newList;
+        writeln("retorne:" ~ to!string(arguments));
+        arguments.scopeExit = ScopeExitCodes.Success;
+        return arguments;
     }
 }

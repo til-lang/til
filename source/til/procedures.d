@@ -35,6 +35,21 @@ class Procedure
             "Procedure.run:"
             ~ this.name ~ "(" ~ to!string(arguments) ~ ")"
         );
-        return new List();
+
+        auto procedureScope = new Escopo(escopo);
+
+        foreach(index, argument; arguments.items)
+        {
+            auto parameterName = this.parameters[index];
+            // auto value = argument.resolve(procedureScope);
+            auto li = new ListItem[1];
+            li[0] = argument;
+            auto value = new List(li);
+            procedureScope.setVariable(parameterName, value);
+            writeln(
+                " argument " ~ parameterName ~ "=" ~ to!string(value)
+            );
+        }
+        return this.body.run(procedureScope);
     }
 }

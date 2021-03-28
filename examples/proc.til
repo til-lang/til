@@ -3,4 +3,4 @@ proc efe {x y z} {
     return "$x $y $z"
 }
 
-set x [efe 10]
+set x [efe 1 2 3]
