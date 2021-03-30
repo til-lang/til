@@ -1,0 +1,13 @@
+set x 1
+
+proc inline {params} {body}
+proc oneline {params} {
+    body
+}
+proc twoline {p1 p2} {
+    return $p1 $p2
+}
+inline 1 > std.out
+oneline 2 > std.out
+std.out [twoline 3 4]
+twoline 5 6 7 > std.out 8 9

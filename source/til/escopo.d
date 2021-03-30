@@ -39,7 +39,7 @@ class Escopo
     }
 
     // Execution
-    List run(Program program)
+    List run(List program)
     {
         auto returnedValue = program.run(this);
         return returnedValue;
@@ -55,7 +55,9 @@ class Escopo
         string r = "scope:\n";
         foreach(name, value; variables)
         {
-            r ~= "  " ~ name ~ "=<" ~ to!string(value) ~ ">\n";
+            r ~= "  " ~ name ~ "=<"
+                 ~ to!string(value) ~ ">"
+                 ~ "(" ~ to!string(value.length) ~")\n";
         }
         r ~= ".";
         return r;
@@ -91,7 +93,7 @@ class Escopo
                 "COMMAND NOT FOUND: <" ~ cmdName ~ "> : "
                 ~ to!string(arguments)
             );
-            return null;
+            return new List();
         }
         else
         {
@@ -156,15 +158,15 @@ class DefaultEscopo : Escopo
     List proc(string cmd, List arguments)
     {
         // proc name {parameters} {body}
-        string name = arguments[0].resolve(this);
+        string name = to!string(arguments[0].evaluate(this));
         ListItem parameters = arguments[1];
         ListItem body = arguments[2];
 
         this.procedures[name] = new Procedure(
             name,
             parameters.values(this),
-            // TODO: check if it is really a SubProgram type:
-            body.subprogram
+            // TODO: check if it is really a SubList type:
+            body.sublist
         );
 
         // Make the procedure available:
@@ -187,8 +189,12 @@ class DefaultEscopo : Escopo
 
     List retorne(string cmdName, List arguments)
     {
-        writeln("retorne:" ~ to!string(arguments));
-        arguments.scopeExit = ScopeExitCodes.Success;
-        return arguments;
+        auto evaluatedItems = arguments.evaluate(this);
+        writeln(" --- RETORNE ---");
+        writeln(" --- → " ~ to!string(arguments));
+        writeln(" --- ← " ~ to!string(evaluatedItems));
+        auto returnValue = new List(evaluatedItems);
+        returnValue.scopeExit = ScopeExitCodes.Success;
+        return returnValue;
     }
 }

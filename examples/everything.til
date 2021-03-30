@@ -20,9 +20,6 @@ std.out "z:$z"
 # (Every value is a "function" that returns itself)
 
 
-# Expand the list as arguments:
-a b c d e < std.out
-
 # Lists:
 set l [list.create a b c d e f]
 set c [list.index $l 2]

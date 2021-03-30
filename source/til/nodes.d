@@ -11,235 +11,6 @@ import til.grammar;
 
 alias Value = string;
 
-
-class Program
-{
-    SubProgram subprogram;
-
-    this(SubProgram subprogram)
-    {
-        this.subprogram = subprogram;
-    }
-
-    List run(Escopo escopo)
-    {
-        return this.subprogram.run(escopo);
-    }
-}
-
-class SubProgram
-{
-    Expression[] expressions;
-
-    this(Expression[] expressions)
-    {
-        this.expressions = expressions;
-    }
-    this(List list)
-    {
-        // Create a Expression to contain the List:
-        Expression e = new Expression(list);
-        this.expressions ~= e;
-    }
-
-    override string toString()
-    {
-        auto list = expressions
-            .map!(x => to!string(x))
-            .joiner("\n");
-        return to!string(list);
-    }
-
-    ulong length()
-    {
-        return expressions.length;
-    }
-
-    List run(Escopo escopo)
-    {
-        List returned;
-
-        foreach(expression; expressions)
-        {
-            writeln("run-expression> " ~ to!string(expression));
-            // XXX: fill "firstArguments" with "argv", maybe...
-            returned = expression.run(escopo, null);
-            writeln(" - returned: " ~ to!string(returned));
-            if (returned !is null && returned.scopeExit != ScopeExitCodes.Continue)
-            {
-                break;
-            }
-        }
-
-        // Returns whatever was the result of the last Expression,
-        writeln(" - returned: " ~ to!string(returned));
-        return returned;
-    }
-
-    // How to "resolve" an entire program into an value???
-    Value resolve(Escopo escopo)
-    {
-        List returned = this.run(escopo);
-        // TODO: handle "null" properly.
-        return to!string(returned);
-    }
-
-    Value[] values(Escopo escopo)
-    {
-        // TODO: return a list of values
-        // It's safe to assume this program
-        // is not to be executed and it's
-        // simply a common list of values already.
-        Value[] theList;
-
-        // Normal situation: only one Expression.
-        // If there is more than one, maybe the
-        // user is just being funny, like
-        // proc {
-        //  a b
-        //  c d
-        // } {body}
-        foreach(expression; expressions)
-        {
-            theList ~= expression.values(escopo);
-        }
-        return theList;
-    }
-}
-
-class Expression
-{
-    ForwardExpression forwardExpression;
-    ExpansionExpression expansionExpression;
-    List list;
-
-    this(ForwardExpression expr)
-    {
-        this.forwardExpression = expr;
-    }
-    this(ExpansionExpression expr)
-    {
-        this.expansionExpression = expr;
-    }
-    this(List l)
-    {
-        this.list = l;
-    }
-
-    override string toString()
-    {
-        if (forwardExpression) {
-            return to!string(forwardExpression);
-        } else if (expansionExpression) {
-            return to!string(expansionExpression);
-        } else {
-            return to!string(list);
-        }
-    }
-
-    List run(Escopo escopo, List firstArguments)
-    {
-        if (forwardExpression) {
-            return forwardExpression.run(escopo, firstArguments);
-        } else if (expansionExpression) {
-            return expansionExpression.run(escopo, firstArguments);
-        } else {
-            return list.run(escopo, firstArguments);
-        }
-    }
-
-    Value[] values(Escopo escopo)
-    {
-        if (forwardExpression) {
-            throw new Exception("forwardExpression.values: not implemented");
-        } else if (expansionExpression) {
-            throw new Exception("expansionExpression.values: not implemented");
-        }
-
-        Value[] theList;
-        // Not sure if this is enough:
-        foreach(item; this.list.items)
-        {
-            theList ~= item.resolve(escopo);
-        }
-        return theList;
-    }
-}
-
-class ExpressionSet
-{
-    Expression[] expressions;
-    this(Expression[] expressions)
-    {
-        this.expressions = expressions;
-    }
-}
-
-class ForwardExpression : ExpressionSet
-{
-    this(Expression[] expressions)
-    {
-        super(expressions);
-    }
-
-    override string toString()
-    {
-        writeln(expressions);
-        string r = "f(" ~ to!string(expressions[0]);
-        foreach(expression; expressions[1..$])
-        {
-            r ~= " > " ~ to!string(expression);
-        }
-        r ~= ")f";
-        return r;
-    }
-
-    List run(Escopo escopo, List firstArguments)
-    {
-        List returned = null;
-
-        foreach(expression; expressions)
-        {
-            writeln("ForwardExpression.run> " ~ to!string(expression));
-            returned = expression.run(escopo, firstArguments);
-
-            // SubPrograms are valid ListItems:
-            auto sp = new SubProgram(returned);
-            firstArguments = new List(sp, false);
-        }
-        return returned;
-    }
-}
-
-class ExpansionExpression : ExpressionSet
-{
-    this(Expression[] expressions)
-    {
-        super(expressions);
-    }
-
-    override string toString()
-    {
-        string r = "f(" ~ to!string(expressions[0]);
-        foreach(expression; expressions[1..$])
-        {
-            r ~= " < " ~ to!string(expression);
-        }
-        r ~= ")f";
-        return r;
-    }
-
-    List run(Escopo escopo, List firstArguments)
-    {
-        foreach(expression; expressions)
-        {
-            writeln("ExpansionExpression.run> " ~ to!string(expression));
-            firstArguments = expression.run(escopo, firstArguments);
-        }
-        return firstArguments;
-    }
-}
-
 enum ScopeExitCodes
 {
     Continue,
@@ -255,20 +26,24 @@ class List
     this()
     {
     }
+    this(ListItem item)
+    {
+        this.items ~= item;
+    }
     this(ListItem[] items)
     {
         this.items = items;
     }
-    this(SubProgram sp, bool execute)
+    this(List sl, bool execute)
     {
-        this.items ~= new ListItem(sp, execute);
+        this.items ~= new ListItem(sl, execute);
     }
 
     override string toString()
     {
         auto list = items
             .map!(x => to!string(x))
-            .joiner(" , ");
+            .joiner(" ");
         return to!string(list);
     }
     ListItem opIndex(int i)
@@ -288,25 +63,66 @@ class List
         return this.length;
     }
 
-    List run(Escopo escopo, List firstArguments)
+    ListItem[] organize()
     {
-        // std.out 1 2 3
-        ListItem command = items[0];
-        List arguments;
+        ListItem[] currentItems;
+        ListItem[] newArguments;
 
-        // Evaluate all strings in this List:
+        /*
+           Organize a piped list:
+
+        1.   1 2 3  > filter {x != 2} < std.out
+            {1 2 3} >...
+        2.   filter {1 2 3} {x != 2}  < std.out
+            {filter {1 2 3} {x != 2}} < std.out
+        3.   std.out [filter {1 2 3} {x != 2}
+        */
+
+        int subIndex = 0;
+        foreach(idx, item; items)
+        {
+            switch(item.type)
+            {
+                case ListItemType.ForwardPipe:
+                    auto program = new List(currentItems);
+                    auto executableItem = new ListItem(program, true);
+                    newArguments = new ListItem[1];
+                    newArguments[0] = executableItem;
+                    currentItems = new ListItem[0];
+                    subIndex = 0;
+                    break;
+
+                default:
+                    currentItems ~= item;
+                    subIndex++;
+                    if (subIndex == 1 && newArguments.length > 0)
+                    {
+                        currentItems ~= newArguments;
+                        newArguments = new ListItem[0];
+                    }
+            }
+        }
+        return currentItems;
+    }
+
+    ListItem[] evaluate(Escopo escopo)
+    {
+        return this.evaluate(this.items, escopo);
+    }
+    ListItem[] evaluate(ListItem[] items, Escopo escopo)
+    {
+        ListItem[] newItems;
+
         foreach(index, item; items)
         {
             switch(item.type)
             {
-                // Strings resolution:
+                case ListItemType.Atom:
                 case ListItemType.String:
-                    // String resolution returns its value
-                    // but must also be an in-place operation:
-                    item.resolve(escopo);
+                    newItems ~= new ListItem(item.evaluate(escopo), false);
                     break;
                 // [subprograms resolution]
-                case ListItemType.SubProgram:
+                case ListItemType.SubList:
                     // If the subprogram should be executed,
                     // then execute and replace itself with
                     // another subprogram that needs no
@@ -314,48 +130,80 @@ class List
                     if (item.execute)
                     {
                         writeln("Running subprogram: " ~ to!string(item));
-                        List tempResult = item.run(escopo);
-                        SubProgram tempSP = new SubProgram(tempResult);
-                        this.items[index] = new ListItem(tempSP, false);
+                        List result = item.run(escopo);
+                        newItems ~= new ListItem(result, false);
+                    }
+                    else
+                    {
+                        newItems ~= item;
                     }
                     break;
-                // TODO: atoms should be resolved, too.
                 default:
+                    newItems ~= item;
                     break;
             }
         }
+        return newItems;
+    }
 
-        // Prepend firstArguments:
-        if (firstArguments !is null)
-        {
-            arguments = new List(firstArguments.items ~ items[1..$]);
-        }
-        else
-        {
-            arguments = new List(items[1..$]);
-        }
+    List run(Escopo escopo)
+    {
+        auto organized = this.organize;
+        writeln(" -- original:", this.items);
+        writeln(" -- organized:", organized);
+        auto evaluatedItems = evaluate(organized, escopo);
+        writeln(" -- evaluated:", evaluatedItems);
+
+        ListItem command = items[0];
+
+        writeln("List.run:" ~ to!string(this.items));
+        auto arguments = new List(evaluatedItems[1..$]);
 
         // lists.order 3 4 1 2 > std.out
         if (command.type == ListItemType.Atom)
         {
-            auto cmd = command.resolve(escopo);
+            // This is a command-like List:
+            auto cmd = to!string(command.evaluate(escopo));
             return escopo.run_command(cmd, arguments);
         }
-        // {lists.order} $my_lists < lists.map
-        else
+
+        // ------------------------------------------
+        // This list is not an expression, but a list
+        // of other lists (a program, that is):
+        List returned;
+
+        foreach(item; evaluatedItems)
         {
-            // SubPrograms, Strings and Atoms just return themselves.
-            return this;
+            writeln("run-list> " ~ to!string(item));
+            returned = item.run(escopo);
+            // writeln(" - returned: " ~ to!string(returned));
+            if (returned !is null && returned.scopeExit != ScopeExitCodes.Continue)
+            {
+                break;
+            }
         }
+
+        // Returns whatever was the result of the last Expression,
+        writeln(" - returned: " ~ to!string(returned));
+        return returned;
     }
 
-    // resolve should never "run" a List. It's safe
-    // to suppose someone else has already run it.
-    Value resolve(Escopo escopo)
+    Value toString(Escopo escopo)
     {
         return to!string(this.items
-            .map!(x => x.resolve(escopo))
+            .map!(x => to!string(x.evaluate(escopo)))
             .joiner(" "));
+    }
+
+    // Extract a list of strings/Values:
+    Value[] values(Escopo escopo)
+    {
+        Value[] theValues;
+        foreach(item; items)
+        {
+            theValues ~= item.values(escopo);
+        }
+        return theValues;
     }
 }
 
@@ -364,17 +212,24 @@ enum ListItemType
     Undefined,
     Atom,
     String,
-    SubProgram,
+    SubList,
+    ForwardPipe,
 }
 
 class ListItem
 {
     Atom atom;
     String str;
-    SubProgram subprogram;
+    List sublist;
+
     bool execute;
+
     ListItemType type;
 
+    this(ListItemType type)
+    {
+        this.type = type;
+    }
     this(Atom a)
     {
         this.atom = a;
@@ -385,10 +240,10 @@ class ListItem
         this.str = s;
         this.type = ListItemType.String;
     }
-    this(SubProgram s, bool execute)
+    this(List sl, bool execute)
     {
-        this.subprogram = s;
-        this.type = ListItemType.SubProgram;
+        this.sublist = sl;
+        this.type = ListItemType.SubList;
         this.execute = execute;
     }
 
@@ -397,41 +252,40 @@ class ListItem
     {
         final switch(this.type)
         {
+            case ListItemType.ForwardPipe:
+                return " > ";
             case ListItemType.Atom:
                 return to!string(this.atom);
             case ListItemType.String:
                 return to!string(this.str);
-            case ListItemType.SubProgram:
-                return to!string(this.subprogram);
+            case ListItemType.SubList:
+                return to!string(this.sublist);
             case ListItemType.Undefined:
                 return "UNDEFINED!";
         }
     }
 
-    //
+    // Extract a list of strings/Values:
     Value[] values(Escopo escopo)
     {
-
         final switch(this.type)
         {
+            case ListItemType.ForwardPipe:
+                throw new Exception("Trying to get value from pipe");
+
             case ListItemType.Atom:
-                Value[] theList = new Value[1];
-                theList[0] = this.atom.resolve(escopo);
-                return theList;
-
+                Value[] v;
+                v ~= to!string(this.atom.evaluate(escopo));
+                return v;
             case ListItemType.String:
-                Value[] theList = new Value[1];
-                theList[0] = this.str.resolve(escopo);
-                return theList;
-
-            case ListItemType.SubProgram:
-                // theList[0] = this.str.resolve();
-                // (it's not this way.)
-                // TODO: think about it...
+                Value[] v;
+                v ~= to!string(this.str.evaluate(escopo));
+                return v;
+            case ListItemType.SubList:
                 if (this.execute) {
-                    throw new Exception("Not implemented (SubProgram)");
+                    throw new Exception("Not implemented (SubList)");
                 }
-                return this.subprogram.values(escopo);
+                return this.sublist.values(escopo);
 
             case ListItemType.Undefined:
                 throw new Exception("Not implemented (Undefined)");
@@ -441,25 +295,26 @@ class ListItem
 
     List run(Escopo escopo)
     {
-        if (this.type != ListItemType.SubProgram)
+        if (this.type != ListItemType.SubList)
         {
             throw new Exception(
                 "ListItem: Cannot run a " ~ to!string(this.type)
             );
         }
-        return this.subprogram.run(escopo);
+        return this.sublist.run(escopo);
     }
 
-    Value resolve(Escopo escopo)
+    List evaluate(Escopo escopo)
     {
         switch(this.type)
         {
             case ListItemType.Atom:
-                return this.atom.resolve(escopo);
+                return this.atom.evaluate(escopo);
             case ListItemType.String:
-                return this.str.resolve(escopo);
-            case ListItemType.SubProgram:
-                return this.subprogram.resolve(escopo);
+                return this.str.evaluate(escopo);
+            case ListItemType.SubList:
+                auto newItems = this.sublist.evaluate(escopo);
+                return new List(newItems);
             default:
                 throw new Exception("wut?");
         }
@@ -473,22 +328,28 @@ class String
     string[] parts;
     string[int] substitutions;
 
+    this(string repr)
+    {
+        this.repr = repr;
+    }
     this(string[] parts, string[int] substitutions)
     {
         this.parts = parts;
         this.substitutions = substitutions;
     }
 
-    string resolve(Escopo escopo)
+    List evaluate(Escopo escopo)
     {
-        if (this.repr !is null)
+        if (this.substitutions.length == 0)
         {
-            return this.repr;
+            auto li = new ListItem(this);
+            return new List(li);
         }
 
         string result;
         string subst;
         Value value;
+
         foreach(index, part;parts)
         {
             subst = this.substitutions.get(cast(int)index, null);
@@ -504,27 +365,27 @@ class String
                     value = "";
                 }
                 else {
-                    value = l.resolve(escopo);
+                    value = to!string(l);
                 }
             }
             result ~= value;
         }
 
         writeln("resolving " ~ to!string(this) ~ " = " ~ result);
-        this.repr = result;
-        return result;
+        auto li = new ListItem(new String(result));
+        return new List(li);
     }
     override string toString()
     {
-        // If it was already resolved...
+        // TODO: check if we ARE setting repr somewhere.
         if (this.repr !is null)
         {
-            return this.repr;
+            return "s\"" ~ this.repr ~ "\"";
         }
         // Or else:
-        return to!string(this.parts
+        return "S\"" ~ to!string(this.parts
             .map!(x => to!string(x))
-            .joiner(""));
+            .joiner("")) ~ "\"";
     }
 }
 
@@ -536,10 +397,21 @@ class Atom
     {
         this.repr = s;
     }
-
-    Value resolve(Escopo escopo)
+    this(List l)
     {
-        return this.repr;
+        this.repr = to!string(l);
+    }
+
+    List evaluate(Escopo escopo)
+    {
+        if (this.repr[0..1] == "$")
+        {
+            return escopo[this.repr[1..$]];
+        }
+        else {
+            auto li = new ListItem(this);
+            return new List(li);
+        }
     }
 
     override string toString()

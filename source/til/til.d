@@ -5,18 +5,14 @@ import pegged.grammar;
 
 mixin(grammar(`
     Til:
-        Program             <- SubProgram endOfInput
-        SubProgram          <- blank* Expression? (eol blank* Expression)* blank*
-        Expression          <- Comment / ForwardExpression / ExpansionExpression / List
+        Program             <- List* blank* endOfInput
         Comment             <~ "#" (!eol .)*
-        ForwardExpression   <- Expression ForwardPipe Expression
-        ExpansionExpression <- Expression ExpansionPipe Expression
-        ForwardPipe         <- " "+ ">" " "+
-        ExpansionPipe       <- " "+ "<" " "+
-        List                <- ListItem (" "+ ListItem)*
-        ListItem            <- SubProgramCall / StringProgram / String / Atom
-        SubProgramCall      <- "[" SubProgram "]"
-        StringProgram       <- "{" SubProgram "}"
+        List                <- blank* ListItem (" " ListItem)*
+        ListItem            <- Pipe / ExecList / SubList / String / Atom
+        Pipe                <- ForwardPipe
+        ForwardPipe         <- ">"
+        ExecList            <- "[" List* "]"
+        SubList             <- "{" List* blank* "}"
         String              <- ["] (Substitution / NotSubstitution)* ["]
         Substitution        <~ "$" [A-Za-z0-9_.]+
         NotSubstitution     <~ (!doublequote !"$" .)*

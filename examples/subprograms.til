@@ -1,23 +1,26 @@
-set x 123
-import "socket"
-import "stdio" as std
-
+set x 11
+set y 22
 
 proc f {x y z} {
-    foreach i {0 $x} {
-        $x > std.out
-    }
+    {$x $y $z} > std.out
+    std.out {$x $y $z}
+    return $x $y $z
+}
+proc g {x y z} {
+    return {$x $y $z}
+}
+proc h {x y z} {
+    return "$x $y $z"
 }
 
-f 5
+set result1 [f $x $y 33]
+{$result1} > std.out
 
-proc callback {connection} {
-    alias conn $connection
-    conn.read > std.out
-    conn.write "pong"
-}
+set result2 [g $x $y 33]
+{$result2} > std.out
 
+set result3 [h $x $y 33]
+{$result3} > std.out
 
-set port 8080
-set host localhost
-set server [socket.server "$host:$port" callback]
+f 1 [expr {$x+1}] {3 4 {5 "$y $z"}} > reverse [expr $x+2] > std.out
+set x "std.out" > $x

@@ -18,7 +18,8 @@ void main()
 
     auto tree = Til(code);
     writeln(tree);
-    Program program;
+
+    List program;
     try {
         program = analyse(tree);
     }
