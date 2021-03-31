@@ -13,15 +13,15 @@ alias Value = string;
 
 enum ScopeExitCodes
 {
-    Continue,
-    Success,
-    Failure,
+    Proceed,  // still running, probably
+    Success,  // returned without errors
+    Failure,  // terminated with errors
 }
 
 class List
 {
     ListItem[] items;
-    ScopeExitCodes scopeExit = ScopeExitCodes.Continue;
+    ScopeExitCodes scopeExit = ScopeExitCodes.Proceed;
     bool hasPipe = true;
 
     this()
@@ -68,7 +68,6 @@ class List
     {
         if (!this.hasPipe)
         {
-            writeln(" - List ", this, " has no pipes.");
             return this.items;
         }
 
@@ -134,7 +133,7 @@ class List
             {
                 case ListItemType.Atom:
                 case ListItemType.String:
-                    newItems ~= new ListItem(item.evaluate(escopo), false);
+                    newItems ~= item.evaluate(escopo);
                     break;
                 // [subprograms resolution]
                 case ListItemType.SubList:
@@ -146,7 +145,16 @@ class List
                     {
                         writeln("Running subprogram: " ~ to!string(item));
                         List result = item.run(escopo);
-                        newItems ~= new ListItem(result, false);
+                        // We run the subprogram and mix
+                        // its SubItem results into THIS list
+                        // os SubItems:
+                        newItems ~= result.items;
+                        // That is: std.out 1 2 3 [math.run {3+1}] 5
+                        // becomes: 1 2 3 4 5
+                        // And that is how things are going to work.
+                        // If the user wants to make the results a list
+                        // of its own, he could say:
+                        // std.out 1 2 3 [math.run {3+1} > list] 5
                     }
                     else
                     {
@@ -180,7 +188,7 @@ class List
         if (command.type == ListItemType.Atom)
         {
             // This is a command-like List:
-            auto cmd = to!string(command.evaluate(escopo));
+            string cmd = command.value;
             return escopo.run_command(cmd, arguments);
         }
 
@@ -195,7 +203,7 @@ class List
         {
             writeln("run-list> " ~ to!string(item));
             returned = item.run(escopo);
-            if (returned !is null && returned.scopeExit != ScopeExitCodes.Continue)
+            if (returned !is null && returned.scopeExit != ScopeExitCodes.Proceed)
             {
                 break;
             }
@@ -293,11 +301,11 @@ class ListItem
 
             case ListItemType.Atom:
                 Value[] v;
-                v ~= to!string(this.atom.evaluate(escopo));
+                v ~= to!string(this.atom.evaluate(escopo)[0]);
                 return v;
             case ListItemType.String:
                 Value[] v;
-                v ~= to!string(this.str.evaluate(escopo));
+                v ~= to!string(this.str.evaluate(escopo)[0]);
                 return v;
             case ListItemType.SubList:
                 if (this.execute) {
@@ -322,7 +330,7 @@ class ListItem
         return this.sublist.run(escopo);
     }
 
-    List evaluate(Escopo escopo)
+    ListItem[] evaluate(Escopo escopo)
     {
         switch(this.type)
         {
@@ -331,10 +339,25 @@ class ListItem
             case ListItemType.String:
                 return this.str.evaluate(escopo);
             case ListItemType.SubList:
-                auto newItems = this.sublist.evaluate(escopo);
-                return new List(newItems);
+                auto l = new ListItem[0];
+                l ~= this;
+                return l;
             default:
                 throw new Exception("wut?");
+        }
+        assert(0);
+    }
+
+    Value value()
+    {
+        switch(this.type)
+        {
+            case ListItemType.Atom:
+                return this.atom.repr;
+            case ListItemType.String:
+                return this.str.repr;
+            default:
+                throw new Exception("Cannot extract value from " ~ to!string(this.type) ~ " " ~ to!string(this.sublist));
         }
         assert(0);
     }
@@ -356,12 +379,13 @@ class String
         this.substitutions = substitutions;
     }
 
-    List evaluate(Escopo escopo)
+    ListItem[] evaluate(Escopo escopo)
     {
+        auto l = new ListItem[0];
         if (this.substitutions.length == 0)
         {
-            auto li = new ListItem(this);
-            return new List(li);
+            l ~= new ListItem(this);
+            return l;
         }
 
         string result;
@@ -377,21 +401,21 @@ class String
             }
             else
             {
-                List l = escopo[subst];
-                if (l is null)
+                List v = escopo[subst];
+                if (v is null)
                 {
                     value = "";
                 }
                 else {
-                    value = to!string(l);
+                    value = to!string(v);
                 }
             }
             result ~= value;
         }
 
         writeln("resolving " ~ to!string(this) ~ " = " ~ result);
-        auto li = new ListItem(new String(result));
-        return new List(li);
+        l ~= new ListItem(new String(result));
+        return l;
     }
     override string toString()
     {
@@ -409,6 +433,9 @@ class String
 
 class Atom
 {
+    int integer;
+    float floatingPoint;
+    bool boolean;
     string repr;
 
     this(string s)
@@ -420,20 +447,30 @@ class Atom
         this.repr = to!string(l);
     }
 
-    List evaluate(Escopo escopo)
+    ListItem[] evaluate(Escopo escopo)
     {
         if (this.repr[0..1] == "$")
         {
-            return escopo[this.repr[1..$]];
+            return escopo[this.repr[1..$]].items;
         }
         else {
-            auto li = new ListItem(this);
-            return new List(li);
+            auto l = new ListItem[0];
+            l ~= new ListItem(this);
+            return l;
         }
     }
 
     override string toString()
     {
         return this.repr;
+    }
+    string debugRepr()
+    {
+        string result = "";
+        result ~= "int:" ~ to!string(this.integer) ~ ";";
+        result ~= "float:" ~ to!string(this.floatingPoint) ~ ";";
+        result ~= "bool:" ~ to!string(this.boolean) ~ ";";
+        result ~= "string:" ~ this.repr;
+        return result;
     }
 }

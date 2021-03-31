@@ -149,6 +149,27 @@ String analyseString(ParseTree p)
 
 Atom analyseAtom(ParseTree p)
 {
-    writeln("> Atom: " ~ p.matches[0]);
-    return new Atom(p.matches[0]);
+    string str = p.matches[0];
+    auto atom = new Atom(str);
+
+    foreach(child; p.children)
+    {
+        final switch(child.name)
+        {
+            case "Til.CommonAtom":
+                break;
+            case "Til.Float":
+                atom.floatingPoint = to!float(str);
+                break;
+            case "Til.Integer":
+                atom.integer = to!int(str);
+                break;
+            case "Til.Boolean":
+                atom.boolean = (
+                    child.children[0].name == "Til.BooleanTrue"
+                );
+                break;
+        }
+    }
+    return atom;
 }

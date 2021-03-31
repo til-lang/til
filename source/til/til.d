@@ -16,5 +16,11 @@ mixin(grammar(`
         String              <- ["] (Substitution / NotSubstitution)* ["]
         Substitution        <~ "$" [A-Za-z0-9_.]+
         NotSubstitution     <~ (!doublequote !"$" .)*
-        Atom                <~ [$A-Za-z0-9_<>+\-_=.:&]+
+        Atom                <- Float / Integer / Boolean / CommonAtom
+        CommonAtom          <~ [$A-Za-z0-9_<>+\-_=.:&]+
+        Float               <~ [0-9]+ "." [0-9]+
+        Integer             <~ [0-9]+
+        Boolean             <- BooleanTrue / BooleanFalse
+        BooleanTrue         <~ "true" / "yes"
+        BooleanFalse        <~ "false" / "no"
     `));

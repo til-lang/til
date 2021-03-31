@@ -157,7 +157,12 @@ class DefaultEscopo : Escopo
     // Commands:
     List set(string cmd, List arguments)
     {
-        string varName = to!string(arguments[0]);
+        foreach(arg; arguments.items)
+        {
+            writeln(" arg:", arg, " ", arg.type);
+        }
+
+        string varName = arguments[0].value;
         auto value = new List(arguments[1..$]);
         setVariable(varName, value);
 
@@ -189,7 +194,7 @@ class DefaultEscopo : Escopo
     List proc(string cmd, List arguments)
     {
         // proc name {parameters} {body}
-        string name = to!string(arguments[0].evaluate(this));
+        string name = to!string(arguments[0].atom);
         ListItem parameters = arguments[1];
         ListItem body = arguments[2];
 

@@ -1,0 +1,7 @@
+set bool true
+set bool false
+set bool yes
+set bool no
+
+set integer 1234
+set float 12.34
