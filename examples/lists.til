@@ -1,14 +1,21 @@
-set x 1
+proc pass {a b} {
+    return $a $b
+}
 
-proc inline {params} {body}
-proc oneline {params} {
-    body
+proc list {} {
+    return {11 22}
 }
-proc twoline {p1 p2} {
-    return $p1 $p2
+proc open_list {} {
+    return op en
 }
-inline 1 |> std.out
-oneline 2 |> std.out
-std.out [twoline 3 4]
-twoline 5 6 7 |> std.out 8 9
-"$x" |> std.out
+
+proc receive3 {a b c} {
+    return "a:$a b:$b c:$c"
+}
+proc receive4 {a b c d} {
+    return "a:$a b:$b c:$c d:$d"
+}
+
+receive3 [list] 33 44
+receive4 [open_list] cc dd
+receive4 [list] 33 44

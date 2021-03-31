@@ -70,8 +70,8 @@ List analyseList(ParseTree p)
                 writeln("Til.List: " ~ child.name);
         }
     }
-    if (listItems.length == 0) return null;
     auto list = new List(listItems);
+    if (listItems.length == 0) return list;
     list.hasPipe = hasPipe;
     return list;
 }

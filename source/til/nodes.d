@@ -13,9 +13,10 @@ alias Value = string;
 
 enum ScopeExitCodes
 {
-    Proceed,  // still running, probably
-    Success,  // returned without errors
-    Failure,  // terminated with errors
+    Proceed,    // still running, probably
+    Success,    // returned without errors
+    Failure,    // terminated with errors
+    ListSuccess,
 }
 
 class List
@@ -147,14 +148,10 @@ class List
                         List result = item.run(escopo);
                         // We run the subprogram and mix
                         // its SubItem results into THIS list
-                        // os SubItems:
+                        // of SubItems:
                         newItems ~= result.items;
-                        // That is: std.out 1 2 3 [math.run {3+1}] 5
-                        // becomes: 1 2 3 4 5
-                        // And that is how things are going to work.
-                        // If the user wants to make the results a list
-                        // of its own, he could say:
-                        // std.out 1 2 3 [math.run {3+1} > list] 5
+                        // TODO : create some tests for this scenario.
+                        // I'm not sure how this will behave in real life.
                     }
                     else
                     {
@@ -201,16 +198,33 @@ class List
 
         foreach(item; evaluatedItems)
         {
-            writeln("run-list> " ~ to!string(item));
+            writeln("run-list> ", item);
             returned = item.run(escopo);
-            if (returned !is null && returned.scopeExit != ScopeExitCodes.Proceed)
+            writeln(" ", item, " → ", returned, " ", returned.scopeExit);
+
+            final switch(returned.scopeExit)
             {
-                break;
+                case ScopeExitCodes.Proceed:
+                    break;
+
+                // -----------------
+                // Proc execution:
+                case ScopeExitCodes.Success:
+                    // Our caller don't have to break!
+                    returned.scopeExit = ScopeExitCodes.ListSuccess;
+                    return returned;
+
+                case ScopeExitCodes.Failure:
+                    throw new Exception("Failure: " ~ to!string(item));
+
+                // -----------------
+                // List execution:
+                case ScopeExitCodes.ListSuccess:
+                    // We don't have to break!
+                    returned.scopeExit = ScopeExitCodes.Proceed;
+                    break;
             }
         }
-
-        // Returns whatever was the result of the last Expression,
-        writeln(" - returned: " ~ to!string(returned));
         return returned;
     }
 
