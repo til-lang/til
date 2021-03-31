@@ -7,8 +7,9 @@ import "socket"
 proc connections_handler {connection} {
     alias conn $connection
 
-    conn.read nonewline: > {
-        "received:$1" > $connection.write
+    # Should we resort to "$1,$2,$3..."?
+    conn.read -nonewline |> {
+        "received:$1" |> $connection.write
     }
 }
 
@@ -36,4 +37,4 @@ set coordinates [dict {
     set index 0
 }]
 
-"$coordinates.index:($coordinates.x $coordinates.y)" > std.out
+"$coordinates.index:($coordinates.x $coordinates.y)" |> std.out

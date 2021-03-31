@@ -41,6 +41,7 @@ List analyseTil(ParseTree p)
 List analyseList(ParseTree p)
 {
     ListItem[] listItems;
+    bool hasPipe = false;
 
     foreach(child; p.children)
     {
@@ -48,18 +49,31 @@ List analyseList(ParseTree p)
         {
             case "Til.ListItem":
                 auto li = analyseListItem(child);
-                listItems ~= li;
+                if (li !is null)
+                {
+                    listItems ~= li;
+                    if (li.type == ListItemType.ForwardPipe)
+                    {
+                        hasPipe = true;
+                    }
+                }
                 break;
             case "Til.List":
                 auto l = analyseList(child);
-                auto li = new ListItem(l, false);
-                listItems ~= li;
+                if (l !is null)
+                {
+                    auto li = new ListItem(l, false);
+                    listItems ~= li;
+                }
                 break;
             default:
                 writeln("Til.List: " ~ child.name);
         }
     }
-    return new List(listItems);
+    if (listItems.length == 0) return null;
+    auto list = new List(listItems);
+    list.hasPipe = hasPipe;
+    return list;
 }
 
 ListItem analyseListItem(ParseTree p)
@@ -89,7 +103,9 @@ ListItem analyseListItem(ParseTree p)
                 throw new InvalidException("ListItem seems invalid: " ~ to!string(child.matches));
         }
     }
-    assert(0);
+    // Now we **can** reach this point, for a Comment
+    // also forms a proper list...
+    return null;
 }
 
 ListItem analysePipe(ParseTree p)

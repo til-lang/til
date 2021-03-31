@@ -22,6 +22,7 @@ class List
 {
     ListItem[] items;
     ScopeExitCodes scopeExit = ScopeExitCodes.Continue;
+    bool hasPipe = true;
 
     this()
     {
@@ -65,6 +66,12 @@ class List
 
     ListItem[] organize()
     {
+        if (!this.hasPipe)
+        {
+            writeln(" - List ", this, " has no pipes.");
+            return this.items;
+        }
+
         ListItem[] currentItems;
         ListItem[] newArguments;
 
@@ -84,12 +91,20 @@ class List
             switch(item.type)
             {
                 case ListItemType.ForwardPipe:
+                    // Generate a SubItem that is executable:
                     auto program = new List(currentItems);
+                    writeln(" - turned into executable: ", program);
                     auto executableItem = new ListItem(program, true);
+
+                    // Reset newArguments:
                     newArguments = new ListItem[1];
                     newArguments[0] = executableItem;
+
+                    // Reset currentItems:
                     currentItems = new ListItem[0];
+
                     subIndex = 0;
+
                     break;
 
                 default:
@@ -149,10 +164,13 @@ class List
     List run(Escopo escopo)
     {
         auto organized = this.organize;
-        writeln(" -- original:", this.items);
-        writeln(" -- organized:", organized);
         auto evaluatedItems = evaluate(organized, escopo);
-        writeln(" -- evaluated:", evaluatedItems);
+        if (this.hasPipe)
+        {
+            writeln(" -- original:", this.items);
+            writeln(" -- organized:", organized);
+            writeln(" -- evaluated:", evaluatedItems);
+        }
 
         ListItem command = items[0];
 
