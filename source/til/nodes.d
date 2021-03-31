@@ -124,7 +124,7 @@ class List
     {
         return this.evaluate(this.items, escopo);
     }
-    ListItem[] evaluate(ListItem[] items, Escopo escopo)
+    static ListItem[] evaluate(ListItem[] items, Escopo escopo)
     {
         ListItem[] newItems;
 
@@ -172,9 +172,8 @@ class List
             writeln(" -- evaluated:", evaluatedItems);
         }
 
-        ListItem command = items[0];
-
-        writeln("List.run:" ~ to!string(this.items));
+        writeln("List.run:" ~ to!string(evaluatedItems));
+        ListItem command = this.items[0];
         auto arguments = new List(evaluatedItems[1..$]);
 
         // lists.order 3 4 1 2 > std.out
@@ -185,6 +184,8 @@ class List
             return escopo.run_command(cmd, arguments);
         }
 
+        writeln(" - command.type: ", command.type);
+
         // ------------------------------------------
         // This list is not an expression, but a list
         // of other lists (a program, that is):
@@ -194,7 +195,6 @@ class List
         {
             writeln("run-list> " ~ to!string(item));
             returned = item.run(escopo);
-            // writeln(" - returned: " ~ to!string(returned));
             if (returned !is null && returned.scopeExit != ScopeExitCodes.Continue)
             {
                 break;
@@ -271,7 +271,7 @@ class ListItem
         final switch(this.type)
         {
             case ListItemType.ForwardPipe:
-                return " > ";
+                return " |> ";
             case ListItemType.Atom:
                 return to!string(this.atom);
             case ListItemType.String:

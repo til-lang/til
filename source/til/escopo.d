@@ -48,7 +48,15 @@ class Escopo
     // Operators
     List opIndex(string name)
     {
-        return this.variables.get(name, null);
+        List value = this.variables.get(name, null);
+        if (value is null && this.parent !is null)
+        {
+            return this.parent[name];
+        }
+        else
+        {
+            return value;
+        }
     }
     override string toString()
     {
@@ -141,6 +149,7 @@ class DefaultEscopo : Escopo
     override void loadCommands()
     {
         this.commands["set"] = &this.set;
+        this.commands["if"] = &this.cmd_if;
         this.commands["proc"] = &this.proc;
         this.commands["return"] = &this.retorne;
     }
@@ -153,6 +162,28 @@ class DefaultEscopo : Escopo
         setVariable(varName, value);
 
         return value;
+    }
+
+    List cmd_if(string cmd, List arguments)
+    {
+        ListItem condition = arguments[0];
+        ListItem thenBody = arguments[1];
+
+        writeln("if ", condition, " then ", thenBody);
+
+        ListItem elseBody = null;
+        if (arguments.length >= 4)
+        {
+            elseBody = arguments[3];
+            writeln("   else ", elseBody);
+        }
+
+        // Evaluate the condition:
+        auto realCondition = condition.sublist.items[0].evaluate(this);
+        writeln(" --- realCondition: ", realCondition, ":", realCondition.length);
+
+        writeln(" --- IF: ignoring conditional!!!");
+        return thenBody.run(this);
     }
 
     List proc(string cmd, List arguments)
