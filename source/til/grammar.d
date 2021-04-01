@@ -158,6 +158,9 @@ Atom analyseAtom(ParseTree p)
         {
             case "Til.CommonAtom":
                 break;
+            case "Til.Name":
+                atom.namePath = extractAtomNamePath(child);
+                break;
             case "Til.Float":
                 atom.floatingPoint = to!float(str);
                 break;
@@ -172,4 +175,25 @@ Atom analyseAtom(ParseTree p)
         }
     }
     return atom;
+}
+
+string[] extractAtomNamePath(ParseTree p)
+{
+    string[] thePath;
+
+    foreach(child; p.children)
+    {
+        switch(child.name)
+        {
+            case "Til.NamePart":
+                thePath ~= child.matches[0];
+                break;
+            default:
+                throw new Exception(
+                    "Invalid child for Til.Name: "
+                    ~ child.name
+                );
+        }
+    }
+    return thePath;
 }

@@ -451,6 +451,7 @@ class Atom
     float floatingPoint;
     bool boolean;
     string repr;
+    string[] namePath;
 
     this(string s)
     {
