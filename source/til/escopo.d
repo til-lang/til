@@ -1,5 +1,6 @@
 module til.escopo;
 
+import std.algorithm.iteration : map, joiner;
 import std.array;
 import std.conv : to;
 import std.stdio : writeln;
@@ -13,10 +14,12 @@ import til.til;
 
 class Escopo
 {
-    List[string] variables;
-    // string[] freeVariables;
     Escopo parent;
-    List delegate(string, List)[string] commands;
+    Escopo[string] namespaces;
+
+    ListItem[string] variables;
+    ListItem delegate(NamePath, List)[string] commands;
+    // string[] freeVariables;
 
     this()
     {
@@ -31,24 +34,18 @@ class Escopo
     {
     }
 
-    // Variables manipulation
-    void setVariable(string name, List value)
-    {
-        variables[name] = value;
-        writeln(name ~ " ← " ~ to!string(value));
-    }
-
     // Execution
-    List run(List program)
+    ListItem run(List program)
     {
         auto returnedValue = program.run(this);
         return returnedValue;
     }
 
     // Operators
-    List opIndex(string name)
+    // escopo[["std", "out"]]
+    ListItem opIndex(string name)
     {
-        List value = this.variables.get(name, null);
+        ListItem value = this.variables.get(name, null);
         if (value is null && this.parent !is null)
         {
             return this.parent[name];
@@ -58,6 +55,21 @@ class Escopo
             return value;
         }
     }
+    // escopo[["std", "out"]] = {1 2 3}
+    void opIndexAssign(ListItem value, NamePath path)
+    {
+        // TODO: navigate through path...
+        string name = to!string(path.joiner("."));
+        variables[name] = value;
+        writeln(name, " ← ", value);
+    }
+    // To facilitate our own lives:
+    void opIndexAssign(ListItem value, string name)
+    {
+        variables[name] = value;
+        writeln(name, " ← ", value);
+    }
+
     override string toString()
     {
         string r = "scope:\n";
@@ -72,9 +84,17 @@ class Escopo
     }
 
     // Commands
-    List delegate(string, List arguments) getCommand(string cmdName)
+    ListItem delegate(NamePath, List) getCommand(NamePath path)
     {
-        List delegate(string, List arguments) handler = this.commands.get(cmdName, null);
+        string head = path[0];
+
+        auto namespace = this.namespaces.get(head, null);
+        if (namespace !is null)
+        {
+            return namespace.getCommand(path[1..$]);
+        }
+
+        ListItem delegate(NamePath, List) handler = commands.get(head, null);
         if (handler is null)
         {
             if (this.parent is null)
@@ -83,7 +103,7 @@ class Escopo
             }
             else
             {
-                return this.parent.getCommand(cmdName);
+                return this.parent.getCommand(path);
             }
         }
         else
@@ -92,20 +112,16 @@ class Escopo
         }
     }
 
-    List run_command(string cmdName, List arguments)
+    ListItem run_command(NamePath path, List arguments)
     {
-        auto handler = this.getCommand(cmdName);
+        auto handler = this.getCommand(path);
         if (handler is null)
         {
-            writeln(
-                "COMMAND NOT FOUND: <" ~ cmdName ~ "> : "
-                ~ to!string(arguments)
-            );
-            return new List();
+            return null;
         }
         else
         {
-            return handler(cmdName, arguments);
+            return handler(path, arguments);
         }
     }
 }
@@ -148,28 +164,23 @@ class DefaultEscopo : Escopo
 
     override void loadCommands()
     {
-        this.commands["set"] = &this.set;
+        this.commands["set"] = &this.cmd_set;
         this.commands["if"] = &this.cmd_if;
         this.commands["proc"] = &this.proc;
         this.commands["return"] = &this.retorne;
     }
 
     // Commands:
-    List set(string cmd, List arguments)
+    ListItem cmd_set(NamePath path, List arguments)
     {
-        foreach(arg; arguments.items)
-        {
-            writeln(" arg:", arg, " ", arg.type);
-        }
-
-        string varName = arguments[0].value;
+        // TODO: navigate through arguments[0].namePath...
+        auto varPath = arguments[0].namePath;
         auto value = new List(arguments[1..$]);
-        setVariable(varName, value);
-
+        this[varPath] = value;
         return value;
     }
 
-    List cmd_if(string cmd, List arguments)
+    ListItem cmd_if(NamePath cmd, List arguments)
     {
         ListItem condition = arguments[0];
         ListItem thenBody = arguments[1];
@@ -183,37 +194,39 @@ class DefaultEscopo : Escopo
             writeln("   else ", elseBody);
         }
 
-        // Evaluate the condition:
-        auto realCondition = condition.sublist.items[0].evaluate(this);
-        writeln(" --- realCondition: ", realCondition, ":", realCondition.length);
-
+        // Run the condition:
+        auto conditionResult = condition.run(this);
+        writeln(" --- conditionResult: ", conditionResult);
         writeln(" --- IF: ignoring conditional!!!");
         return thenBody.run(this);
     }
 
-    List proc(string cmd, List arguments)
+    ListItem proc(NamePath cmd, List arguments)
     {
         // proc name {parameters} {body}
-        string name = to!string(arguments[0].atom);
+        ListItem arg0 = arguments[0];
+        string name = arg0.asString;
         ListItem parameters = arguments[1];
         ListItem body = arguments[2];
 
         this.procedures[name] = new Procedure(
             name,
-            parameters.values(this),
+            parameters,
             // TODO: check if it is really a SubList type:
-            body.sublist
+            body
         );
 
         // Make the procedure available:
         this.commands[name] = &this.runProc;
 
-        auto result = new List(arguments[0..1]);
-        return result;
+        return arg0;
     }
 
-    List runProc(string cmdName, List arguments)
+    ListItem runProc(NamePath path, List arguments)
     {
+        // TODO: navigate through path items properly:
+        string cmdName = to!string(path.joiner("."));
+
         auto proc = this.procedures.get(cmdName, null);
         if (proc is null) {
             throw new Exception(
@@ -223,14 +236,11 @@ class DefaultEscopo : Escopo
         return proc.run(this, cmdName, arguments);
     }
 
-    List retorne(string cmdName, List arguments)
+    ListItem retorne(NamePath cmdName, List arguments)
     {
-        auto evaluatedItems = arguments.evaluate(this);
-        writeln(" --- RETORNE ---");
-        writeln(" --- → " ~ to!string(arguments));
-        writeln(" --- ← " ~ to!string(evaluatedItems));
-        auto returnValue = new List(evaluatedItems);
-        returnValue.scopeExit = ScopeExitCodes.Success;
+        writeln(" --- RETORNE: ", arguments);
+        auto returnValue = arguments;
+        returnValue.scopeExit = ScopeExitCodes.ReturnSuccess;
         return returnValue;
     }
 }

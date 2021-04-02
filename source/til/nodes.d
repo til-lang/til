@@ -8,22 +8,36 @@ import til.escopo;
 import til.exceptions;
 import til.grammar;
 
-
-alias Value = string;
+alias NamePath = string[];
 
 enum ScopeExitCodes
 {
-    Proceed,    // still running, probably
-    Success,    // returned without errors
-    Failure,    // terminated with errors
-    ListSuccess,
+    Proceed,          // keep running
+    ReturnSuccess,    // returned without errors
+    Failure,          // terminated with errors
+    ListSuccess,      // A list was executed with success
 }
 
-class List
+// Interfaces:
+interface ListItem
 {
+    ulong length();
+    string asString();
+
+    ListItem run(Escopo);
+    NamePath namePath();
+
+    ScopeExitCodes scopeExit();
+    ScopeExitCodes scopeExit(ScopeExitCodes);
+}
+
+// Classes:
+class List : ListItem
+{
+    ScopeExitCodes _scopeExit;
+
     ListItem[] items;
-    ScopeExitCodes scopeExit = ScopeExitCodes.Proceed;
-    bool hasPipe = true;
+    bool execute = true;
 
     this()
     {
@@ -36,19 +50,24 @@ class List
     {
         this.items = items;
     }
-    this(List sl, bool execute)
-    {
-        this.items ~= new ListItem(sl, execute);
-    }
 
+    // Utilities and operators:
     override string toString()
     {
-        auto list = items
-            .map!(x => to!string(x))
-            .joiner(" ");
-        return to!string(list);
+        string s = this.asString;
+        if (execute)
+        {
+            return "[" ~ s ~ "]";
+        }
+        else {
+            return "{" ~ s ~ "}";
+        }
     }
     ListItem opIndex(int i)
+    {
+        return items[i];
+    }
+    ListItem opIndex(ulong i)
     {
         return items[i];
     }
@@ -65,154 +84,64 @@ class List
         return this.length;
     }
 
-    ListItem[] organize()
+    // Methods:
+    string asString()
     {
-        if (!this.hasPipe)
-        {
-            return this.items;
-        }
-
-        ListItem[] currentItems;
-        ListItem[] newArguments;
-
-        /*
-           Organize a piped list:
-
-        1.   1 2 3  > filter {x != 2} < std.out
-            {1 2 3} >...
-        2.   filter {1 2 3} {x != 2}  < std.out
-            {filter {1 2 3} {x != 2}} < std.out
-        3.   std.out [filter {1 2 3} {x != 2}
-        */
-
-        int subIndex = 0;
-        foreach(idx, item; items)
-        {
-            switch(item.type)
-            {
-                case ListItemType.ForwardPipe:
-                    // Generate a SubItem that is executable:
-                    auto program = new List(currentItems);
-                    writeln(" - turned into executable: ", program);
-                    auto executableItem = new ListItem(program, true);
-
-                    // Reset newArguments:
-                    newArguments = new ListItem[1];
-                    newArguments[0] = executableItem;
-
-                    // Reset currentItems:
-                    currentItems = new ListItem[0];
-
-                    subIndex = 0;
-
-                    break;
-
-                default:
-                    currentItems ~= item;
-                    subIndex++;
-                    if (subIndex == 1 && newArguments.length > 0)
-                    {
-                        currentItems ~= newArguments;
-                        newArguments = new ListItem[0];
-                    }
-            }
-        }
-        return currentItems;
+        return to!string(this.items
+            .map!(x => to!string(x))
+            .joiner(" "));
+    }
+    @property
+    ScopeExitCodes scopeExit()
+    {
+        return this._scopeExit;
+    }
+    @property
+    final ScopeExitCodes scopeExit(ScopeExitCodes code)
+    {
+        _scopeExit = code;
+        return code;
     }
 
-    ListItem[] evaluate(Escopo escopo)
+    ListItem run(Escopo escopo)
     {
-        return this.evaluate(this.items, escopo);
-    }
-    static ListItem[] evaluate(ListItem[] items, Escopo escopo)
-    {
+        writeln("Running ", this);
+
+        // SubLists are not executed:
+        if (!execute)
+        {
+            return this;
+        }
+
+        // How to run a list:
+        // 1- Run every item in the list:
+        // Atoms and string will eventually substitute.
+        // ExecLists will be run.
+        // SubLists will return themselves.
+        // 
+        // 2- Get the "command" and try to run it.
+        // If it's not a proper command, just return `this`.
+
+        // ----- 1 -----
         ListItem[] newItems;
+        ListItem result;
 
-        foreach(index, item; items)
+        foreach(item; items)
         {
-            switch(item.type)
-            {
-                case ListItemType.Atom:
-                case ListItemType.String:
-                    newItems ~= item.evaluate(escopo);
-                    break;
-                // [subprograms resolution]
-                case ListItemType.SubList:
-                    // If the subprogram should be executed,
-                    // then execute and replace itself with
-                    // another subprogram that needs no
-                    // further execution:
-                    if (item.execute)
-                    {
-                        writeln("Running subprogram: " ~ to!string(item));
-                        List result = item.run(escopo);
-                        // We run the subprogram and mix
-                        // its SubItem results into THIS list
-                        // of SubItems:
-                        newItems ~= result.items;
-                        // TODO : create some tests for this scenario.
-                        // I'm not sure how this will behave in real life.
-                    }
-                    else
-                    {
-                        newItems ~= item;
-                    }
-                    break;
-                default:
-                    newItems ~= item;
-                    break;
-            }
-        }
-        return newItems;
-    }
+            result = item.run(escopo);
+            writeln(" ", item, " → ", result, "\t\t\t", result.scopeExit);
 
-    List run(Escopo escopo)
-    {
-        auto organized = this.organize;
-        auto evaluatedItems = evaluate(organized, escopo);
-        if (this.hasPipe)
-        {
-            writeln(" -- original:", this.items);
-            writeln(" -- organized:", organized);
-            writeln(" -- evaluated:", evaluatedItems);
-        }
-
-        writeln("List.run:" ~ to!string(evaluatedItems));
-        ListItem command = this.items[0];
-        auto arguments = new List(evaluatedItems[1..$]);
-
-        // lists.order 3 4 1 2 > std.out
-        if (command.type == ListItemType.Atom)
-        {
-            // This is a command-like List:
-            string cmd = command.value;
-            return escopo.run_command(cmd, arguments);
-        }
-
-        writeln(" - command.type: ", command.type);
-
-        // ------------------------------------------
-        // This list is not an expression, but a list
-        // of other lists (a program, that is):
-        List returned;
-
-        foreach(item; evaluatedItems)
-        {
-            writeln("run-list> ", item);
-            returned = item.run(escopo);
-            writeln(" ", item, " → ", returned, " ", returned.scopeExit);
-
-            final switch(returned.scopeExit)
+            final switch(result.scopeExit)
             {
                 case ScopeExitCodes.Proceed:
                     break;
 
                 // -----------------
                 // Proc execution:
-                case ScopeExitCodes.Success:
+                case ScopeExitCodes.ReturnSuccess:
                     // Our caller don't have to break!
-                    returned.scopeExit = ScopeExitCodes.ListSuccess;
-                    return returned;
+                    result.scopeExit = ScopeExitCodes.ListSuccess;
+                    return result;
 
                 case ScopeExitCodes.Failure:
                     throw new Exception("Failure: " ~ to!string(item));
@@ -221,171 +150,49 @@ class List
                 // List execution:
                 case ScopeExitCodes.ListSuccess:
                     // We don't have to break!
-                    returned.scopeExit = ScopeExitCodes.Proceed;
+                    result.scopeExit = ScopeExitCodes.Proceed;
                     break;
             }
+            newItems ~= result;
         }
-        return returned;
-    }
 
-    Value toString(Escopo escopo)
-    {
-        return to!string(this.items
-            .map!(x => to!string(x.evaluate(escopo)))
-            .joiner(" "));
-    }
-
-    // Extract a list of strings/Values:
-    Value[] values(Escopo escopo)
-    {
-        Value[] theValues;
-        foreach(item; items)
+        if (newItems.length == 0)
         {
-            theValues ~= item.values(escopo);
+            return new List();
         }
-        return theValues;
+
+        // ----- 2 -----
+        ListItem head = newItems[0];
+        auto tail = new List(items[1..$]);
+
+        // lists.order 3 4 1 2
+        NamePath cmd = head.namePath;
+        ListItem cmdResult = escopo.run_command(cmd, tail);
+        if (cmdResult !is null)
+        {
+            return cmdResult;
+        }
+        else {
+            return result;
+        }
+    }
+
+    NamePath namePath()
+    {
+        return ["<LIST>"];
     }
 }
 
-enum ListItemType
+class String : ListItem
 {
-    Undefined,
-    Atom,
-    String,
-    SubList,
-    ForwardPipe,
-}
+    ScopeExitCodes _scopeExit;
 
-class ListItem
-{
-    Atom atom;
-    String str;
-    List sublist;
-
-    bool execute;
-
-    ListItemType type;
-
-    this(ListItemType type)
-    {
-        this.type = type;
-    }
-    this(Atom a)
-    {
-        this.atom = a;
-        this.type = ListItemType.Atom;
-    }
-    this(String s)
-    {
-        this.str = s;
-        this.type = ListItemType.String;
-    }
-    this(List sl, bool execute)
-    {
-        this.sublist = sl;
-        this.type = ListItemType.SubList;
-        this.execute = execute;
-    }
-
-    // Operators:
-    override string toString()
-    {
-        final switch(this.type)
-        {
-            case ListItemType.ForwardPipe:
-                return " |> ";
-            case ListItemType.Atom:
-                return to!string(this.atom);
-            case ListItemType.String:
-                return to!string(this.str);
-            case ListItemType.SubList:
-                return to!string(this.sublist);
-            case ListItemType.Undefined:
-                return "UNDEFINED!";
-        }
-    }
-
-    // Extract a list of strings/Values:
-    Value[] values(Escopo escopo)
-    {
-        final switch(this.type)
-        {
-            case ListItemType.ForwardPipe:
-                throw new Exception("Trying to get value from pipe");
-
-            case ListItemType.Atom:
-                Value[] v;
-                v ~= to!string(this.atom.evaluate(escopo)[0]);
-                return v;
-            case ListItemType.String:
-                Value[] v;
-                v ~= to!string(this.str.evaluate(escopo)[0]);
-                return v;
-            case ListItemType.SubList:
-                if (this.execute) {
-                    throw new Exception("Not implemented (SubList)");
-                }
-                return this.sublist.values(escopo);
-
-            case ListItemType.Undefined:
-                throw new Exception("Not implemented (Undefined)");
-        }
-        assert(0);
-    }
-
-    List run(Escopo escopo)
-    {
-        if (this.type != ListItemType.SubList)
-        {
-            throw new Exception(
-                "ListItem: Cannot run a " ~ to!string(this.type)
-            );
-        }
-        return this.sublist.run(escopo);
-    }
-
-    ListItem[] evaluate(Escopo escopo)
-    {
-        switch(this.type)
-        {
-            case ListItemType.Atom:
-                return this.atom.evaluate(escopo);
-            case ListItemType.String:
-                return this.str.evaluate(escopo);
-            case ListItemType.SubList:
-                auto l = new ListItem[0];
-                l ~= this;
-                return l;
-            default:
-                throw new Exception("wut?");
-        }
-        assert(0);
-    }
-
-    Value value()
-    {
-        switch(this.type)
-        {
-            case ListItemType.Atom:
-                return this.atom.repr;
-            case ListItemType.String:
-                return this.str.repr;
-            default:
-                throw new Exception("Cannot extract value from " ~ to!string(this.type) ~ " " ~ to!string(this.sublist));
-        }
-        assert(0);
-    }
-}
-
-class String
-{
-    string repr;
     string[] parts;
     string[int] substitutions;
 
-    this(string repr)
+    this(string s)
     {
-        this.repr = repr;
+        this.parts ~= s;
     }
     this(string[] parts, string[int] substitutions)
     {
@@ -393,18 +200,47 @@ class String
         this.substitutions = substitutions;
     }
 
-    ListItem[] evaluate(Escopo escopo)
+    // Operators:
+    ulong length()
     {
-        auto l = new ListItem[0];
+        return 1;
+    }
+    override string toString()
+    {
+        return '"' ~ to!string(this.parts
+            .map!(x => to!string(x))
+            .joiner("^")) ~ '"';
+    }
+
+    // Methods:
+    @property
+    ScopeExitCodes scopeExit()
+    {
+        return this._scopeExit;
+    }
+
+    @property
+    final ScopeExitCodes scopeExit(ScopeExitCodes code)
+    {
+        _scopeExit = code;
+        return code;
+    }
+
+    NamePath namePath()
+    {
+        return ["<STRING>"];
+    }
+
+    ListItem run(Escopo escopo)
+    {
         if (this.substitutions.length == 0)
         {
-            l ~= new ListItem(this);
-            return l;
+            return this;
         }
 
         string result;
         string subst;
-        Value value;
+        string value;
 
         foreach(index, part;parts)
         {
@@ -415,43 +251,38 @@ class String
             }
             else
             {
-                List v = escopo[subst];
+                ListItem v = escopo[subst];
                 if (v is null)
                 {
                     value = "";
                 }
                 else {
-                    value = to!string(v);
+                    value = v.asString;
                 }
             }
             result ~= value;
         }
 
-        writeln("resolving " ~ to!string(this) ~ " = " ~ result);
-        l ~= new ListItem(new String(result));
-        return l;
+        writeln(" - string " ~ to!string(this) ~ " → " ~ result);
+        return new String(result);
     }
-    override string toString()
+
+    string asString()
     {
-        // TODO: check if we ARE setting repr somewhere.
-        if (this.repr !is null)
-        {
-            return "s\"" ~ this.repr ~ "\"";
-        }
-        // Or else:
-        return "S\"" ~ to!string(this.parts
+        return to!string(this.parts
             .map!(x => to!string(x))
-            .joiner("")) ~ "\"";
+            .joiner(""));
     }
 }
 
-class Atom
+class Atom : ListItem
 {
     int integer;
     float floatingPoint;
     bool boolean;
     string repr;
-    string[] namePath;
+    NamePath _namePath;
+    ScopeExitCodes _scopeExit;
 
     this(string s)
     {
@@ -462,22 +293,10 @@ class Atom
         this.repr = to!string(l);
     }
 
-    ListItem[] evaluate(Escopo escopo)
-    {
-        if (this.repr[0..1] == "$")
-        {
-            return escopo[this.repr[1..$]].items;
-        }
-        else {
-            auto l = new ListItem[0];
-            l ~= new ListItem(this);
-            return l;
-        }
-    }
-
+    // Utilities and operators:
     override string toString()
     {
-        return this.repr;
+        return ":" ~ this.repr;
     }
     string debugRepr()
     {
@@ -487,5 +306,51 @@ class Atom
         result ~= "bool:" ~ to!string(this.boolean) ~ ";";
         result ~= "string:" ~ this.repr;
         return result;
+    }
+    ulong length()
+    {
+        return 1;
+    }
+
+    // Methods:
+    @property
+    ScopeExitCodes scopeExit()
+    {
+        return this._scopeExit;
+    }
+
+    @property
+    final ScopeExitCodes scopeExit(ScopeExitCodes code)
+    {
+        this._scopeExit = code;
+        return code;
+    }
+
+    ListItem run(Escopo escopo)
+    {
+        if (this.repr[0..1] == "$")
+        {
+            return escopo[this.repr[1..$]];
+        }
+        else {
+            return this;
+        }
+    }
+
+    string asString()
+    {
+        return this.repr;
+    }
+
+    @property
+    NamePath namePath()
+    {
+        return this._namePath;
+    }
+    @property
+    NamePath namePath(NamePath path)
+    {
+        this._namePath = path;
+        return path;
     }
 }

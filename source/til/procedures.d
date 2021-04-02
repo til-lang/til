@@ -8,20 +8,18 @@ import til.escopo;
 import til.nodes;
 
 
-alias Parameters = Value[];
-
 class Procedure
 {
     string name;
     // proc f {x=10}
     // → parameters["x"] = "10"
-    Parameters parameters;
-    List body;
+    List parameters;
+    ListItem body;
 
-    this(string name, Parameters parameters, List body)
+    this(string name, ListItem parameters, ListItem body)
     {
         this.name = name;
-        this.parameters = parameters;
+        this.parameters = new List(parameters);
         this.body = body;
 
         writeln(
@@ -38,7 +36,7 @@ class Procedure
 
         auto procedureScope = new Escopo(escopo);
 
-        auto parametersCount = this.parameters.length;
+        auto parametersCount = parameters.length;
         auto argumentsCount = arguments.length;
         if (argumentsCount < parametersCount)
         {
@@ -49,23 +47,18 @@ class Procedure
             throw new Exception("Not enough parameters");
         }
 
-        foreach(index, argument; arguments.items[0..parametersCount])
+        foreach(index, argument; arguments[0..parametersCount])
         {
-            auto parameterName = this.parameters[index];
-            // auto value = argument.resolve(procedureScope);
-            auto li = new ListItem[1];
-            li[0] = argument;
-            auto value = new List(li);
-            procedureScope.setVariable(parameterName, value);
-            writeln(
-                " argument " ~ parameterName ~ "=" ~ to!string(value)
-            );
+            // TODO: save parameters as strings already:
+            auto parameterName = this.parameters[index].asString;
+            procedureScope[parameterName] = argument;
+            writeln(" argument ", parameterName, "=", argument);
         }
-        procedureScope.setVariable("extra_args", new List(
+        procedureScope[["extra_args"]] = new List(
             arguments.items[parametersCount..$]
-        ));
+        );
 
         writeln(" body.run: " ~ to!string(this.body) ~ ";");
-        return this.body.run(procedureScope);
+        return cast(List)this.body.run(procedureScope);
     }
 }

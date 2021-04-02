@@ -1,5 +1,6 @@
 module til.grammar;
 
+import std.array;
 import std.conv : to;
 import std.stdio : writeln;
 
@@ -40,40 +41,55 @@ List analyseTil(ParseTree p)
 
 List analyseList(ParseTree p)
 {
-    ListItem[] listItems;
-    bool hasPipe = false;
+    ListItem[] items;
+    ListItem[] firstArguments;
+    int currentCounter = 0;
 
     foreach(child; p.children)
     {
+        if (child.isPipe) {
+            firstArguments = items;
+            items = new ListItem[0];
+            currentCounter = 0;
+            continue;
+        }
+
         switch(child.name)
         {
             case "Til.ListItem":
                 auto li = analyseListItem(child);
                 if (li !is null)
                 {
-                    listItems ~= li;
-                    if (li.type == ListItemType.ForwardPipe)
-                    {
-                        hasPipe = true;
-                    }
+                    items ~= li;
                 }
                 break;
             case "Til.List":
                 auto l = analyseList(child);
                 if (l !is null)
                 {
-                    auto li = new ListItem(l, false);
-                    listItems ~= li;
+                    items ~= l;
                 }
                 break;
             default:
                 writeln("Til.List: " ~ child.name);
         }
+
+        // Right after the first item in the list we
+        // insert the "firstArguments" list:
+        if (currentCounter == 0 && firstArguments !is null)
+        {
+            items ~= new List(firstArguments);
+            firstArguments = null;
+        }
+
+        currentCounter++;
     }
-    auto list = new List(listItems);
-    if (listItems.length == 0) return list;
-    list.hasPipe = hasPipe;
-    return list;
+    return new List(items);
+}
+
+bool isPipe(ParseTree p)
+{
+    return p.children[0].name == "Til.Pipe";
 }
 
 ListItem analyseListItem(ParseTree p)
@@ -84,45 +100,27 @@ ListItem analyseListItem(ParseTree p)
         {
             case "Til.Comment":
                 continue;
-            case "Til.Pipe":
-                return analysePipe(child);
             case "Til.ExecList":
-                auto sl = analyseList(child);
-                return new ListItem(sl, true);
+                return analyseList(child);
             case "Til.SubList":
                 auto sl = analyseList(child);
-                return new ListItem(sl, false);
+                sl.execute = false;
+                return sl;
             case "Til.String":
-                auto s = analyseString(child);
-                return new ListItem(s);
+                return analyseString(child);
             case "Til.Atom":
-                auto a = analyseAtom(child);
-                return new ListItem(a);
+                return analyseAtom(child);
             default:
-                writeln("Til.ListItem: " ~ child.name);
-                throw new InvalidException("ListItem seems invalid: " ~ to!string(child.matches));
+                throw new InvalidException(
+                    "ListItem seems invalid: "
+                    ~ child.name ~ " : "
+                    ~ to!string(child.matches)
+                );
         }
     }
     // Now we **can** reach this point, for a Comment
     // also forms a proper list...
     return null;
-}
-
-ListItem analysePipe(ParseTree p)
-{
-    foreach(index, child; p.children)
-    {
-        switch(child.name)
-        {
-            case "Til.ForwardPipe":
-                return new ListItem(ListItemType.ForwardPipe);
-            default:
-                throw new InvalidException(
-                    "ListItem/Pipe seems invalid: " ~ child.name
-                );
-        }
-    }
-    assert(0);
 }
 
 // Strings:
@@ -142,14 +140,13 @@ String analyseString(ParseTree p)
             case "Til.NotSubstitution":
                 parts ~= child.matches[0];
         }
-        writeln(" " ~ child.name ~ ":", child.matches[0]);
     }
     return new String(parts, substitutions);
 }
 
 Atom analyseAtom(ParseTree p)
 {
-    string str = p.matches[0];
+    string str = p.matches.join("");
     auto atom = new Atom(str);
 
     foreach(child; p.children)
