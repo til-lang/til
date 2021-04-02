@@ -13,18 +13,20 @@ class Procedure
     string name;
     // proc f {x=10}
     // → parameters["x"] = "10"
-    List parameters;
-    ListItem body;
+    ListItem[] parameters;
+    List body;
 
     this(string name, ListItem parameters, ListItem body)
     {
         this.name = name;
-        this.parameters = new List(parameters);
-        this.body = body;
+        this.parameters = parameters.atoms;
+        this.body = new List(body.items, true);
 
         writeln(
-            "proc.define: " ~ name ~ "(" ~ to!string(parameters) ~ ")"
-            ~ ": " ~ to!string(body));
+            "proc.define: ", this.name,
+            "(", this.parameters, ")",
+            ": ", this.body
+        );
     }
 
     List run(Escopo escopo, string name, List arguments)

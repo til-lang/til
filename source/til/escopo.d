@@ -37,7 +37,7 @@ class Escopo
     // Execution
     ListItem run(List program)
     {
-        auto returnedValue = program.run(this);
+        auto returnedValue = program.runAsMain(this);
         return returnedValue;
     }
 
@@ -114,6 +114,16 @@ class Escopo
 
     ListItem run_command(NamePath path, List arguments)
     {
+        // Normally the end of the program, where
+        // all that is left is a simple result:
+        /*
+        if (path.length == 0)
+        {
+            return null;
+        }
+        */
+
+        writeln("run_command:", path, " : ", arguments);
         auto handler = this.getCommand(path);
         if (handler is null)
         {
@@ -167,7 +177,7 @@ class DefaultEscopo : Escopo
         this.commands["set"] = &this.cmd_set;
         this.commands["if"] = &this.cmd_if;
         this.commands["proc"] = &this.proc;
-        this.commands["return"] = &this.retorne;
+        this.commands["return"] = &this.cmd_return;
     }
 
     // Commands:
@@ -236,10 +246,11 @@ class DefaultEscopo : Escopo
         return proc.run(this, cmdName, arguments);
     }
 
-    ListItem retorne(NamePath cmdName, List arguments)
+    ListItem cmd_return(NamePath cmdName, List arguments)
     {
-        writeln(" --- RETORNE: ", arguments);
+        writeln(" --- RETURN: ", arguments);
         auto returnValue = arguments;
+        returnValue.execute = false;
         returnValue.scopeExit = ScopeExitCodes.ReturnSuccess;
         return returnValue;
     }

@@ -1,5 +1,7 @@
 module til.nodes;
 
+
+import std.array : join;
 import std.conv : to;
 import std.stdio : writeln;
 import std.algorithm.iteration : map, joiner;
@@ -7,6 +9,7 @@ import std.algorithm.iteration : map, joiner;
 import til.escopo;
 import til.exceptions;
 import til.grammar;
+
 
 alias NamePath = string[];
 
@@ -18,37 +21,101 @@ enum ScopeExitCodes
     ListSuccess,      // A list was executed with success
 }
 
-// Interfaces:
-interface ListItem
+
+// A base class for all kind of items that
+// compose a list (including Lists):
+class ListItem
 {
-    ulong length();
-    string asString();
+    ulong defaultLength = 0;
+    string objectNAME = "BASEITEM";
+    ScopeExitCodes _scopeExit;
+    string[] _namePath;
 
-    ListItem run(Escopo);
-    NamePath namePath();
+    @property
+    ScopeExitCodes scopeExit()
+    {
+        return this._scopeExit;
+    }
+    @property
+    final ScopeExitCodes scopeExit(ScopeExitCodes code)
+    {
+        _scopeExit = code;
+        return code;
+    }
 
-    ScopeExitCodes scopeExit();
-    ScopeExitCodes scopeExit(ScopeExitCodes);
+    @property
+    NamePath namePath()
+    {
+        return this._namePath;
+    }
+    @property
+    NamePath namePath(NamePath path)
+    {
+        this._namePath = path;
+        return path;
+    }
+    @property
+    NamePath namePath(string name)
+    {
+        auto path = [name];
+        this._namePath = path;
+        return path;
+    }
+
+    /*
+    {
+        {a b c}
+        d e f
+        {g h i}
+    } → a b c d e f g h i
+    */
+    ListItem[] atoms()
+    {
+        ListItem[] a;
+        // List.items returns ListItem[]
+        // Anything else returns null.
+        foreach(item; this.items)
+        {
+            auto subItems = item.items;
+            if (subItems is null)
+            {
+                a ~= item;
+            }
+            else {
+                a ~= item.atoms;
+            }
+        }
+        return a;
+    }
+
+    // Stubs:
+    ulong length() {return defaultLength;}
+    string asString() {return objectNAME;}
+    ListItem run(Escopo escopo) {return null;}
+    ListItem[] items() {return null;}
 }
 
-// Classes:
+
 class List : ListItem
 {
-    ScopeExitCodes _scopeExit;
-
-    ListItem[] items;
-    bool execute = true;
+    ListItem[] _items;
+    bool execute = false;
 
     this()
     {
     }
     this(ListItem item)
     {
-        this.items ~= item;
+        this._items ~= item;
     }
     this(ListItem[] items)
     {
-        this.items = items;
+        this._items = items;
+    }
+    this(ListItem[] items, bool execute)
+    {
+        this._items = items;
+        this.execute = execute;
     }
 
     // Utilities and operators:
@@ -65,19 +132,19 @@ class List : ListItem
     }
     ListItem opIndex(int i)
     {
-        return items[i];
+        return _items[i];
     }
     ListItem opIndex(ulong i)
     {
-        return items[i];
+        return _items[i];
     }
     ListItem[] opSlice(ulong start, ulong end)
     {
-        return items[start..end];
+        return _items[start..end];
     }
-    ulong length()
+    override ulong length()
     {
-        return items.length;
+        return _items.length;
     }
     @property ulong opDollar()
     {
@@ -85,25 +152,27 @@ class List : ListItem
     }
 
     // Methods:
-    string asString()
+    override string asString()
     {
-        return to!string(this.items
+        return to!string(this._items
             .map!(x => to!string(x))
             .joiner(" "));
     }
-    @property
-    ScopeExitCodes scopeExit()
+
+    override ListItem[] items()
     {
-        return this._scopeExit;
-    }
-    @property
-    final ScopeExitCodes scopeExit(ScopeExitCodes code)
-    {
-        _scopeExit = code;
-        return code;
+        return this._items;
     }
 
-    ListItem run(Escopo escopo)
+    override ListItem run(Escopo escopo)
+    {
+        return this._run(escopo, false);
+    }
+    ListItem runAsMain(Escopo escopo)
+    {
+        return this._run(escopo, true);
+    }
+    ListItem _run(Escopo escopo, bool isMain)
     {
         writeln("Running ", this);
 
@@ -126,7 +195,7 @@ class List : ListItem
         ListItem[] newItems;
         ListItem result;
 
-        foreach(item; items)
+        foreach(item; _items)
         {
             result = item.run(escopo);
             writeln(" ", item, " → ", result, "\t\t\t", result.scopeExit);
@@ -139,7 +208,10 @@ class List : ListItem
                 // -----------------
                 // Proc execution:
                 case ScopeExitCodes.ReturnSuccess:
-                    // Our caller don't have to break!
+                    // ReturnSuccess is received here when
+                    // we are still INSIDE A PROC.
+                    // We return the result, but out caller
+                    // doesn't have to break:
                     result.scopeExit = ScopeExitCodes.ListSuccess;
                     return result;
 
@@ -149,21 +221,33 @@ class List : ListItem
                 // -----------------
                 // List execution:
                 case ScopeExitCodes.ListSuccess:
-                    // We don't have to break!
                     result.scopeExit = ScopeExitCodes.Proceed;
-                    break;
+                    // TESTE
+                    // break;
+                    return result;
             }
             newItems ~= result;
         }
 
+        if (isMain)
+        {
+            return result;
+        }
+
         if (newItems.length == 0)
         {
+            // Unreachable???
+            writeln(" ", this, ".run RETURNED EMPTY LIST!");
             return new List();
         }
 
         // ----- 2 -----
+        writeln(" -- newItems: ", newItems);
         ListItem head = newItems[0];
-        auto tail = new List(items[1..$]);
+
+        writeln(" List.run.head:", head);
+        // auto tail = new List(_items[1..$]);
+        auto tail = new List(newItems[1..$]);
 
         // lists.order 3 4 1 2
         NamePath cmd = head.namePath;
@@ -176,17 +260,11 @@ class List : ListItem
             return result;
         }
     }
-
-    NamePath namePath()
-    {
-        return ["<LIST>"];
-    }
 }
 
 class String : ListItem
 {
-    ScopeExitCodes _scopeExit;
-
+    ulong defaultLength = 1;
     string[] parts;
     string[int] substitutions;
 
@@ -201,37 +279,14 @@ class String : ListItem
     }
 
     // Operators:
-    ulong length()
-    {
-        return 1;
-    }
     override string toString()
     {
         return '"' ~ to!string(this.parts
             .map!(x => to!string(x))
-            .joiner("^")) ~ '"';
+            .joiner("")) ~ '"';
     }
 
-    // Methods:
-    @property
-    ScopeExitCodes scopeExit()
-    {
-        return this._scopeExit;
-    }
-
-    @property
-    final ScopeExitCodes scopeExit(ScopeExitCodes code)
-    {
-        _scopeExit = code;
-        return code;
-    }
-
-    NamePath namePath()
-    {
-        return ["<STRING>"];
-    }
-
-    ListItem run(Escopo escopo)
+    override ListItem run(Escopo escopo)
     {
         if (this.substitutions.length == 0)
         {
@@ -267,7 +322,7 @@ class String : ListItem
         return new String(result);
     }
 
-    string asString()
+    override string asString()
     {
         return to!string(this.parts
             .map!(x => to!string(x))
@@ -280,7 +335,8 @@ class Atom : ListItem
     int integer;
     float floatingPoint;
     bool boolean;
-    string repr;
+    string _repr;
+    ulong defaultLength = 1;
     NamePath _namePath;
     ScopeExitCodes _scopeExit;
 
@@ -307,26 +363,27 @@ class Atom : ListItem
         result ~= "string:" ~ this.repr;
         return result;
     }
-    ulong length()
-    {
-        return 1;
-    }
 
     // Methods:
     @property
-    ScopeExitCodes scopeExit()
+    string repr()
     {
-        return this._scopeExit;
-    }
+        if (this._repr is null)
+        {
+            this._repr = this.namePath.join(".");
+        }
+        return this._repr;
 
+    }
     @property
-    final ScopeExitCodes scopeExit(ScopeExitCodes code)
+    string repr(string s)
     {
-        this._scopeExit = code;
-        return code;
+        this._repr = s;
+        this._namePath = [s];
+        return s;
     }
 
-    ListItem run(Escopo escopo)
+    override ListItem run(Escopo escopo)
     {
         if (this.repr[0..1] == "$")
         {
@@ -337,20 +394,8 @@ class Atom : ListItem
         }
     }
 
-    string asString()
+    override string asString()
     {
         return this.repr;
-    }
-
-    @property
-    NamePath namePath()
-    {
-        return this._namePath;
-    }
-    @property
-    NamePath namePath(NamePath path)
-    {
-        this._namePath = path;
-        return path;
     }
 }

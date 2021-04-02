@@ -1,6 +1,10 @@
-# efe: a "function" (or procedure)
-proc efe {x y z} {
+proc f {x y z} {
+    set x [g $x]
     return "$x $y $z"
 }
 
-set x [efe 1 2 3]
+proc g {a} {
+    return "$a"
+}
+
+set x [f 1 2 3]

@@ -30,7 +30,7 @@ List analyseTil(ParseTree p)
         switch(child.name)
         {
             case "Til.Program":
-                auto program = analyseList(child);
+                auto program = analyseList(child, true);
                 return program;
             default:
                 writeln("analyseTil: Not recognized: " ~ child.name);
@@ -39,7 +39,7 @@ List analyseTil(ParseTree p)
     throw new InvalidException("Program seems invalid");
 }
 
-List analyseList(ParseTree p)
+List analyseList(ParseTree p, bool execute)
 {
     ListItem[] items;
     ListItem[] firstArguments;
@@ -64,7 +64,7 @@ List analyseList(ParseTree p)
                 }
                 break;
             case "Til.List":
-                auto l = analyseList(child);
+                auto l = analyseList(child, true);
                 if (l !is null)
                 {
                     items ~= l;
@@ -84,7 +84,14 @@ List analyseList(ParseTree p)
 
         currentCounter++;
     }
-    return new List(items);
+    if (items.length == 0)
+    {
+        return null;
+    }
+    else
+    {
+        return new List(items, execute);
+    }
 }
 
 bool isPipe(ParseTree p)
@@ -101,11 +108,9 @@ ListItem analyseListItem(ParseTree p)
             case "Til.Comment":
                 continue;
             case "Til.ExecList":
-                return analyseList(child);
+                return analyseList(child, true);
             case "Til.SubList":
-                auto sl = analyseList(child);
-                sl.execute = false;
-                return sl;
+                return analyseList(child, false);
             case "Til.String":
                 return analyseString(child);
             case "Til.Atom":

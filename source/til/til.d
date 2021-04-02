@@ -19,7 +19,7 @@ mixin(grammar(`
         Atom              <- Float / Integer / Boolean / Name / CommonAtom
         CommonAtom        <~ [$A-Za-z0-9_<>+\-_=.:&]+
         Name              <- NamePart ("." NamePart)*
-        NamePart          <~ [A-Za-z] [A-Za-z0-9_]+
+        NamePart          <~ [A-Za-z] [A-Za-z0-9_]*
         Float             <~ [0-9]+ "." [0-9]+
         Integer           <~ [0-9]+
         Boolean           <- BooleanTrue / BooleanFalse
