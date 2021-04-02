@@ -5,8 +5,9 @@ set font.size 14
 set theme.name "Industrial"
 
 # set hour [time.current.hour]
-set hour 10
+set hour 18
 std.out $hour >= 5
+
 if {$hour >= 6 && $hour < 18} {
     set theme.mode "light"
 } else {

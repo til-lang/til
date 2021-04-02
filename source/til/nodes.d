@@ -21,11 +21,24 @@ enum ScopeExitCodes
     ListSuccess,      // A list was executed with success
 }
 
+enum ObjectTypes
+{
+    Undefined,
+    List,
+    String,
+    Name,
+    Atom,
+    Float,
+    Integer,
+    Boolean
+}
+
 
 // A base class for all kind of items that
 // compose a list (including Lists):
 class ListItem
 {
+    ObjectTypes type = ObjectTypes.Undefined;
     ulong defaultLength = 0;
     string objectNAME = "BASEITEM";
     ScopeExitCodes _scopeExit;
@@ -91,7 +104,11 @@ class ListItem
     // Stubs:
     ulong length() {return defaultLength;}
     string asString() {return objectNAME;}
-    ListItem run(Escopo escopo) {return null;}
+    ListItem run(Escopo escopo)
+    {
+        return this.run(escopo, false);
+    }
+    ListItem run(Escopo escopo, bool isMain) {return null;}
     ListItem[] items() {return null;}
 }
 
@@ -107,6 +124,11 @@ class List : ListItem
     this(ListItem item)
     {
         this._items ~= item;
+    }
+    this(ListItem item, bool execute)
+    {
+        this._items ~= item;
+        this.execute = execute;
     }
     this(ListItem[] items)
     {
@@ -164,15 +186,21 @@ class List : ListItem
         return this._items;
     }
 
-    override ListItem run(Escopo escopo)
+    ListItem[] evaluate(Escopo escopo)
     {
-        return this._run(escopo, false);
+        ListItem[] newItems;
+        // TODO: check if this list is a SubList or not.
+        // (maybe?)
+
+        foreach(item; _items)
+        {
+            newItems ~= item.run(escopo);
+        }
+
+        return newItems;
     }
-    ListItem runAsMain(Escopo escopo)
-    {
-        return this._run(escopo, true);
-    }
-    ListItem _run(Escopo escopo, bool isMain)
+
+    override ListItem run(Escopo escopo, bool isMain)
     {
         writeln("Running ", this);
 

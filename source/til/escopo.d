@@ -7,6 +7,7 @@ import std.stdio : writeln;
 import std.string : strip;
 
 import til.grammar;
+import til.logic;
 import til.nodes;
 import til.procedures;
 import til.til;
@@ -37,7 +38,7 @@ class Escopo
     // Execution
     ListItem run(List program)
     {
-        auto returnedValue = program.runAsMain(this);
+        auto returnedValue = program.run(this, true);
         return returnedValue;
     }
 
@@ -192,23 +193,49 @@ class DefaultEscopo : Escopo
 
     ListItem cmd_if(NamePath cmd, List arguments)
     {
-        ListItem condition = arguments[0];
+        /*
+        Disclaimer: this is kind of shitty. Beware.
+        */
+        auto condition = arguments[0];
         ListItem thenBody = arguments[1];
-
-        writeln("if ", condition, " then ", thenBody);
-
-        ListItem elseBody = null;
+        ListItem elseBody;
         if (arguments.length >= 4)
         {
             elseBody = arguments[3];
             writeln("   else ", elseBody);
         }
+        else
+        {
+            elseBody = null;
+        }
+
+        writeln("if ", condition, " then ", thenBody);
 
         // Run the condition:
-        auto conditionResult = condition.run(this);
-        writeln(" --- conditionResult: ", conditionResult);
-        writeln(" --- IF: ignoring conditional!!!");
-        return thenBody.run(this);
+        bool result = false;
+        foreach(c; condition.items)
+        {
+            // XXX : it runs but IGNORES the result of every list
+            // in the condition, except the last one...
+            writeln(" --- IF.c: ", c);
+            auto l = new List(c.items);
+            auto e = l.evaluate(this);
+            writeln(" --- IF.e: ", e);
+            result = boolean(e);
+        }
+        if (result)
+        {
+            return new List(thenBody.items).run(this, true);
+        }
+        else if (elseBody !is null)
+        {
+            return new List(elseBody.items, true).run(this, true);
+        }
+        else
+        {
+            // XXX : it seems coherent, but is it correct?
+            return arguments;
+        }
     }
 
     ListItem proc(NamePath cmd, List arguments)

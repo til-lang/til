@@ -61,6 +61,6 @@ class Procedure
         );
 
         writeln(" body.run: " ~ to!string(this.body) ~ ";");
-        return cast(List)this.body.run(procedureScope);
+        return cast(List)this.body.run(procedureScope, true);
     }
 }

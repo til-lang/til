@@ -7,4 +7,4 @@ proc g {a} {
     return "$a"
 }
 
-set x [f 1 2 3]
+set x [f 1 2 3] [g 4]
