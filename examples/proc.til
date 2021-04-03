@@ -1,10 +1,10 @@
 proc f {x y z} {
     set x [g $x]
-    return "$x $y $z"
+    return $x $y $z
 }
 
 proc g {a} {
-    return "$a"
+    return ">$a<"
 }
 
 set x [f 1 2 3] [g 4]

@@ -79,7 +79,7 @@ bool boolean(ListItem[] items)
         }
     }
 
-    auto l = new List(items, false);
+    auto l = new SubList(items);
     foreach(index, atom; l.atoms)
     {
         string s = atom.asString;

@@ -14,13 +14,13 @@ class Procedure
     // proc f {x=10}
     // → parameters["x"] = "10"
     ListItem[] parameters;
-    List body;
+    ListItem body;
 
     this(string name, ListItem parameters, ListItem body)
     {
         this.name = name;
         this.parameters = parameters.atoms;
-        this.body = new List(body.items, true);
+        this.body = body;
 
         writeln(
             "proc.define: ", this.name,
@@ -29,17 +29,22 @@ class Procedure
         );
     }
 
-    List run(Escopo escopo, string name, List arguments)
+    ListItem run(Escopo escopo, string name, ListItem[] arguments)
     {
         writeln(
             "proc.run:"
             ~ this.name ~ "(" ~ to!string(arguments) ~ ") "
         );
 
+
         auto procedureScope = new Escopo(escopo);
 
         auto parametersCount = parameters.length;
         auto argumentsCount = arguments.length;
+        writeln(
+            "  parameters: ", this.parameters,
+            " (", parametersCount, ")"
+        );
         if (argumentsCount < parametersCount)
         {
             // TODO:
@@ -56,11 +61,11 @@ class Procedure
             procedureScope[parameterName] = argument;
             writeln(" argument ", parameterName, "=", argument);
         }
-        procedureScope[["extra_args"]] = new List(
-            arguments.items[parametersCount..$]
+        procedureScope[["extra_args"]] = new SubList(
+            arguments[parametersCount..$]
         );
 
         writeln(" body.run: " ~ to!string(this.body) ~ ";");
-        return cast(List)this.body.run(procedureScope, true);
+        return new ExecList(this.body.items).run(procedureScope);
     }
 }

@@ -12,6 +12,8 @@ import til.nodes;
 import til.procedures;
 import til.til;
 
+alias Args = ListItem[];
+alias Result = ListItem;
 
 class Escopo
 {
@@ -19,7 +21,7 @@ class Escopo
     Escopo[string] namespaces;
 
     ListItem[string] variables;
-    ListItem delegate(NamePath, List)[string] commands;
+    ListItem delegate(NamePath, Args)[string] commands;
     // string[] freeVariables;
 
     this()
@@ -36,9 +38,9 @@ class Escopo
     }
 
     // Execution
-    ListItem run(List program)
+    ListItem run(ListItem program)
     {
-        auto returnedValue = program.run(this, true);
+        auto returnedValue = program.run(this);
         return returnedValue;
     }
 
@@ -85,7 +87,7 @@ class Escopo
     }
 
     // Commands
-    ListItem delegate(NamePath, List) getCommand(NamePath path)
+    Result delegate(NamePath, Args) getCommand(NamePath path)
     {
         string head = path[0];
 
@@ -95,7 +97,7 @@ class Escopo
             return namespace.getCommand(path[1..$]);
         }
 
-        ListItem delegate(NamePath, List) handler = commands.get(head, null);
+        ListItem delegate(NamePath, Args) handler = commands.get(head, null);
         if (handler is null)
         {
             if (this.parent is null)
@@ -113,7 +115,7 @@ class Escopo
         }
     }
 
-    ListItem run_command(NamePath path, List arguments)
+    Result runCommand(NamePath path, Args arguments)
     {
         // Normally the end of the program, where
         // all that is left is a simple result:
@@ -124,7 +126,7 @@ class Escopo
         }
         */
 
-        writeln("run_command:", path, " : ", arguments);
+        writeln("runCommand:", path, " : ", arguments);
         auto handler = this.getCommand(path);
         if (handler is null)
         {
@@ -177,21 +179,23 @@ class DefaultEscopo : Escopo
     {
         this.commands["set"] = &this.cmd_set;
         this.commands["if"] = &this.cmd_if;
-        this.commands["proc"] = &this.proc;
+        this.commands["foreach"] = &this.cmd_foreach;
+        this.commands["proc"] = &this.cmd_proc;
         this.commands["return"] = &this.cmd_return;
     }
 
     // Commands:
-    ListItem cmd_set(NamePath path, List arguments)
+    Result cmd_set(NamePath path, Args arguments)
     {
         // TODO: navigate through arguments[0].namePath...
         auto varPath = arguments[0].namePath;
-        auto value = new List(arguments[1..$]);
+        writeln(" set: ", arguments);
+        ListItem value = new SubList(arguments[1..$]);
         this[varPath] = value;
         return value;
     }
 
-    ListItem cmd_if(NamePath cmd, List arguments)
+    Result cmd_if(NamePath cmd, Args arguments)
     {
         /*
         Disclaimer: this is kind of shitty. Beware.
@@ -218,27 +222,49 @@ class DefaultEscopo : Escopo
             // XXX : it runs but IGNORES the result of every list
             // in the condition, except the last one...
             writeln(" --- IF.c: ", c);
-            auto l = new List(c.items);
-            auto e = l.evaluate(this);
+            auto e = c.run(this);
             writeln(" --- IF.e: ", e);
-            result = boolean(e);
+            result = boolean(e.items);
         }
         if (result)
         {
-            return new List(thenBody.items).run(this, true);
+            return new ExecList(thenBody.items).run(this);
         }
         else if (elseBody !is null)
         {
-            return new List(elseBody.items, true).run(this, true);
+            return new ExecList(elseBody.items).run(this);
         }
         else
         {
             // XXX : it seems coherent, but is it correct?
-            return arguments;
+            return new SubList(arguments);
         }
     }
 
-    ListItem proc(NamePath cmd, List arguments)
+    Result cmd_foreach(NamePath cmd, Args arguments)
+    {
+        auto argNames = arguments[0];
+        auto argRange = arguments[1];
+        auto argBody = arguments[2];
+
+        writeln(" FOREACH ", argNames, " in ", argRange, ":");
+        writeln("         ", argBody);
+
+        auto range = new ExecList(argRange.items).run(this);
+        writeln(" range → ", range);
+        foreach(item; range.items)
+        {
+            writeln(" item ", item);
+            foreach(atom; item.atoms)
+            {
+                writeln(" atom ", atom);
+            }
+        }
+
+        return null;
+    }
+
+    Result cmd_proc(NamePath cmd, Args arguments)
     {
         // proc name {parameters} {body}
         ListItem arg0 = arguments[0];
@@ -259,7 +285,7 @@ class DefaultEscopo : Escopo
         return arg0;
     }
 
-    ListItem runProc(NamePath path, List arguments)
+    Result runProc(NamePath path, Args arguments)
     {
         // TODO: navigate through path items properly:
         string cmdName = to!string(path.joiner("."));
@@ -273,11 +299,10 @@ class DefaultEscopo : Escopo
         return proc.run(this, cmdName, arguments);
     }
 
-    ListItem cmd_return(NamePath cmdName, List arguments)
+    Result cmd_return(NamePath cmdName, Args arguments)
     {
         writeln(" --- RETURN: ", arguments);
-        auto returnValue = arguments;
-        returnValue.execute = false;
+        auto returnValue = new SubList(arguments);
         returnValue.scopeExit = ScopeExitCodes.ReturnSuccess;
         return returnValue;
     }

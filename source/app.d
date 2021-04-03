@@ -19,7 +19,7 @@ void main()
     auto tree = Til(code);
     writeln(tree);
 
-    List program;
+    ExecList program;
     try {
         program = analyse(tree);
     }

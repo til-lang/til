@@ -1,0 +1,9 @@
+proc f {x} {
+    return "-$x-"
+}
+
+proc s {x} {
+    return ">$x<"
+}
+
+set result [f 123 |> s]

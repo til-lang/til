@@ -104,19 +104,14 @@ class ListItem
     // Stubs:
     ulong length() {return defaultLength;}
     string asString() {return objectNAME;}
-    ListItem run(Escopo escopo)
-    {
-        return this.run(escopo, false);
-    }
-    ListItem run(Escopo escopo, bool isMain) {return null;}
+
+    ListItem run(Escopo escopo) {return null;}
     ListItem[] items() {return null;}
 }
 
-
-class List : ListItem
+class BaseList : ListItem
 {
     ListItem[] _items;
-    bool execute = false;
 
     this()
     {
@@ -125,33 +120,12 @@ class List : ListItem
     {
         this._items ~= item;
     }
-    this(ListItem item, bool execute)
-    {
-        this._items ~= item;
-        this.execute = execute;
-    }
     this(ListItem[] items)
     {
         this._items = items;
     }
-    this(ListItem[] items, bool execute)
-    {
-        this._items = items;
-        this.execute = execute;
-    }
 
-    // Utilities and operators:
-    override string toString()
-    {
-        string s = this.asString;
-        if (execute)
-        {
-            return "[" ~ s ~ "]";
-        }
-        else {
-            return "{" ~ s ~ "}";
-        }
-    }
+    // Operators:
     ListItem opIndex(int i)
     {
         return _items[i];
@@ -185,32 +159,48 @@ class List : ListItem
     {
         return this._items;
     }
+}
 
-    ListItem[] evaluate(Escopo escopo)
+/*
+ * A word about lists and how each one should `run`:
+ * 
+ * A SubList always returns its items, without running them;
+ * A CommonList runs each item and returns them;
+ * A ExecList runs each item and tries to execute each of
+ * them as a command.
+ */
+
+class ExecList : BaseList
+{
+    this()
     {
-        ListItem[] newItems;
-        // TODO: check if this list is a SubList or not.
-        // (maybe?)
-
-        foreach(item; _items)
-        {
-            newItems ~= item.run(escopo);
-        }
-
-        return newItems;
+        super();
+    }
+    this(ListItem item)
+    {
+        super(item);
+    }
+    this(ListItem[] items)
+    {
+        super(items);
     }
 
-    override ListItem run(Escopo escopo, bool isMain)
+    /*
+     * A ExecList is how we represent both the program
+     * itself and any ExecList.
+     */
+
+    // Utilities and operators:
+    override string toString()
     {
-        writeln("Running ", this);
+        string s = this.asString;
+        return "[" ~ s ~ "]";
+    }
 
-        // SubLists are not executed:
-        if (!execute)
-        {
-            return this;
-        }
-
-        // How to run a list:
+    override ListItem run(Escopo escopo)
+    {
+        writeln("ExecList.run: ", this);
+        // How to run a program:
         // 1- Run every item in the list:
         // Atoms and string will eventually substitute.
         // ExecLists will be run.
@@ -220,13 +210,37 @@ class List : ListItem
         // If it's not a proper command, just return `this`.
 
         // ----- 1 -----
-        ListItem[] newItems;
         ListItem result;
 
-        foreach(item; _items)
+        foreach(item; this._items)
         {
-            result = item.run(escopo);
-            writeln(" ", item, " → ", result, "\t\t\t", result.scopeExit);
+            // Each item is supposed to be a CommonList.
+            // So running a CommonList returns a SubList with
+            // all substitutions already made:
+            auto subList = item.run(escopo);
+
+            writeln(
+                " ", item, " → ", subList
+            );
+            // After that, we can already treat the SubList
+            // as if it as a command:
+            result = runCommand(subList.items, escopo);
+
+            writeln(
+                " → ", result
+            );
+            if (result is null)
+            {
+                /*
+                throw new Exception(
+                    "Command not found: " ~ to!string(subList)
+                );
+                */
+                // TESTE:
+                // TODO: make it raise the Exception.
+                result = new SubList();
+            }
+            writeln(result.scopeExit);
 
             final switch(result.scopeExit)
             {
@@ -250,43 +264,128 @@ class List : ListItem
                 // List execution:
                 case ScopeExitCodes.ListSuccess:
                     result.scopeExit = ScopeExitCodes.Proceed;
-                    // TESTE
-                    // break;
                     return result;
             }
-            newItems ~= result;
         }
 
-        if (isMain)
-        {
-            return result;
-        }
+        // Return the result of the last "expression":
+        return result;
+    }
 
-        if (newItems.length == 0)
-        {
-            // Unreachable???
-            writeln(" ", this, ".run RETURNED EMPTY LIST!");
-            return new List();
-        }
-
+    ListItem runCommand(ListItem[] items, Escopo escopo)
+    {
+        writeln("nodes.runCommand:", items);
         // ----- 2 -----
-        writeln(" -- newItems: ", newItems);
-        ListItem head = newItems[0];
+        ListItem head = items[0];
 
-        writeln(" List.run.head:", head);
-        // auto tail = new List(_items[1..$]);
-        auto tail = new List(newItems[1..$]);
+        auto tail = items[1..$];
+        writeln(" List.run: ", head, " : ", tail);
 
         // lists.order 3 4 1 2
         NamePath cmd = head.namePath;
-        ListItem cmdResult = escopo.run_command(cmd, tail);
-        if (cmdResult !is null)
+        return escopo.runCommand(cmd, tail);
+    }
+}
+
+class SubList : BaseList
+{
+    this()
+    {
+        super();
+    }
+    this(ListItem item)
+    {
+        super(item);
+    }
+    this(ListItem[] items)
+    {
+        super(items);
+    }
+
+    // -----------------------------
+    // Utilities and operators:
+    override string toString()
+    {
+        string s = this.asString;
+        return "{" ~ s ~ "}";
+    }
+
+    override ListItem run(Escopo escopo)
+    {
+        writeln("SubList.run: ", this);
+        return this;
+    }
+}
+
+class CommonList : BaseList
+{
+    this()
+    {
+        super();
+    }
+    this(ListItem item)
+    {
+        super(item);
+    }
+    this(ListItem[] items)
+    {
+        super(items);
+    }
+
+    override string toString()
+    {
+        string s = this.asString;
+        return "(" ~ s ~ ")";
+    }
+    /*
+     * A "Common" List is what goes inside both
+     * Programs/ExecLists and SubLists.
+     *
+     * # (All lines: a program)
+     * set x [math.sum 1 2 3]   <- Common List
+     *       ^  ^
+     *       |  +--- A Common List inside an ExecList
+     *       +------ An ExecList
+     */
+
+    override ListItem run(Escopo escopo)
+    {
+        writeln("CommonList.run: ", this);
+        ListItem[] newItems;
+
+        foreach(item; this._items)
         {
-            return cmdResult;
+            auto result = item.run(escopo);
+            // TODO: evaluate result.scopeExit.
+            auto items = result.items();
+            if (items is null)
+            {
+                // An Atom or String
+                newItems ~= result;
+            }
+            else if (result != item)
+            {
+                // ExecLists should return a CommonList
+                // so that we can "expand" the result, here:
+                newItems ~= items;
+            }
+            else
+            {
+                // A proper SubLists, that evaluates to itself:
+                newItems ~= result;
+            }
         }
-        else {
-            return result;
-        }
+
+        /*
+        After evaluation, we shouldn't evaluate
+        the resulting List again, so the natural
+        thinking would lead to return a SubList.
+        HOWEVER, we also want to "expand" ExecLists
+        results, so to signal that we should return
+        anything that not a SubList (we're going to
+        choose a new CommonList.)
+        */
+        return new CommonList(newItems);
     }
 }
 
@@ -372,10 +471,6 @@ class Atom : ListItem
     {
         this.repr = s;
     }
-    this(List l)
-    {
-        this.repr = to!string(l);
-    }
 
     // Utilities and operators:
     override string toString()
@@ -415,7 +510,10 @@ class Atom : ListItem
     {
         if (this.repr[0..1] == "$")
         {
-            return escopo[this.repr[1..$]];
+            string key = this.repr[1..$];
+            // writeln(" Atom: ", key);
+            // writeln(escopo);
+            return escopo[key];
         }
         else {
             return this;

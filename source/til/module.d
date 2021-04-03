@@ -1,8 +1,10 @@
+import til.escopo;
 import til.nodes;
+
 
 class Module
 {
-    List delegate(string, List)[string] commands;
+    ListItem delegate(string, Args)[string] commands;
 
     this()
     {

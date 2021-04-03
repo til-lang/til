@@ -11,7 +11,7 @@ import til.nodes;
 import til.til;
 
 
-List analyse(ParseTree p)
+ExecList analyse(ParseTree p)
 {
     switch(p.name)
     {
@@ -23,14 +23,14 @@ List analyse(ParseTree p)
     assert(0);
 }
 
-List analyseTil(ParseTree p)
+ExecList analyseTil(ParseTree p)
 {
     foreach(child; p.children)
     {
         switch(child.name)
         {
             case "Til.Program":
-                auto program = analyseList(child, true);
+                auto program = analyseProgram(child);
                 return program;
             default:
                 writeln("analyseTil: Not recognized: " ~ child.name);
@@ -39,7 +39,30 @@ List analyseTil(ParseTree p)
     throw new InvalidException("Program seems invalid");
 }
 
-List analyseList(ParseTree p, bool execute)
+ExecList analyseProgram(ParseTree p)
+{
+    ListItem[] items;
+
+    foreach(child; p.children)
+    {
+        switch(child.name)
+        {
+            case "Til.List":
+                auto li = analyseListItems(child);
+                if (li !is null)
+                {
+                    items ~= new CommonList(li);
+                }
+                break;
+            default:
+                writeln("Til.List: " ~ child.name);
+                throw new InvalidException("Program seems invalid");
+        }
+    }
+    return new ExecList(items);
+}
+
+ListItem[] analyseListItems(ParseTree p)
 {
     ListItem[] items;
     ListItem[] firstArguments;
@@ -64,10 +87,10 @@ List analyseList(ParseTree p, bool execute)
                 }
                 break;
             case "Til.List":
-                auto l = analyseList(child, true);
-                if (l !is null)
+                auto li = analyseListItems(child);
+                if (li !is null)
                 {
-                    items ~= l;
+                    items ~= new CommonList(li);
                 }
                 break;
             default:
@@ -78,20 +101,16 @@ List analyseList(ParseTree p, bool execute)
         // insert the "firstArguments" list:
         if (currentCounter == 0 && firstArguments !is null)
         {
-            items ~= new List(firstArguments);
+            // Important: an ExecList should always
+            // contain 1 > N CommonLists!
+            auto cl = new CommonList(firstArguments);
+            items ~= new ExecList(cl);
             firstArguments = null;
         }
 
         currentCounter++;
     }
-    if (items.length == 0)
-    {
-        return null;
-    }
-    else
-    {
-        return new List(items, execute);
-    }
+    return items;
 }
 
 bool isPipe(ParseTree p)
@@ -108,9 +127,9 @@ ListItem analyseListItem(ParseTree p)
             case "Til.Comment":
                 continue;
             case "Til.ExecList":
-                return analyseList(child, true);
+                return new ExecList(analyseListItems(child));
             case "Til.SubList":
-                return analyseList(child, false);
+                return new SubList(analyseListItems(child));
             case "Til.String":
                 return analyseString(child);
             case "Til.Atom":
