@@ -217,15 +217,9 @@ class DefaultEscopo : Escopo
 
         // Run the condition:
         bool result = false;
-        foreach(c; condition.items)
-        {
-            // XXX : it runs but IGNORES the result of every list
-            // in the condition, except the last one...
-            trace(" --- IF.c: ", c);
-            auto e = c.run(this);
-            trace(" --- IF.e: ", e);
-            result = boolean(e.items);
-        }
+        auto conditionItems = BaseList.flatten(condition.items);
+        auto conditions = new CommonList(conditionItems).run(this);
+        result = boolean(conditions.items);
         if (result)
         {
             return new ExecList(thenBody.items).run(this);

@@ -8,22 +8,25 @@ import til.nodes;
 
 bool boolean(ListItem[] items)
 {
-    /*
-        Now this is somewhat "clever" implementation
-        for a HORRIBLE thing that is "parsing" infix
-        notation without the help of the language parser.
-        Now you see there's a good reason why Lisp
-        dialects prefer to "keep it simple" and only
-        implement operators as usual functions, or
-        stack-based languages that simply make things...
-        well... stack-based.
+    /***************************************************
+    Now this is a somewhat "clever" implementation
+    for a HORRIBLE thing that is dealing with infix
+    notation without the help of the language parser.
+    Now you see there's a good reason why Lisp
+    dialects prefer to "keep it simple" and only
+    implement operators as usual functions, or
+    stack-based languages that simply make things...
+    well... stack-based.
 
-        C:         1 < 2 && 1 > 2 || 1 < 2
-        "Human":  (1 < 2) && ((1 > 2) || (1 < 2))
-        Lisp:     (and (lt 1 2) (or (gt 1 2) (lt 1 2)))
-        Stack      1 2 lt 1 2 gt 1 2 lt or and
-        Tcl       {1 < 2 && 1 > 2 || 1 < 2} (just like C)
-    */
+    C:         1 < 2 && 1 > 2 || 1 < 2
+    "Human":  (1 < 2) && ((1 > 2) || (1 < 2))
+    Lisp:     (and (lt 1 2) (or (gt 1 2) (lt 1 2)))
+    Stack      1 2 lt 1 2 gt 1 2 lt or and
+    Tcl       {1 < 2 && 1 > 2 || 1 < 2} (just like C)
+
+    (Interesting to note: it seems stack-based languages
+    must evaluate ALL the conditions, always...)
+    ****************************************************/
     ListItem lastItem;
     bool currentResult = false;
 
