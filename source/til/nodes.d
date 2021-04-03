@@ -235,7 +235,6 @@ class ExecList : BaseList
             // After that, we can already treat the SubList
             // as if it as a command:
             result = runCommand(subList.items, escopo);
-
             trace(
                 " → ", result
             );
@@ -263,7 +262,7 @@ class ExecList : BaseList
                     // ReturnSuccess is received here when
                     // we are still INSIDE A PROC.
                     // We return the result, but out caller
-                    // doesn't have to break:
+                    // doesn't necessarily have to break:
                     result.scopeExit = ScopeExitCodes.ListSuccess;
                     return result;
 
@@ -279,6 +278,8 @@ class ExecList : BaseList
         }
 
         // Return the result of the last "expression":
+        // XXX : if nothing went wrong, it should be a ListSuccess.
+        result.scopeExit = ScopeExitCodes.ListSuccess;
         return result;
     }
 
@@ -293,7 +294,19 @@ class ExecList : BaseList
 
         // lists.order 3 4 1 2
         NamePath cmd = head.namePath;
-        return escopo.runCommand(cmd, tail);
+        // XXX : is it the correct place to check if we
+        // are trying to execute a SubList as if it was
+        // a command???
+        if (cmd is null)
+        {
+            // return items[0];  <-- working, but horrendous.
+            // XXX: should it be a CommonList, maybe?
+            return new SubList(items);
+        }
+        else
+        {
+            return escopo.runCommand(cmd, tail);
+        }
     }
 }
 
