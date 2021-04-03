@@ -243,6 +243,9 @@ class DefaultEscopo : Escopo
 
     Result cmd_foreach(NamePath cmd, Args arguments)
     {
+        /*
+        DISCLAIMER: this code is very (VERY) inefficient.
+        */
         auto argNames = arguments[0];
         auto argRange = arguments[1];
         auto argBody = arguments[2];
@@ -250,15 +253,58 @@ class DefaultEscopo : Escopo
         writeln(" FOREACH ", argNames, " in ", argRange, ":");
         writeln("         ", argBody);
 
-        auto range = new ExecList(argRange.items).run(this);
-        writeln(" range → ", range);
+        auto anItems = argNames.items;
+        ListItem[] names;
+        if (anItems is null)
+        {
+            names = [argNames];
+        }
+        else {
+            names = new CommonList(anItems).atoms;
+        }
+        writeln(" names: ", names);
+        auto range = new CommonList(argRange.items).run(this);
+        writeln(" range: ", range);
+
+        Result result;
         foreach(item; range.items)
         {
-            writeln(" item ", item);
-            foreach(atom; item.atoms)
+            auto loopScope = new Escopo(this);
+            writeln(" item: ", item);
+            auto subItems = item.items;
+            foreach(index, name; names)
             {
-                writeln(" atom ", atom);
+                writeln("   name: ", name);
+                if (subItems is null)
+                {
+                    loopScope[name.namePath] = item;
+                }
+                else
+                {
+                    // Ouch...
+                    ListItem[] plainItems;
+                    foreach(subList; subItems)
+                    {
+                        foreach(subListItem; subList.items)
+                        {
+                            plainItems ~= subListItem;
+                        }
+                    }
+                    loopScope[name.namePath] = plainItems[index];
+                }
+
+                // TODO: analyse each result.scopeExit!
+                // TODO (later): optionally **inline** loops.
+                //  That should be achieved simply putting all
+                // lists run with its own loopScope into a single
+                // ExecList and running this one.
+                // XXX: and THAT is a very nice reason why we
+                // should be using D Ranges system: a List content
+                // could be provided dynamically, so we would turn
+                // this loop generator into an... actual generator.
             }
+            result = new ExecList(argBody.items).run(loopScope);
+            writeln(loopScope);
         }
 
         return null;
