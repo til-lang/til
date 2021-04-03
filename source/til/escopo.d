@@ -3,7 +3,7 @@ module til.escopo;
 import std.algorithm.iteration : map, joiner;
 import std.array;
 import std.conv : to;
-import std.stdio : writeln;
+import std.experimental.logger;
 import std.string : strip;
 
 import til.grammar;
@@ -64,13 +64,13 @@ class Escopo
         // TODO: navigate through path...
         string name = to!string(path.joiner("."));
         variables[name] = value;
-        writeln(name, " ← ", value);
+        trace(name, " ← ", value);
     }
     // To facilitate our own lives:
     void opIndexAssign(ListItem value, string name)
     {
         variables[name] = value;
-        writeln(name, " ← ", value);
+        trace(name, " ← ", value);
     }
 
     override string toString()
@@ -126,7 +126,7 @@ class Escopo
         }
         */
 
-        writeln("runCommand:", path, " : ", arguments);
+        trace("runCommand:", path, " : ", arguments);
         auto handler = this.getCommand(path);
         if (handler is null)
         {
@@ -189,7 +189,7 @@ class DefaultEscopo : Escopo
     {
         // TODO: navigate through arguments[0].namePath...
         auto varPath = arguments[0].namePath;
-        writeln(" set: ", arguments);
+        trace(" set: ", arguments);
         ListItem value = new SubList(arguments[1..$]);
         this[varPath] = value;
         return value;
@@ -206,14 +206,14 @@ class DefaultEscopo : Escopo
         if (arguments.length >= 4)
         {
             elseBody = arguments[3];
-            writeln("   else ", elseBody);
+            trace("   else ", elseBody);
         }
         else
         {
             elseBody = null;
         }
 
-        writeln("if ", condition, " then ", thenBody);
+        trace("if ", condition, " then ", thenBody);
 
         // Run the condition:
         bool result = false;
@@ -221,9 +221,9 @@ class DefaultEscopo : Escopo
         {
             // XXX : it runs but IGNORES the result of every list
             // in the condition, except the last one...
-            writeln(" --- IF.c: ", c);
+            trace(" --- IF.c: ", c);
             auto e = c.run(this);
-            writeln(" --- IF.e: ", e);
+            trace(" --- IF.e: ", e);
             result = boolean(e.items);
         }
         if (result)
@@ -250,8 +250,8 @@ class DefaultEscopo : Escopo
         auto argRange = arguments[1];
         auto argBody = arguments[2];
 
-        writeln(" FOREACH ", argNames, " in ", argRange, ":");
-        writeln("         ", argBody);
+        trace(" FOREACH ", argNames, " in ", argRange, ":");
+        trace("         ", argBody);
 
         auto anItems = argNames.items;
         ListItem[] names;
@@ -262,34 +262,26 @@ class DefaultEscopo : Escopo
         else {
             names = new CommonList(anItems).atoms;
         }
-        writeln(" names: ", names);
+        trace(" names: ", names);
         auto range = new CommonList(argRange.items).run(this);
-        writeln(" range: ", range);
+        trace(" range: ", range);
 
         Result result;
         foreach(item; range.items)
         {
             auto loopScope = new Escopo(this);
-            writeln(" item: ", item);
+            trace(" item: ", item);
             auto subItems = item.items;
             foreach(index, name; names)
             {
-                writeln("   name: ", name);
+                trace("   name: ", name);
                 if (subItems is null)
                 {
                     loopScope[name.namePath] = item;
                 }
                 else
                 {
-                    // Ouch...
-                    ListItem[] plainItems;
-                    foreach(subList; subItems)
-                    {
-                        foreach(subListItem; subList.items)
-                        {
-                            plainItems ~= subListItem;
-                        }
-                    }
+                    ListItem[] plainItems = BaseList.flatten(subItems);
                     loopScope[name.namePath] = plainItems[index];
                 }
 
@@ -304,7 +296,7 @@ class DefaultEscopo : Escopo
                 // this loop generator into an... actual generator.
             }
             result = new ExecList(argBody.items).run(loopScope);
-            writeln(loopScope);
+            trace(loopScope);
         }
 
         return null;
@@ -347,7 +339,7 @@ class DefaultEscopo : Escopo
 
     Result cmd_return(NamePath cmdName, Args arguments)
     {
-        writeln(" --- RETURN: ", arguments);
+        trace(" --- RETURN: ", arguments);
         auto returnValue = new SubList(arguments);
         returnValue.scopeExit = ScopeExitCodes.ReturnSuccess;
         return returnValue;

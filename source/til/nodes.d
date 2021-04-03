@@ -3,7 +3,7 @@ module til.nodes;
 
 import std.array : join;
 import std.conv : to;
-import std.stdio : writeln;
+import std.experimental.logger;
 import std.algorithm.iteration : map, joiner;
 
 import til.escopo;
@@ -159,6 +159,28 @@ class BaseList : ListItem
     {
         return this._items;
     }
+
+    // Some utilities:
+    static ListItem[] flatten(ListItem[] items)
+    {
+        ListItem[] flattened;
+
+        foreach(item; items)
+        {
+            auto nextItems = item.items;
+            if (nextItems is null)
+            {
+                // An Atom or String:
+                flattened ~= item;
+            }
+            else
+            {
+                flattened ~= BaseList.flatten(item.items);
+            }
+        }
+
+        return flattened;
+    }
 }
 
 /*
@@ -199,7 +221,7 @@ class ExecList : BaseList
 
     override ListItem run(Escopo escopo)
     {
-        writeln("ExecList.run: ", this);
+        trace("ExecList.run: ", this);
         // How to run a program:
         // 1- Run every item in the list:
         // Atoms and string will eventually substitute.
@@ -219,14 +241,14 @@ class ExecList : BaseList
             // all substitutions already made:
             auto subList = item.run(escopo);
 
-            writeln(
+            trace(
                 " ", item, " → ", subList
             );
             // After that, we can already treat the SubList
             // as if it as a command:
             result = runCommand(subList.items, escopo);
 
-            writeln(
+            trace(
                 " → ", result
             );
             if (result is null)
@@ -240,7 +262,7 @@ class ExecList : BaseList
                 // TODO: make it raise the Exception.
                 result = new SubList();
             }
-            writeln(result.scopeExit);
+            trace(result.scopeExit);
 
             final switch(result.scopeExit)
             {
@@ -274,12 +296,12 @@ class ExecList : BaseList
 
     ListItem runCommand(ListItem[] items, Escopo escopo)
     {
-        writeln("nodes.runCommand:", items);
+        trace("nodes.runCommand:", items);
         // ----- 2 -----
         ListItem head = items[0];
 
         auto tail = items[1..$];
-        writeln(" List.run: ", head, " : ", tail);
+        trace(" List.run: ", head, " : ", tail);
 
         // lists.order 3 4 1 2
         NamePath cmd = head.namePath;
@@ -312,7 +334,7 @@ class SubList : BaseList
 
     override ListItem run(Escopo escopo)
     {
-        writeln("SubList.run: ", this);
+        trace("SubList.run: ", this);
         return this;
     }
 }
@@ -350,7 +372,7 @@ class CommonList : BaseList
 
     override ListItem run(Escopo escopo)
     {
-        writeln("CommonList.run: ", this);
+        trace("CommonList.run: ", this);
         ListItem[] newItems;
 
         foreach(item; this._items)
@@ -445,7 +467,7 @@ class String : ListItem
             result ~= value;
         }
 
-        writeln(" - string " ~ to!string(this) ~ " → " ~ result);
+        trace(" - string " ~ to!string(this) ~ " → " ~ result);
         return new String(result);
     }
 
@@ -511,8 +533,8 @@ class Atom : ListItem
         if (this.repr[0..1] == "$")
         {
             string key = this.repr[1..$];
-            // writeln(" Atom: ", key);
-            // writeln(escopo);
+            // trace(" Atom: ", key);
+            // trace(escopo);
             return escopo[key];
         }
         else {

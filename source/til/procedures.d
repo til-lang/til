@@ -1,8 +1,7 @@
 module til.procedures;
 
-
-import std.stdio;
 import std.conv;
+import std.experimental.logger;
 
 import til.escopo;
 import til.nodes;
@@ -22,7 +21,7 @@ class Procedure
         this.parameters = parameters.atoms;
         this.body = body;
 
-        writeln(
+        trace(
             "proc.define: ", this.name,
             "(", this.parameters, ")",
             ": ", this.body
@@ -31,7 +30,7 @@ class Procedure
 
     ListItem run(Escopo escopo, string name, ListItem[] arguments)
     {
-        writeln(
+        trace(
             "proc.run:"
             ~ this.name ~ "(" ~ to!string(arguments) ~ ") "
         );
@@ -41,7 +40,7 @@ class Procedure
 
         auto parametersCount = parameters.length;
         auto argumentsCount = arguments.length;
-        writeln(
+        trace(
             "  parameters: ", this.parameters,
             " (", parametersCount, ")"
         );
@@ -59,13 +58,13 @@ class Procedure
             // TODO: save parameters as strings already:
             auto parameterName = this.parameters[index].asString;
             procedureScope[parameterName] = argument;
-            writeln(" argument ", parameterName, "=", argument);
+            trace(" argument ", parameterName, "=", argument);
         }
         procedureScope[["extra_args"]] = new SubList(
             arguments[parametersCount..$]
         );
 
-        writeln(" body.run: " ~ to!string(this.body) ~ ";");
+        trace(" body.run: " ~ to!string(this.body) ~ ";");
         return new ExecList(this.body.items).run(procedureScope);
     }
 }

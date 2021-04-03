@@ -2,7 +2,7 @@ module til.grammar;
 
 import std.array;
 import std.conv : to;
-import std.stdio : writeln;
+import std.experimental.logger;
 
 import pegged.grammar;
 
@@ -18,7 +18,7 @@ ExecList analyse(ParseTree p)
         case "Til":
             return analyseTil(p);
         default:
-            writeln("analyse: Not recognized: " ~ p.name);
+            trace("analyse: Not recognized: " ~ p.name);
     }
     assert(0);
 }
@@ -33,7 +33,7 @@ ExecList analyseTil(ParseTree p)
                 auto program = analyseProgram(child);
                 return program;
             default:
-                writeln("analyseTil: Not recognized: " ~ child.name);
+                trace("analyseTil: Not recognized: " ~ child.name);
         }
     }
     throw new InvalidException("Program seems invalid");
@@ -55,7 +55,7 @@ ExecList analyseProgram(ParseTree p)
                 }
                 break;
             default:
-                writeln("Til.List: " ~ child.name);
+                trace("Til.List: " ~ child.name);
                 throw new InvalidException("Program seems invalid");
         }
     }
@@ -94,7 +94,7 @@ ListItem[] analyseListItems(ParseTree p)
                 }
                 break;
             default:
-                writeln("Til.List: " ~ child.name);
+                trace("Til.List: " ~ child.name);
         }
 
         // Right after the first item in the list we

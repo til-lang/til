@@ -1,4 +1,5 @@
 import std.stdio;
+import std.experimental.logger;
 
 import til.escopo;
 import til.exceptions;
@@ -9,6 +10,9 @@ import til.til;
 
 void main()
 {
+    // Enable language debugging:
+    globalLogLevel = LogLevel.trace;
+
     // There must be a better way of doing this:
     string code = "";
     foreach(line; stdin.byLine)
@@ -17,20 +21,20 @@ void main()
     }
 
     auto tree = Til(code);
-    writeln(tree);
+    trace(tree);
 
     ExecList program;
     try {
         program = analyse(tree);
     }
     catch (Exception e) {
-        writeln(e);
-        writeln("==== ERROR ====");
+        trace(e);
+        trace("==== ERROR ====");
     }
-    writeln("======OK=======");
+    trace("======OK=======");
 
     auto escopo = new DefaultEscopo();
     auto returnedValue = escopo.run(program);
-    writeln("returnedValue: ", returnedValue);
-    writeln(escopo);
+    trace("returnedValue: ", returnedValue);
+    trace(escopo);
 }
