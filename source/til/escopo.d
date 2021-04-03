@@ -6,6 +6,7 @@ import std.conv : to;
 import std.experimental.logger;
 import std.string : strip;
 
+import til.exceptions;
 import til.grammar;
 import til.logic;
 import til.nodes;
@@ -19,6 +20,7 @@ class Escopo
 {
     Escopo parent;
     Escopo[string] namespaces;
+    static Escopo[string] availableModules;
 
     ListItem[string] variables;
     ListItem delegate(NamePath, Args)[string] commands;
@@ -177,11 +179,15 @@ class DefaultEscopo : Escopo
 
     override void loadCommands()
     {
+        // Basic commands:
         this.commands["set"] = &this.cmd_set;
         this.commands["if"] = &this.cmd_if;
         this.commands["foreach"] = &this.cmd_foreach;
         this.commands["proc"] = &this.cmd_proc;
         this.commands["return"] = &this.cmd_return;
+
+        // Modules
+        this.commands["import"] = &this.cmd_import;
     }
 
     // Commands:
@@ -337,5 +343,33 @@ class DefaultEscopo : Escopo
         auto returnValue = new SubList(arguments);
         returnValue.scopeExit = ScopeExitCodes.ReturnSuccess;
         return returnValue;
+    }
+
+    // --------------------------------------------
+    Result cmd_import(NamePath path, Args arguments)
+    {
+        // import std as x
+        auto modulePath = arguments[0].asString;
+        string newName = modulePath;
+        if (arguments.length == 3)
+        {
+            auto as = arguments[1].asString;
+            if (as != "as")
+            {
+                throw new InvalidException(
+                    "Invalid syntax for import"
+                );
+            }
+            newName = arguments[2].asString;
+        }
+        tracef("IMPORT %s AS %s", modulePath, newName);
+        auto theModule = this.availableModules.get(modulePath, null);
+        if (theModule is null)
+        {
+            // TODO: inform which module:
+            throw new InvalidException("Module not found");
+        }
+        this.namespaces[newName] = theModule;
+        return new Atom(newName);
     }
 }

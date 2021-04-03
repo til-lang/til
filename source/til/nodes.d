@@ -41,20 +41,8 @@ class ListItem
     ObjectTypes type = ObjectTypes.Undefined;
     ulong defaultLength = 0;
     string objectNAME = "BASEITEM";
-    ScopeExitCodes _scopeExit;
+    ScopeExitCodes scopeExit;
     string[] _namePath;
-
-    @property
-    ScopeExitCodes scopeExit()
-    {
-        return this._scopeExit;
-    }
-    @property
-    final ScopeExitCodes scopeExit(ScopeExitCodes code)
-    {
-        _scopeExit = code;
-        return code;
-    }
 
     @property
     NamePath namePath()

@@ -1,0 +1,6 @@
+import posix.shell as sh
+
+
+foreach {filename} [sh.ls "/usr/lib64"] {
+    std.out $filename
+}
