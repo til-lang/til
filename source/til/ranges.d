@@ -1,20 +1,37 @@
-module til.generators;
+module til.ranges;
 
 import std.conv;
+import std.range;
 
 import til.nodes;
 
+/*
+This Range implements a ForwardRange interface.
+It's not explicitly put here because... well,
+it just breaks everything and I'm in no
+mood right now to find the proper way
+of using it.
 
-class Generator
+Contributions are welcome. I believe the
+right way would be
+class Range : ForwardRange!(ListItem)
+but, again, that breaks things so
+I'm not very sure.
+*/
+class Range
 {
-    bool isInfinite = false;
-
     abstract bool empty();
     abstract ListItem front();
     abstract void popFront();
     abstract ulong length();
-    abstract Generator copy();
+    abstract Range save();
     override abstract string toString();
+
+    // It's actually VERY important that
+    // every new Range you create implement
+    // it's own asString since the resulting
+    // value is used INSIDE the language
+    // itself (not only as as debugging tool).
     abstract string asString();
 
     ListItem consume()
@@ -25,10 +42,8 @@ class Generator
     }
 }
 
-class InfiniteGenerator : Generator
+class InfiniteRange : Range
 {
-    bool isInfinite = true;
-
     override ulong length()
     {
         return 0;
@@ -37,13 +52,24 @@ class InfiniteGenerator : Generator
     {
         return false;
     }
+
+    /*
+       The thing with infinite ranges
+       is that their representation as
+       strings is kind of useless in any
+       scenario so in this particular case
+       it's wiser to simply represent them
+       in a way that helps the user to
+       detect when a unintended
+       conversion was made.
+    */
     override string asString()
     {
         return this.toString();
     }
 }
 
-class StaticItems : Generator
+class StaticItems : Range
 {
     ListItem[] _items;
     ulong currentIndex = 0;
@@ -68,7 +94,7 @@ class StaticItems : Generator
         return to!string(this._items);
     }
 
-    override StaticItems copy()
+    override StaticItems save()
     {
         auto result = new StaticItems(this._items);
         result.currentIndex = this.currentIndex;
@@ -93,29 +119,18 @@ class StaticItems : Generator
     }
 }
 
-class ChainedItems : Generator
+class ChainedItems : Range
 {
-    Generator[] _generators;
-    ulong currentGeneratorIndex = 0;
+    Range[] _generators;
+    ulong currentRangeIndex = 0;
     ulong _length;
 
-    this(Generator[] generators)
+    this(Range[] generators)
     {
         this._generators = generators;
         foreach(g; generators)
         {
-            if (g.isInfinite)
-            {
-                // If g is a INFINITE Generator,
-                // this one is infinite, too.
-                this.isInfinite = true;
-                this._length = 0;
-                break;
-            }
-            else
-            {
-                this._length += g.length;
-            }
+            this._length += g.length;
         }
     }
 
@@ -129,7 +144,7 @@ class ChainedItems : Generator
         foreach(idx, g; _generators)
         {
             s ~= g.toString();
-            if (currentGeneratorIndex == idx)
+            if (currentRangeIndex == idx)
             {
                 s ~= " ←\n";
             }
@@ -142,17 +157,17 @@ class ChainedItems : Generator
         return s;
     }
 
-    Generator currentGenerator()
+    Range currentRange()
     {
-        if (currentGeneratorIndex >= this._generators.length)
+        if (currentRangeIndex >= this._generators.length)
         {
             return null;
         }
-        return this._generators[currentGeneratorIndex];
+        return this._generators[currentRangeIndex];
     }
-    Generator getNextGenerator()
+    Range getNextRange()
     {
-        auto idx = currentGeneratorIndex + 1;
+        auto idx = currentRangeIndex + 1;
         if (idx >= _generators.length)
         {
             return null;
@@ -160,15 +175,15 @@ class ChainedItems : Generator
         return _generators[idx];
     }
 
-    override ChainedItems copy()
+    override ChainedItems save()
     {
-        Generator[] copies;
+        Range[] copies;
         foreach(g; _generators)
         {
-            copies ~= g.copy();
+            copies ~= g.save();
         }
         auto result = new ChainedItems(copies);
-        result.currentGeneratorIndex = this.currentGeneratorIndex;
+        result.currentRangeIndex = this.currentRangeIndex;
         return result;
     }
 
@@ -178,7 +193,7 @@ class ChainedItems : Generator
     }
     override bool empty()
     {
-        auto c = this.currentGenerator;
+        auto c = this.currentRange;
         if (c is null)
         {
             return true;
@@ -189,20 +204,20 @@ class ChainedItems : Generator
         }
         else
         {
-            c = this.getNextGenerator();
+            c = this.getNextRange();
             return (c is null);
         }
     }
     override ListItem front()
     {
-        return currentGenerator.front();
+        return currentRange.front();
     }
     override void popFront()
     {
-        currentGenerator.popFront();
-        if (currentGenerator.empty)
+        currentRange.popFront();
+        if (currentRange.empty)
         {
-            this.currentGeneratorIndex++;
+            this.currentRangeIndex++;
         }
     }
 }

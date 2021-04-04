@@ -8,7 +8,7 @@ import std.experimental.logger;
 
 import til.escopo;
 import til.exceptions;
-import til.generators;
+import til.ranges;
 import til.grammar;
 
 
@@ -94,12 +94,12 @@ class ListItem
     abstract string asString();
 
     ListItem run(Escopo escopo) {return null;}
-    Generator items() {return null;}
+    Range items() {return null;}
 }
 
 class BaseList : ListItem
 {
-    private Generator _items;
+    private Range _items;
 
     this()
     {
@@ -113,7 +113,7 @@ class BaseList : ListItem
     {
         this._items = new StaticItems(items);
     }
-    this(Generator items)
+    this(Range items)
     {
         this._items = items;
     }
@@ -149,13 +149,13 @@ class BaseList : ListItem
     }
 
     @property
-    override Generator items()
+    override Range items()
     {
-        return this._items.copy();
+        return this._items.save();
     }
 
     // Some utilities:
-    static ListItem[] flatten(Generator items)
+    static ListItem[] flatten(Range items)
     {
         ListItem[] flattened;
 
@@ -200,7 +200,7 @@ class ExecList : BaseList
     {
         super(items);
     }
-    this(Generator items)
+    this(Range items)
     {
         super(items);
     }
@@ -295,14 +295,14 @@ class ExecList : BaseList
         return result;
     }
 
-    ListItem runCommand(Generator items, Escopo escopo)
+    ListItem runCommand(Range items, Escopo escopo)
     {
         trace("nodes.runCommand:", items);
         // ----- 2 -----
 
         // Backup the contents, in case this is NOT a command.
         // XXX: this part could be improved, probably...
-        auto backup = items.copy();
+        auto backup = items.save();
 
         // head : tail
         ListItem head = items.consume();
@@ -342,7 +342,7 @@ class SubList : BaseList
     {
         super(items);
     }
-    this(Generator items)
+    this(Range items)
     {
         super(items);
     }
@@ -376,7 +376,7 @@ class CommonList : BaseList
     {
         super(items);
     }
-    this(Generator items)
+    this(Range items)
     {
         super(items);
     }
@@ -399,9 +399,9 @@ class CommonList : BaseList
 
     override ListItem run(Escopo escopo)
     {
-        // TODO: create a CHAIN of Generators.
+        // TODO: create a CHAIN of Ranges.
         trace("CommonList.run: ", this);
-        Generator[] generators;
+        Range[] ranges;
 
         foreach(item; this.items)
         {
@@ -412,25 +412,25 @@ class CommonList : BaseList
             if (items is null)
             {
                 // An Atom or String
-                trace(" CommonList.generators ← new StaticItems(Atom/String)");
+                trace(" CommonList.ranges ← new StaticItems(Atom/String)");
                 trace("  ", result);
-                generators ~= new StaticItems(result);
+                ranges ~= new StaticItems(result);
             }
             else if (result != item)
             // else if (result.scopeExit == ScopeExitCodes.ListSuccess)
             {
                 // ExecLists should return a CommonList
                 // so that we can "expand" the result, here:
-                trace(" CommonList.generators ~= items");
+                trace(" CommonList.ranges ~= items");
                 trace("  ", result, " != ", item);
-                generators ~= items;
+                ranges ~= items;
             }
             else
             {
                 // A proper SubLists, that evaluates to itself:
-                trace(" CommonList.generators ← new StaticItems(SubList)");
+                trace(" CommonList.ranges ← new StaticItems(SubList)");
                 trace("  ", result);
-                generators ~= new StaticItems(result);
+                ranges ~= new StaticItems(result);
             }
         }
 
@@ -443,7 +443,7 @@ class CommonList : BaseList
         anything that not a SubList (we're going to
         choose a new CommonList.)
         */
-        return new CommonList(new ChainedItems(generators));
+        return new CommonList(new ChainedItems(ranges));
     }
 }
 

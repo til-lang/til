@@ -5,7 +5,7 @@ import std.experimental.logger;
 
 import til.escopo;
 import til.exceptions;
-import til.generators;
+import til.ranges;
 import til.nodes;
 
 
@@ -30,7 +30,7 @@ class Procedure
         );
     }
 
-    ListItem run(Escopo escopo, string name, Generator arguments)
+    ListItem run(Escopo escopo, string name, Range arguments)
     {
         trace(
             "proc.run:"

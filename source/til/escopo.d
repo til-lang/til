@@ -7,14 +7,14 @@ import std.experimental.logger;
 import std.string : strip;
 
 import til.exceptions;
-import til.generators;
+import til.ranges;
 import til.grammar;
 import til.logic;
 import til.nodes;
 import til.procedures;
 import til.til;
 
-alias Args = Generator;
+alias Args = Range;
 alias Result = ListItem;
 
 class Escopo
@@ -202,8 +202,8 @@ class DefaultEscopo : Escopo
         auto value = new SubList(arguments);
         // XXX : should we "unroll" the value???
         // PROBABLY NOT.
-        // -- variables["x"] = Generator;
-        // io.out $x  <-- THAT will consume the Generator.
+        // -- variables["x"] = Range;
+        // io.out $x  <-- THAT will consume the Range.
         this[varPath] = value;
         return value;
     }
@@ -315,7 +315,7 @@ class DefaultEscopo : Escopo
                     // XXX: and THAT is a very nice reason why we
                     // should be using D Ranges system: a List content
                     // could be provided dynamically, so we would turn
-                    // this loop generator into an... actual generator.
+                    // this loop range into an... actual range.
                 }
             }
             result = new ExecList(argBody.items).run(loopScope);
@@ -399,7 +399,7 @@ class DefaultEscopo : Escopo
     // TESTES:
     Result cmd_range(NamePath path, Args arguments)
     {
-        class Range : InfiniteGenerator
+        class Range : InfiniteRange
         {
             ulong current = 0;
             ulong limit = 0;
@@ -426,7 +426,7 @@ class DefaultEscopo : Escopo
             {
                 return (current >= limit);
             }
-            override Range copy()
+            override Range save()
             {
                 auto x = new Range(limit);
                 x.current = current;
@@ -437,7 +437,7 @@ class DefaultEscopo : Escopo
         // TODO: use asInteger:
         auto limit = arguments.consume().asString;
         tracef(" range.limit:%s", limit);
-        auto generator = new Range(to!ulong(limit));
-        return new SubList(generator);
+        auto range = new Range(to!ulong(limit));
+        return new SubList(range);
     }
 }

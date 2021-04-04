@@ -2,11 +2,11 @@ module til.logic;
 
 import std.conv;
 
-import til.generators;
+import til.ranges;
 import til.nodes;
 
 
-bool boolean(Generator items)
+bool boolean(Range items)
 {
     /***************************************************
     Now this is a somewhat "clever" implementation
