@@ -4,6 +4,7 @@ import std.conv;
 import std.experimental.logger;
 
 import til.escopo;
+import til.generators;
 import til.nodes;
 
 
@@ -28,7 +29,7 @@ class Procedure
         );
     }
 
-    ListItem run(Escopo escopo, string name, ListItem[] arguments)
+    ListItem run(Escopo escopo, string name, Generator arguments)
     {
         trace(
             "proc.run:"
@@ -53,16 +54,16 @@ class Procedure
             throw new Exception("Not enough parameters");
         }
 
-        foreach(index, argument; arguments[0..parametersCount])
+        // foreach(index, argument; arguments[0..parametersCount])
+        foreach(index, parameter; this.parameters)
         {
             // TODO: save parameters as strings already:
-            auto parameterName = this.parameters[index].asString;
+            auto parameterName = parameter.asString;
+            auto argument = arguments.consume();
             procedureScope[parameterName] = argument;
             trace(" argument ", parameterName, "=", argument);
         }
-        procedureScope[["extra_args"]] = new SubList(
-            arguments[parametersCount..$]
-        );
+        procedureScope[["extra_args"]] = new SubList(arguments);
 
         trace(" body.run: " ~ to!string(this.body) ~ ";");
         return new ExecList(this.body.items).run(procedureScope);

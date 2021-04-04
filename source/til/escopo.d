@@ -7,13 +7,14 @@ import std.experimental.logger;
 import std.string : strip;
 
 import til.exceptions;
+import til.generators;
 import til.grammar;
 import til.logic;
 import til.nodes;
 import til.procedures;
 import til.til;
 
-alias Args = ListItem[];
+alias Args = Generator;
 alias Result = ListItem;
 
 class Escopo
@@ -81,8 +82,7 @@ class Escopo
         foreach(name, value; variables)
         {
             r ~= "  " ~ name ~ "=<"
-                 ~ to!string(value) ~ ">"
-                 ~ "(" ~ to!string(value.length) ~")\n";
+                 ~ to!string(value) ~ ">";
         }
         r ~= ".";
         return r;
@@ -194,9 +194,13 @@ class DefaultEscopo : Escopo
     Result cmd_set(NamePath path, Args arguments)
     {
         // TODO: navigate through arguments[0].namePath...
-        auto varPath = arguments[0].namePath;
+        auto varPath = arguments.consume().namePath;
         trace(" set: ", arguments);
-        ListItem value = new SubList(arguments[1..$]);
+        auto value = new SubList(arguments);
+        // XXX : should we "unroll" the value???
+        // PROBABLY NOT.
+        // -- variables["x"] = Generator;
+        // io.out $x  <-- THAT will consume the Generator.
         this[varPath] = value;
         return value;
     }
@@ -206,12 +210,19 @@ class DefaultEscopo : Escopo
         /*
         Disclaimer: this is kind of shitty. Beware.
         */
-        auto condition = arguments[0];
-        ListItem thenBody = arguments[1];
+        auto condition = arguments.consume();
+        ListItem thenBody = arguments.consume();
         ListItem elseBody;
-        if (arguments.length >= 4)
+        if (!arguments.empty)
         {
-            elseBody = arguments[3];
+            auto elseWord = arguments.consume().asString;
+            if (elseWord != "else")
+            {
+                throw new InvalidException(
+                    "Invalid format for if/then/else clause"
+                );
+            }
+            elseBody = arguments.consume();
             trace("   else ", elseBody);
         }
         else
@@ -224,14 +235,18 @@ class DefaultEscopo : Escopo
         // Run the condition:
         bool result = false;
         auto conditionItems = BaseList.flatten(condition.items);
+        trace(" → if ", conditionItems, " then ", thenBody);
         auto conditions = new CommonList(conditionItems).run(this);
+        trace(" -→ if ", conditions, " then ", thenBody);
         result = boolean(conditions.items);
+        trace(" --- result: ", result);
         if (result)
         {
             return new ExecList(thenBody.items).run(this);
         }
         else if (elseBody !is null)
         {
+            trace(" elseBody.items: ", elseBody.items);
             return new ExecList(elseBody.items).run(this);
         }
         else
@@ -246,9 +261,9 @@ class DefaultEscopo : Escopo
         /*
         DISCLAIMER: this code is very (VERY) inefficient.
         */
-        auto argNames = arguments[0];
-        auto argRange = arguments[1];
-        auto argBody = arguments[2];
+        auto argNames = arguments.consume();
+        auto argRange = arguments.consume();
+        auto argBody = arguments.consume();
 
         trace(" FOREACH ", argNames, " in ", argRange, ":");
         trace("         ", argBody);
@@ -272,28 +287,33 @@ class DefaultEscopo : Escopo
             auto loopScope = new Escopo(this);
             trace(" item: ", item);
             auto subItems = item.items;
-            foreach(index, name; names)
+            if (subItems is null)
             {
-                trace("   name: ", name);
-                if (subItems is null)
+                foreach(index, name; names)
                 {
+                    trace("   name: ", name);
                     loopScope[name.namePath] = item;
                 }
-                else
+            }
+            else
+            {
+                ListItem[] plainItems = BaseList.flatten(subItems);
+                foreach(index, name; names)
                 {
-                    ListItem[] plainItems = BaseList.flatten(subItems);
+                    trace("   name: ", name);
+                    trace("   plainItems: ", plainItems);
                     loopScope[name.namePath] = plainItems[index];
-                }
 
-                // TODO: analyse each result.scopeExit!
-                // TODO (later): optionally **inline** loops.
-                //  That should be achieved simply putting all
-                // lists run with its own loopScope into a single
-                // ExecList and running this one.
-                // XXX: and THAT is a very nice reason why we
-                // should be using D Ranges system: a List content
-                // could be provided dynamically, so we would turn
-                // this loop generator into an... actual generator.
+                    // TODO: analyse each result.scopeExit!
+                    // TODO (later): optionally **inline** loops.
+                    //  That should be achieved simply putting all
+                    // lists run with its own loopScope into a single
+                    // ExecList and running this one.
+                    // XXX: and THAT is a very nice reason why we
+                    // should be using D Ranges system: a List content
+                    // could be provided dynamically, so we would turn
+                    // this loop generator into an... actual generator.
+                }
             }
             result = new ExecList(argBody.items).run(loopScope);
             trace(loopScope);
@@ -305,10 +325,10 @@ class DefaultEscopo : Escopo
     Result cmd_proc(NamePath cmd, Args arguments)
     {
         // proc name {parameters} {body}
-        ListItem arg0 = arguments[0];
+        ListItem arg0 = arguments.consume();
         string name = arg0.asString;
-        ListItem parameters = arguments[1];
-        ListItem body = arguments[2];
+        ListItem parameters = arguments.consume();
+        ListItem body = arguments.consume();
 
         this.procedures[name] = new Procedure(
             name,
@@ -349,18 +369,18 @@ class DefaultEscopo : Escopo
     Result cmd_import(NamePath path, Args arguments)
     {
         // import std as x
-        auto modulePath = arguments[0].asString;
+        auto modulePath = arguments.consume().asString;
         string newName = modulePath;
-        if (arguments.length == 3)
+        if (!arguments.empty)
         {
-            auto as = arguments[1].asString;
+            auto as = arguments.consume().asString;
             if (as != "as")
             {
                 throw new InvalidException(
                     "Invalid syntax for import"
                 );
             }
-            newName = arguments[2].asString;
+            newName = arguments.consume().asString;
         }
         tracef("IMPORT %s AS %s", modulePath, newName);
         auto theModule = this.availableModules.get(modulePath, null);

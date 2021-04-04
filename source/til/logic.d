@@ -1,12 +1,12 @@
 module til.logic;
 
 import std.conv;
-import std.stdio;
 
+import til.generators;
 import til.nodes;
 
 
-bool boolean(ListItem[] items)
+bool boolean(Generator items)
 {
     /***************************************************
     Now this is a somewhat "clever" implementation
@@ -30,17 +30,16 @@ bool boolean(ListItem[] items)
     ListItem lastItem;
     bool currentResult = false;
 
-    bool saver(ulong index, ListItem x)
+    bool saver(string s, ListItem x)
     {
         lastItem = x;
         return false;
     }
-    bool delegate(ulong, ListItem) currentHandler = &saver;
+    bool delegate(string s, ListItem) currentHandler = &saver;
 
-    bool do_gte(ulong index, ListItem t2)
+    bool do_gte(string s, ListItem t2)
     {
         auto t1 = lastItem;
-        writeln("  gte ", t1, " ", t2);
         currentHandler = &saver;
 
         // TODO: use asInteger, asFloat and asString
@@ -48,15 +47,14 @@ bool boolean(ListItem[] items)
         lastItem = null;
         return false;
     }
-    bool gte(ulong index, ListItem x)
+    bool gte(string s, ListItem x)
     {
         currentHandler = &do_gte;
         return false;
     }
-    bool do_lt(ulong index, ListItem t2)
+    bool do_lt(string s, ListItem t2)
     {
         auto t1 = lastItem;
-        writeln("  lt ", t1, " ", t2);
         currentHandler = &saver;
 
         // TODO: use asInteger, asFloat and asString
@@ -64,45 +62,42 @@ bool boolean(ListItem[] items)
         lastItem = null;
         return false;
     }
-    bool lt(ulong index, ListItem x)
+    bool lt(string s, ListItem x)
     {
         currentHandler = &do_lt;
         return false;
     }
-    bool and(ulong index, ListItem x)
+    bool and(string s, ListItem x)
     {
-        if (currentResult == false)
+        if (currentResult == true)
         {
-            return false;
+            // Consume the `&&`:
+            items.popFront();
+            currentResult = boolean(items);
         }
-        else
-        {
-            currentResult = boolean(items[index+1..$]);
-            return true;
-        }
+        return true;
     }
 
-    auto l = new SubList(items);
-    foreach(index, atom; l.atoms)
+    auto index = 0;
+    foreach(item; items)
     {
-        string s = atom.asString;
+        string s = item.asString;
         bool ended = false;
         switch(s)
         {
             case ">=":
-                ended = gte(index, atom);
+                ended = gte(s, item);
                 break;
             case "<":
-                ended = lt(index, atom);
+                ended = lt(s, item);
                 break;
             case "&&":
-                ended = and(index, atom);
+                ended = and(s, item);
                 break;
             default:
-                ended = currentHandler(index, atom);
+                ended = currentHandler(s, item);
         }
         if (ended) break;
     }
-    writeln("  boolean ", items, " returning ", currentResult);
     return currentResult;
 }

@@ -7,13 +7,16 @@ import til.grammar;
 import til.nodes;
 import til.til;
 
+// Modules:
 import til.std.io;
 import til.libs.posix.shell;
+
 
 void main()
 {
     // Enable language debugging:
     globalLogLevel = LogLevel.trace;
+    // globalLogLevel = LogLevel.warning;
 
     // There must be a better way of doing this:
     string code = "";

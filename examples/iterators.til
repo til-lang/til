@@ -12,3 +12,7 @@ foreach {fname} {[ls]} {
 foreach {filename} {[sh.ls "/usr/lib64"]} {
     $filename |> io.out
 }
+
+ls |> io.out
+ls |> io.err
+{1 2 3} |> io.out

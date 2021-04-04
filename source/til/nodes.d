@@ -1,13 +1,14 @@
 module til.nodes;
 
 
+import std.algorithm.iteration : map, joiner;
 import std.array : join;
 import std.conv : to;
 import std.experimental.logger;
-import std.algorithm.iteration : map, joiner;
 
 import til.escopo;
 import til.exceptions;
+import til.generators;
 import til.grammar;
 
 
@@ -40,7 +41,6 @@ class ListItem
 {
     ObjectTypes type = ObjectTypes.Undefined;
     ulong defaultLength = 0;
-    string objectNAME = "BASEITEM";
     ScopeExitCodes scopeExit;
     string[] _namePath;
 
@@ -91,29 +91,35 @@ class ListItem
 
     // Stubs:
     ulong length() {return defaultLength;}
-    string asString() {return objectNAME;}
+    abstract string asString();
 
     ListItem run(Escopo escopo) {return null;}
-    ListItem[] items() {return null;}
+    Generator items() {return null;}
 }
 
 class BaseList : ListItem
 {
-    ListItem[] _items;
+    private Generator _items;
 
     this()
     {
+        this._items = new StaticItems([]);
     }
     this(ListItem item)
     {
-        this._items ~= item;
+        this._items = new StaticItems([item]);
     }
     this(ListItem[] items)
+    {
+        this._items = new StaticItems(items);
+    }
+    this(Generator items)
     {
         this._items = items;
     }
 
     // Operators:
+    /*
     ListItem opIndex(int i)
     {
         return _items[i];
@@ -134,22 +140,24 @@ class BaseList : ListItem
     {
         return this.length;
     }
+    */
 
     // Methods:
     override string asString()
     {
-        return to!string(this._items
+        return to!string(this.items
             .map!(x => to!string(x))
             .joiner(" "));
     }
 
-    override ListItem[] items()
+    @property
+    override Generator items()
     {
-        return this._items;
+        return this._items.copy();
     }
 
     // Some utilities:
-    static ListItem[] flatten(ListItem[] items)
+    static ListItem[] flatten(Generator items)
     {
         ListItem[] flattened;
 
@@ -194,6 +202,10 @@ class ExecList : BaseList
     {
         super(items);
     }
+    this(Generator items)
+    {
+        super(items);
+    }
 
     /*
      * A ExecList is how we represent both the program
@@ -222,7 +234,7 @@ class ExecList : BaseList
         // ----- 1 -----
         ListItem result;
 
-        foreach(item; this._items)
+        foreach(item; this.items)
         {
             // Each item is supposed to be a CommonList.
             // So running a CommonList returns a SubList with
@@ -249,7 +261,7 @@ class ExecList : BaseList
                 // TODO: make it raise the Exception.
                 result = new SubList();
             }
-            trace(result.scopeExit);
+            trace("result: ", result, " (", result.scopeExit, ")");
 
             final switch(result.scopeExit)
             {
@@ -280,16 +292,18 @@ class ExecList : BaseList
         // Return the result of the last "expression":
         // XXX : if nothing went wrong, it should be a ListSuccess.
         result.scopeExit = ScopeExitCodes.ListSuccess;
+        trace("ExecLists.RETURNING ", result);
         return result;
     }
 
-    ListItem runCommand(ListItem[] items, Escopo escopo)
+    ListItem runCommand(Generator items, Escopo escopo)
     {
         trace("nodes.runCommand:", items);
         // ----- 2 -----
-        ListItem head = items[0];
 
-        auto tail = items[1..$];
+        // head : tail
+        ListItem head = items.consume();
+        auto tail = items;
         trace(" List.run: ", head, " : ", tail);
 
         // lists.order 3 4 1 2
@@ -324,6 +338,10 @@ class SubList : BaseList
     {
         super(items);
     }
+    this(Generator items)
+    {
+        super(items);
+    }
 
     // -----------------------------
     // Utilities and operators:
@@ -354,6 +372,10 @@ class CommonList : BaseList
     {
         super(items);
     }
+    this(Generator items)
+    {
+        super(items);
+    }
 
     override string toString()
     {
@@ -373,10 +395,12 @@ class CommonList : BaseList
 
     override ListItem run(Escopo escopo)
     {
+        // TODO: create a CHAIN of Generators.
         trace("CommonList.run: ", this);
-        ListItem[] newItems;
+        Generator[] generators;
 
-        foreach(item; this._items)
+
+        foreach(item; this.items)
         {
             auto result = item.run(escopo);
             // TODO: evaluate result.scopeExit.
@@ -384,18 +408,18 @@ class CommonList : BaseList
             if (items is null)
             {
                 // An Atom or String
-                newItems ~= result;
+                generators ~= new StaticItems(result);
             }
             else if (result != item)
             {
                 // ExecLists should return a CommonList
                 // so that we can "expand" the result, here:
-                newItems ~= items;
+                generators ~= items;
             }
             else
             {
                 // A proper SubLists, that evaluates to itself:
-                newItems ~= result;
+                generators ~= new StaticItems(result);
             }
         }
 
@@ -408,7 +432,7 @@ class CommonList : BaseList
         anything that not a SubList (we're going to
         choose a new CommonList.)
         */
-        return new CommonList(newItems);
+        return new CommonList(new ChainedItems(generators));
     }
 }
 
