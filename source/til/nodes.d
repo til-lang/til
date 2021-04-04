@@ -145,9 +145,7 @@ class BaseList : ListItem
     // Methods:
     override string asString()
     {
-        return to!string(this.items
-            .map!(x => to!string(x))
-            .joiner(" "));
+        return this.items.asString;
     }
 
     @property
@@ -284,7 +282,8 @@ class ExecList : BaseList
                 // -----------------
                 // List execution:
                 case ScopeExitCodes.ListSuccess:
-                    result.scopeExit = ScopeExitCodes.Proceed;
+                    // TESTE:
+                    // result.scopeExit = ScopeExitCodes.Proceed;
                     return result;
             }
         }
@@ -301,6 +300,10 @@ class ExecList : BaseList
         trace("nodes.runCommand:", items);
         // ----- 2 -----
 
+        // Backup the contents, in case this is NOT a command.
+        // XXX: this part could be improved, probably...
+        auto backup = items.copy();
+
         // head : tail
         ListItem head = items.consume();
         auto tail = items;
@@ -315,7 +318,8 @@ class ExecList : BaseList
         {
             // return items[0];  <-- working, but horrendous.
             // XXX: should it be a CommonList, maybe?
-            return new SubList(items);
+            // BUG: HEEEY! We consumed the head, already!
+            return new SubList(backup);
         }
         else
         {
@@ -399,26 +403,33 @@ class CommonList : BaseList
         trace("CommonList.run: ", this);
         Generator[] generators;
 
-
         foreach(item; this.items)
         {
+            trace(" - item:", item);
             auto result = item.run(escopo);
             // TODO: evaluate result.scopeExit.
             auto items = result.items();
             if (items is null)
             {
                 // An Atom or String
+                trace(" CommonList.generators ← new StaticItems(Atom/String)");
+                trace("  ", result);
                 generators ~= new StaticItems(result);
             }
             else if (result != item)
+            // else if (result.scopeExit == ScopeExitCodes.ListSuccess)
             {
                 // ExecLists should return a CommonList
                 // so that we can "expand" the result, here:
+                trace(" CommonList.generators ~= items");
+                trace("  ", result, " != ", item);
                 generators ~= items;
             }
             else
             {
                 // A proper SubLists, that evaluates to itself:
+                trace(" CommonList.generators ← new StaticItems(SubList)");
+                trace("  ", result);
                 generators ~= new StaticItems(result);
             }
         }
@@ -498,9 +509,7 @@ class String : ListItem
 
     override string asString()
     {
-        return to!string(this.parts
-            .map!(x => to!string(x))
-            .joiner(""));
+        return to!string(this.parts.joiner(""));
     }
 }
 
@@ -517,6 +526,11 @@ class Atom : ListItem
     this(string s)
     {
         this.repr = s;
+    }
+    this(ulong i)
+    {
+        this.integer = cast(int) i;
+        this._repr = to!string(i);
     }
 
     // Utilities and operators:

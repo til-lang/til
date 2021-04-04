@@ -1,0 +1,10 @@
+import std.io as io
+
+range 50000 |> io.out
+io.out "---"
+"===" |> io.out
+
+foreach x {[range 70000]} {
+    io.out $x
+}
+io.out "---"

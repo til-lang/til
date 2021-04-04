@@ -188,6 +188,9 @@ class DefaultEscopo : Escopo
 
         // Modules
         this.commands["import"] = &this.cmd_import;
+
+        // Tests:
+        this.commands["range"] = &this.cmd_range;
     }
 
     // Commands:
@@ -391,5 +394,50 @@ class DefaultEscopo : Escopo
         }
         this.namespaces[newName] = theModule;
         return new Atom(newName);
+    }
+
+    // TESTES:
+    Result cmd_range(NamePath path, Args arguments)
+    {
+        class Range : InfiniteGenerator
+        {
+            ulong current = 0;
+            ulong limit = 0;
+
+            this(ulong limit)
+            {
+                this.limit = limit;
+            }
+
+            override string toString()
+            {
+                return "range(0," ~ to!string(limit) ~ ")";
+            }
+
+            override void popFront()
+            {
+                current++;
+            }
+            override ListItem front()
+            {
+                return new Atom(current);
+            }
+            override bool empty()
+            {
+                return (current >= limit);
+            }
+            override Range copy()
+            {
+                auto x = new Range(limit);
+                x.current = current;
+                return x;
+            }
+        }
+
+        // TODO: use asInteger:
+        auto limit = arguments.consume().asString;
+        tracef(" range.limit:%s", limit);
+        auto generator = new Range(to!ulong(limit));
+        return new SubList(generator);
     }
 }

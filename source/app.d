@@ -15,8 +15,14 @@ import til.libs.posix.shell;
 void main()
 {
     // Enable language debugging:
-    globalLogLevel = LogLevel.trace;
-    // globalLogLevel = LogLevel.warning;
+    debug
+    {
+        globalLogLevel = LogLevel.trace;
+    }
+    else
+    {
+        globalLogLevel = LogLevel.warning;
+    }
 
     // There must be a better way of doing this:
     string code = "";

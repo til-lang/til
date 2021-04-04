@@ -15,12 +15,31 @@ class Generator
     abstract ulong length();
     abstract Generator copy();
     override abstract string toString();
+    abstract string asString();
 
     ListItem consume()
     {
         ListItem x = this.front;
         this.popFront();
         return x;
+    }
+}
+
+class InfiniteGenerator : Generator
+{
+    bool isInfinite = true;
+
+    override ulong length()
+    {
+        return 0;
+    }
+    override bool empty()
+    {
+        return false;
+    }
+    override string asString()
+    {
+        return this.toString();
     }
 }
 
@@ -40,6 +59,10 @@ class StaticItems : Generator
         this._length = items.length;
     }
 
+    override string asString()
+    {
+        return this.toString();
+    }
     override string toString()
     {
         return to!string(this._items);
@@ -96,6 +119,10 @@ class ChainedItems : Generator
         }
     }
 
+    override string asString()
+    {
+        return this.front.asString;
+    }
     override string toString()
     {
         string s = "ChainedItems(\n";

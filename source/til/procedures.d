@@ -4,6 +4,7 @@ import std.conv;
 import std.experimental.logger;
 
 import til.escopo;
+import til.exceptions;
 import til.generators;
 import til.nodes;
 
@@ -39,29 +40,23 @@ class Procedure
 
         auto procedureScope = new Escopo(escopo);
 
-        auto parametersCount = parameters.length;
-        auto argumentsCount = arguments.length;
-        trace(
-            "  parameters: ", this.parameters,
-            " (", parametersCount, ")"
-        );
-        if (argumentsCount < parametersCount)
-        {
-            // TODO:
-            // ==========
-            // = ARITY! =
-            // ==========
-            throw new Exception("Not enough parameters");
-        }
-
-        // foreach(index, argument; arguments[0..parametersCount])
         foreach(index, parameter; this.parameters)
         {
             // TODO: save parameters as strings already:
             auto parameterName = parameter.asString;
-            auto argument = arguments.consume();
-            procedureScope[parameterName] = argument;
-            trace(" argument ", parameterName, "=", argument);
+            if (arguments.empty)
+            {
+                throw new InvalidException(
+                    "Wrong number of parameters to command "
+                    ~ name
+                );
+            }
+            else
+            {
+                auto argument = arguments.consume();
+                procedureScope[parameterName] = argument;
+                trace(" argument ", parameterName, "=", argument);
+            }
         }
         procedureScope[["extra_args"]] = new SubList(arguments);
 

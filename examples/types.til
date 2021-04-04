@@ -1,7 +1,16 @@
-set bool true
-set bool false
-set bool yes
-set bool no
+import std.io as io
 
-set integer 1234
-set float 12.34
+set bool true |> io.out
+set bool false |> io.out
+set bool yes |> io.out
+set bool no |> io.out
+
+set integer 1234 |> io.out
+set float 12.34 |> io.out
+
+# Idea: create a command to inspect things.
+# set integer 1234 |> debug.inspect
+# Atom:
+#   repr "1234"
+#   integer 1234
+#   floatingPoint 1234.0

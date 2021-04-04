@@ -1,3 +1,5 @@
+import std.io as io
+
 proc pass {a b} {
     return $a $b
 }
@@ -16,6 +18,8 @@ proc receive4 {a b c d} {
     return "a:$a b:$b c:$c d:$d"
 }
 
-receive3 [list] 33 44
-receive4 [open_list] cc dd
-receive4 [list] 33 44
+receive3 [list] 33 44 |> io.out
+receive4 [open_list] cc dd |> io.out
+receive4 [pass aa bb] 33 44 |> io.out
+io.out "Expected: wrong number of parameters:"
+receive4 [list] 33 44 |> io.out

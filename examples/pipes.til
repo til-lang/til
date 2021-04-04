@@ -1,3 +1,5 @@
+import std.io as io
+
 proc f {x} {
     return "-$x-"
 }
@@ -7,3 +9,4 @@ proc s {x} {
 }
 
 set result [f 123 |> s]
+io.out $result
