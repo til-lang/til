@@ -1,11 +1,7 @@
 import std.io as io
+import std.math as math
 
-set y 5
-
-foreach x {[range 10]} {
-    if {($x < $y) || (2 * $x) < $y + 1} {
-        io.out "a"
-    } else {
-        io.out "b"
-    }
-}
+math.run 1 * 0 |> io.out
+math.run 1 + 0 |> io.out
+math.run 4 / 2 |> io.out
+math.run 5 - 2 |> io.out

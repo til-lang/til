@@ -58,7 +58,7 @@ class Procedure
                 trace(" argument ", parameterName, "=", argument);
             }
         }
-        procedureScope[["extra_args"]] = new SubList(arguments);
+        procedureScope[["args"]] = new SubList(arguments);
 
         trace(" body.run: " ~ to!string(this.body) ~ ";");
         return new ExecList(this.body.items).run(procedureScope);

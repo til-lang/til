@@ -94,6 +94,7 @@ class ListItem
     // Stubs:
     ulong length() {return defaultLength;}
     abstract string asString();
+    abstract ListItem inverted();
 
     ListItem run(Escopo escopo) {return null;}
     Range items() {return null;}
@@ -120,34 +121,17 @@ class BaseList : ListItem
         this._items = items;
     }
 
-    // Operators:
-    /*
-    ListItem opIndex(int i)
-    {
-        return _items[i];
-    }
-    ListItem opIndex(ulong i)
-    {
-        return _items[i];
-    }
-    ListItem[] opSlice(ulong start, ulong end)
-    {
-        return _items[start..end];
-    }
-    override ulong length()
-    {
-        return _items.length;
-    }
-    @property ulong opDollar()
-    {
-        return this.length;
-    }
-    */
-
     // Methods:
     override string asString()
     {
         return this.items.asString;
+    }
+
+    override ListItem inverted()
+    {
+        throw new Exception("Cannot invert a List!");
+        // XXX : or can?
+        // XXX : should we?
     }
 
     @property
@@ -259,7 +243,7 @@ class ExecList : BaseList
                 );
                 */
                 // TESTE:
-                // TODO: make it raise the Exception.
+                // TODO: make it throw the Exception.
                 result = new SubList();
             }
             trace("result: ", result, " (", result.scopeExit, ")");
@@ -512,6 +496,21 @@ class String : ListItem
     {
         return to!string(this.parts.joiner(""));
     }
+
+    override ListItem inverted()
+    {
+        string newRepr;
+        string repr = this.asString;
+        if (repr[0] == '-')
+        {
+            newRepr = repr[1..$];
+        }
+        else
+        {
+            newRepr = "-" ~ repr;
+        }
+        return new String(newRepr);
+    }
 }
 
 class Atom : ListItem
@@ -533,11 +532,17 @@ class Atom : ListItem
         this(s);
         this.type = t;
     }
-    this(ulong i)
+    this(int i)
     {
-        this.integer = cast(int) i;
+        this.integer = i;
         this._repr = to!string(i);
         this.type = ObjectTypes.Integer;
+    }
+    this(float f)
+    {
+        this.floatingPoint = f;
+        this._repr = to!string(f);
+        this.type = ObjectTypes.Float;
     }
     this(bool b)
     {
@@ -583,13 +588,29 @@ class Atom : ListItem
 
     override ListItem run(Escopo escopo)
     {
-        if (this.repr[0..1] == "$")
+        string repr = this.repr;
+        char firstChar = repr[0];
+        if (firstChar == '$')
         {
-            trace(" Atom.run: scope: ", escopo);
-            string key = this.repr[1..$];
-            // trace(" Atom: ", key);
-            // trace(escopo);
+            string key = repr[1..$];
             return escopo[key];
+        }
+        else if (repr.length >= 3 && firstChar == '-' && repr[1] == '$')
+        {
+            string key = repr[2..$];
+            // set x 10
+            // set y -$x
+            //  → set y -10
+            auto value = escopo[key];
+            /*
+            It's not a good idea to simply return
+            a `new Atom(value.repr)` because we
+            don't want to lose information
+            about the value, as its
+            integer or float
+            values...
+            */
+            return value.inverted;
         }
         else {
             return this;
@@ -599,5 +620,21 @@ class Atom : ListItem
     override string asString()
     {
         return this.repr;
+    }
+
+    override ListItem inverted()
+    {
+        switch(this.type)
+        {
+            case ObjectTypes.Integer:
+                return new Atom(-this.integer);
+            case ObjectTypes.Float:
+                return new Atom(-this.floatingPoint);
+            default:
+                throw new Exception(
+                    "Atom: don't know how to invert a "
+                    ~ to!string(this.type)
+                );
+        }
     }
 }

@@ -458,10 +458,10 @@ class DefaultEscopo : Escopo
     {
         class Range : InfiniteRange
         {
-            ulong current = 0;
-            ulong limit = 0;
+            int current = 0;
+            int limit = 0;
 
-            this(ulong limit)
+            this(int limit)
             {
                 this.limit = limit;
             }
@@ -494,7 +494,7 @@ class DefaultEscopo : Escopo
         // TODO: use asInteger:
         auto limit = arguments.consume().asString;
         tracef(" range.limit:%s", limit);
-        auto range = new Range(to!ulong(limit));
+        auto range = new Range(to!int(limit));
         return new SubList(range);
     }
 }
