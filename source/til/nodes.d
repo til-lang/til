@@ -29,9 +29,11 @@ enum ObjectTypes
     String,
     Name,
     Atom,
+    Parentesis,
+    Operator,
     Float,
     Integer,
-    Boolean
+    Boolean,
 }
 
 
@@ -283,15 +285,12 @@ class ExecList : BaseList
                 // -----------------
                 // List execution:
                 case ScopeExitCodes.ListSuccess:
-                    // TESTE:
-                    // result.scopeExit = ScopeExitCodes.Proceed;
+                    result.scopeExit = ScopeExitCodes.Proceed;
                     return result;
             }
         }
 
         // Return the result of the last "expression":
-        // XXX : if nothing went wrong, it should be a ListSuccess.
-        result.scopeExit = ScopeExitCodes.ListSuccess;
         trace("ExecLists.RETURNING ", result);
         return result;
     }
@@ -529,22 +528,29 @@ class Atom : ListItem
     {
         this._repr = s;
     }
+    this(string s, ObjectTypes t)
+    {
+        this(s);
+        this.type = t;
+    }
     this(ulong i)
     {
         this.integer = cast(int) i;
         this._repr = to!string(i);
+        this.type = ObjectTypes.Integer;
     }
     this(bool b)
     {
         this.boolean = b;
         this.integer = to!int(b);
         this._repr = to!string(b);
+        this.type = ObjectTypes.Boolean;
     }
 
     // Utilities and operators:
     override string toString()
     {
-        return ":" ~ this.repr;
+        return ":" ~ this.repr ~ "(" ~ to!string(this.type) ~ ")";
     }
     string debugRepr()
     {

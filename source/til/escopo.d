@@ -150,6 +150,7 @@ class Escopo
         auto handler = this.getCommand(path);
         if (handler is null)
         {
+            trace("NO COMMAND FOUND FOR ", path);
             return null;
         }
         else
@@ -276,8 +277,7 @@ class DefaultEscopo : Escopo
         }
         else
         {
-            // XXX : it seems coherent, but is it correct?
-            return new SubList(arguments);
+            return new SubList();
         }
     }
 

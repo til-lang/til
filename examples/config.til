@@ -8,7 +8,7 @@ set theme.name "Industrial"
 set hour 19
 std.out $hour >= 5
 
-if {$hour >= 6 && $hour < 18} {
+if {1 > 2 || $hour >= 6 && $hour < 18} {
     set theme.mode "light"
 } else {
     set theme.mode "dark"

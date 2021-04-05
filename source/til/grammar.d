@@ -181,20 +181,27 @@ Atom analyseAtom(ParseTree p)
                 break;
             case "Til.Name":
                 atom.namePath = extractAtomNamePath(child);
+                atom.type = ObjectTypes.Name;
                 break;
             case "Til.Float":
                 atom.floatingPoint = to!float(str);
+                atom.type = ObjectTypes.Float;
                 break;
             case "Til.Integer":
                 atom.integer = to!int(str);
+                atom.type = ObjectTypes.Integer;
                 break;
             case "Til.Boolean":
                 atom.boolean = (
                     child.children[0].name == "Til.BooleanTrue"
                 );
+                atom.type = ObjectTypes.Boolean;
                 break;
             case "Til.Parentesis":
+                atom.type = ObjectTypes.Parentesis;
+                break;
             case "Til.Operator":
+                atom.type = ObjectTypes.Operator;
                 break;
         }
     }

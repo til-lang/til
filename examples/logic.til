@@ -1,0 +1,46 @@
+import std.io as io
+
+set a 1
+set b 2
+set c 3
+
+if {1 > 2} {
+    io.out "WRONG"
+}
+if {1 < 2} {
+    io.out "1 < 2"
+}
+if {$a > $b} {
+    io.out "WRONG"
+}
+if {$a < $b} {
+    io.out "a < b"
+    io.out " = $a < $b"
+}
+
+if {$a > $b || $a > 10 || $a < $b} {
+    io.out "three OR is okay"
+}
+if {$a > $b || $a < $b && 1 > 2} {
+    io.out "OR+AND is WRONG"
+} else {
+    io.out "OR+AND is okay"
+}
+
+if {($a < $b && 1 > 2) || $a < $b} {
+    io.out "Parentesis is okay"
+} else {
+    io.out "Parentesis is WRONG"
+}
+
+if {(($a < $b && 55 > 57) || ($a < $b && (97 > 98 || 12 < 34)))} {
+    io.out "Lots of parentesis is okay"
+} else {
+    io.out "Lots of parentesis is WRONG"
+}
+
+if {(($a < $b && 55 > 57) || ($a < $b && (97 < 98 && 12 > 34)))} {
+    io.out "Second lot of parentesis is WRONG"
+} else {
+    io.out "Second lot of parentesis is okay"
+}

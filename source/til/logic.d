@@ -6,7 +6,6 @@ import std.experimental.logger;
 import til.ranges;
 import til.nodes;
 
-
 bool boolean(Range items)
 {
     /***************************************************
@@ -28,17 +27,23 @@ bool boolean(Range items)
     (Interesting to note: it seems stack-based languages
     must evaluate ALL the conditions, always...)
     ****************************************************/
-    ListItem lastItem;
-    bool currentResult = false;
 
     trace(" BOOLEAN ANALYSIS: ", items);
 
-    void saver(string s, ListItem x)
+    ListItem lastItem;
+    bool currentResult = false;
+    void delegate(string, ListItem) currentHandler;
+    bool delegate(ListItem, ListItem)[string] operators;
+
+
+    final void defaultHandler(string s, ListItem x)
     {
+        trace("  defaultHandler ", s);
+        trace( "saving item");
         lastItem = x;
+        return;
     }
-    void delegate(string, ListItem) currentHandler = &saver;
-    void delegate(string, ListItem)[string] handlers;
+    currentHandler = &defaultHandler;
 
     /*
     The most usual way of implementing an operation handler
@@ -50,48 +55,57 @@ bool boolean(Range items)
     sum-with-one to `2`, resulting
     a `3`.
     */
-    void gte(string s, ListItem op)
+
+    // -----------------------------------------------
+    void operatorHandler(string operatorName, ListItem opItem)
     {
         ListItem t1 = lastItem;
-        void do_gte(string s, ListItem t2)
+        void operate(string strT2, ListItem t2)
         {
-            currentHandler = &saver;
+            auto newResult = {
+                switch(operatorName)
+                {
+                    // -----------------------------------------------
+                    // Operators implementations:
+                    // TODO: use asInteger, asFloat and asString
+                    // TODO: this could be entirely made at compile
+                    // time, I assume...
+                    case "<":
+                        return to!int(t1.asString) < to!int(t2.asString);
+                    case ">":
+                        return to!int(t1.asString) > to!int(t2.asString);
+                    case ">=":
+                        return to!int(t1.asString) >= to!int(t2.asString);
+                    case "<=":
+                        return to!int(t1.asString) <= to!int(t2.asString);
+                    default:
+                        throw new Exception(
+                            "Unknown operator: "
+                            ~ operatorName
+                        );
+                }
+            }();
+            trace(" newResult: ", to!string(newResult));
 
-            // TODO: use asInteger, asFloat and asString
-            currentResult = (to!int(t1.asString) >= to!int(t2.asString));
             lastItem = null;
-            currentHandler = &saver;
+            currentResult = currentResult || newResult;
+            currentHandler = &defaultHandler;
         }
-        currentHandler = &do_gte;
+        currentHandler = &operate;
     }
-    handlers[">="] = &gte;
 
-    void lt(string s, ListItem op)
-    {
-        ListItem t1 = lastItem;
-        void do_lt(string s, ListItem t2)
-        {
-            currentHandler = &saver;
-
-            // TODO: use asInteger, asFloat and asString
-            currentResult = (to!int(t1.asString) < to!int(t2.asString));
-            lastItem = null;
-            currentHandler = &saver;
-        }
-        currentHandler = &do_lt;
-    }
-    handlers["<"] = &lt;
-
-    void parentesis(string s, ListItem parentesis)
+    // -----------------------------------------------
+    void parentesisOpen()
     {
         // Consume the "(":
         items.popFront();
-        auto newResult = boolean(items);
-        return currentHandler(")", new Atom(newResult));
-    }
-    handlers["("] = &parentesis;
 
-    // SPECIAL CASES:
+        auto newResult = boolean(items);
+        currentResult = currentResult || newResult;
+    }
+
+    // -----------------------------------------------
+    // Logical operators:
     /*
     About `and` & `or`:
     AND has precedence over OR.
@@ -101,69 +115,58 @@ bool boolean(Range items)
     */
     void and()
     {
-        /*
-        We are NOT stopping evaluation for now, so
-        f1 && f2 && f3 && t4
-        will evaluate all three falsy values, the
-        last truthy one and, in the end, return
-        a "false" result.
-        */
-
         // Consume the `&&`:
         items.popFront();
         auto newResult = boolean(items);
+        trace(" and.newResult: ", to!string(newResult));
         currentResult = currentResult && newResult;
+        trace(" and.currentResult: ", to!string(currentResult));
     }
 
-    void or()
-    {
-        /*
-        We are NOT stopping evaluation for now. So
-        `t1 && f2 && f3` will still evaluate the
-        last two falsy values, even if the
-        first one is already truthy.
-        */
-
-        // Consume the `||`:
-        items.popFront();
-        auto newResult = boolean(items);
-        currentResult = currentResult || newResult;
-    }
-
+    // -----------------------------------------------
     // The loop:
     foreach(item; items)
     {
         string s = item.asString;
-        trace("s: ", s);
+        trace("s: ", s, " ", to!string(item.type));
 
-        // Special cases:
-        if (s == "&&")
+        if (item.type == ObjectTypes.Operator)
         {
-            and();
+            if (s == "&&")
+            {
+                and();
+                trace(" returning from AND: ", to!string(currentResult));
+                break;
+            }
+            else if (s == "||")
+            {
+                // OR is our default behaviour.
+                // So we do nothing, here.
+                continue;
+            }
+        }
+        else if (item.type == ObjectTypes.Parentesis)
+        {
+            if (s == "(")
+            {
+                parentesisOpen();
+                continue;
+            }
+            else if (s == ")")
+            {
+                // Time to leave:
+                break;
+            }
+        }
+
+        if (item.type == ObjectTypes.Operator)
+        {
+            operatorHandler(s, item);
             continue;
         }
-        else if (s == "||")
-        {
-            or();
-            continue;
-        }
-        else if (s == ")")
-        {
-            // Time to leave:
-            break;
-        }
-
-        auto handler = handlers.get(s, null);
-        if (handler is null)
-        {
-            // Generally a term (numbers)
-            currentHandler(s, item);
-        }
-        else
-        {
-            // Generally operators
-            handler(s, item);
-        }
+        // Not an operator? Must be a value...
+        currentHandler(s, item);
     }
+    trace("  returning ", to!string(currentResult));
     return currentResult;
 }
