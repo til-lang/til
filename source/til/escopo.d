@@ -22,6 +22,7 @@ class Escopo
     Escopo parent;
     Escopo[string] namespaces;
     static Escopo[string] availableModules;
+    string name = "<scope>";
 
     ListItem[string] variables;
     ListItem delegate(NamePath, Args)[string] commands;
@@ -36,7 +37,12 @@ class Escopo
         this.parent = parent;
         this.loadCommands();
     }
-    void loadCommands()
+    this(Escopo parent, string name)
+    {
+        this(parent);
+        this.name = name;
+    }
+    abstract void loadCommands()
     {
     }
 
@@ -78,7 +84,13 @@ class Escopo
 
     override string toString()
     {
-        string r = "scope:\n";
+        string r = "";
+        if (this.parent !is null)
+        {
+            r ~= this.parent.name ~ "/";
+        }
+        r ~= this.name ~ ":\n";
+
         foreach(name, value; variables)
         {
             r ~= "  " ~ name ~ "=<"
@@ -99,7 +111,7 @@ class Escopo
             return namespace.getCommand(path[1..$]);
         }
 
-        ListItem delegate(NamePath, Args) handler = commands.get(head, null);
+        ListItem delegate(NamePath, Args) handler = this.commands.get(head, null);
         if (handler is null)
         {
             if (this.parent is null)
@@ -108,6 +120,11 @@ class Escopo
             }
             else
             {
+                trace(
+                    ">>> SEARCHING FOR COMMAND ",
+                    head,
+                    " IN PARENT SCOPE <<<"
+                );
                 return this.parent.getCommand(path);
             }
         }
@@ -129,6 +146,7 @@ class Escopo
         */
 
         trace("runCommand:", path, " : ", arguments);
+        trace(" running in scope:", this);
         auto handler = this.getCommand(path);
         if (handler is null)
         {
@@ -149,7 +167,6 @@ class DefaultEscopo : Escopo
     {
         this(null);
     }
-
     this(Escopo parent)
     {
         super(parent);
@@ -175,6 +192,10 @@ class DefaultEscopo : Escopo
         So, actually, nothing to do, here. :)
         GO AWAY, NOW!!!
         */
+    }
+    this(Escopo parent, string name)
+    {
+        super(parent, name);
     }
 
     override void loadCommands()
@@ -215,6 +236,8 @@ class DefaultEscopo : Escopo
         */
         auto condition = arguments.consume();
         ListItem thenBody = arguments.consume();
+        trace("if ", condition, " then ", thenBody);
+
         ListItem elseBody;
         if (!arguments.empty)
         {
@@ -232,8 +255,7 @@ class DefaultEscopo : Escopo
         {
             elseBody = null;
         }
-
-        trace("if ", condition, " then ", thenBody);
+        trace("cmd_if.scope: ", this);
 
         // Run the condition:
         bool result = false;
@@ -287,7 +309,7 @@ class DefaultEscopo : Escopo
         Result result;
         foreach(item; range.items)
         {
-            auto loopScope = new Escopo(this);
+            auto loopScope = new DefaultEscopo(this, "foreach " ~ to!string(item));
             trace(" item: ", item);
             auto subItems = item.items;
             if (subItems is null)
@@ -318,10 +340,12 @@ class DefaultEscopo : Escopo
                     // this loop range into an... actual range.
                 }
             }
+            trace("loopScope: ", loopScope);
+            trace("argBody.items: ", argBody.items);
             result = new ExecList(argBody.items).run(loopScope);
-            trace(loopScope);
         }
 
+        trace(" ----- FOREACH END -----");
         return null;
     }
 

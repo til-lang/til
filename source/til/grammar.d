@@ -193,6 +193,9 @@ Atom analyseAtom(ParseTree p)
                     child.children[0].name == "Til.BooleanTrue"
                 );
                 break;
+            case "Til.Parentesis":
+            case "Til.Operator":
+                break;
         }
     }
     return atom;

@@ -1,6 +1,7 @@
 module til.logic;
 
 import std.conv;
+import std.experimental.logger;
 
 import til.ranges;
 import til.nodes;
@@ -30,74 +31,139 @@ bool boolean(Range items)
     ListItem lastItem;
     bool currentResult = false;
 
-    bool saver(string s, ListItem x)
+    trace(" BOOLEAN ANALYSIS: ", items);
+
+    void saver(string s, ListItem x)
     {
         lastItem = x;
-        return false;
     }
-    bool delegate(string s, ListItem) currentHandler = &saver;
+    void delegate(string, ListItem) currentHandler = &saver;
+    void delegate(string, ListItem)[string] handlers;
 
-    bool do_gte(string s, ListItem t2)
+    /*
+    The most usual way of implementing an operation handler
+    is by returnin a CLOSURE whose "first argument" is
+    the first value of an infix notation. For
+    instance, `1 + 2` would first save `1`,
+    then make a "sum-with-one" closure
+    the currentHandler and then apply
+    sum-with-one to `2`, resulting
+    a `3`.
+    */
+    void gte(string s, ListItem op)
     {
-        auto t1 = lastItem;
-        currentHandler = &saver;
-
-        // TODO: use asInteger, asFloat and asString
-        currentResult = (to!int(t1.asString) >= to!int(t2.asString));
-        lastItem = null;
-        return false;
-    }
-    bool gte(string s, ListItem x)
-    {
-        currentHandler = &do_gte;
-        return false;
-    }
-    bool do_lt(string s, ListItem t2)
-    {
-        auto t1 = lastItem;
-        currentHandler = &saver;
-
-        // TODO: use asInteger, asFloat and asString
-        currentResult = (to!int(t1.asString) < to!int(t2.asString));
-        lastItem = null;
-        return false;
-    }
-    bool lt(string s, ListItem x)
-    {
-        currentHandler = &do_lt;
-        return false;
-    }
-    bool and(string s, ListItem x)
-    {
-        if (currentResult == true)
+        ListItem t1 = lastItem;
+        void do_gte(string s, ListItem t2)
         {
-            // Consume the `&&`:
-            items.popFront();
-            currentResult = boolean(items);
+            currentHandler = &saver;
+
+            // TODO: use asInteger, asFloat and asString
+            currentResult = (to!int(t1.asString) >= to!int(t2.asString));
+            lastItem = null;
+            currentHandler = &saver;
         }
-        return true;
+        currentHandler = &do_gte;
+    }
+    handlers[">="] = &gte;
+
+    void lt(string s, ListItem op)
+    {
+        ListItem t1 = lastItem;
+        void do_lt(string s, ListItem t2)
+        {
+            currentHandler = &saver;
+
+            // TODO: use asInteger, asFloat and asString
+            currentResult = (to!int(t1.asString) < to!int(t2.asString));
+            lastItem = null;
+            currentHandler = &saver;
+        }
+        currentHandler = &do_lt;
+    }
+    handlers["<"] = &lt;
+
+    void parentesis(string s, ListItem parentesis)
+    {
+        // Consume the "(":
+        items.popFront();
+        auto newResult = boolean(items);
+        return currentHandler(")", new Atom(newResult));
+    }
+    handlers["("] = &parentesis;
+
+    // SPECIAL CASES:
+    /*
+    About `and` & `or`:
+    AND has precedence over OR.
+
+    Take for instance `f or t and t`. It should return true.
+    (The explicit version would be `(f or t) and t`.)
+    */
+    void and()
+    {
+        /*
+        We are NOT stopping evaluation for now, so
+        f1 && f2 && f3 && t4
+        will evaluate all three falsy values, the
+        last truthy one and, in the end, return
+        a "false" result.
+        */
+
+        // Consume the `&&`:
+        items.popFront();
+        auto newResult = boolean(items);
+        currentResult = currentResult && newResult;
     }
 
-    auto index = 0;
+    void or()
+    {
+        /*
+        We are NOT stopping evaluation for now. So
+        `t1 && f2 && f3` will still evaluate the
+        last two falsy values, even if the
+        first one is already truthy.
+        */
+
+        // Consume the `||`:
+        items.popFront();
+        auto newResult = boolean(items);
+        currentResult = currentResult || newResult;
+    }
+
+    // The loop:
     foreach(item; items)
     {
         string s = item.asString;
-        bool ended = false;
-        switch(s)
+        trace("s: ", s);
+
+        // Special cases:
+        if (s == "&&")
         {
-            case ">=":
-                ended = gte(s, item);
-                break;
-            case "<":
-                ended = lt(s, item);
-                break;
-            case "&&":
-                ended = and(s, item);
-                break;
-            default:
-                ended = currentHandler(s, item);
+            and();
+            continue;
         }
-        if (ended) break;
+        else if (s == "||")
+        {
+            or();
+            continue;
+        }
+        else if (s == ")")
+        {
+            // Time to leave:
+            break;
+        }
+
+        auto handler = handlers.get(s, null);
+        if (handler is null)
+        {
+            // Generally a term (numbers)
+            currentHandler(s, item);
+        }
+        else
+        {
+            // Generally operators
+            handler(s, item);
+        }
     }
     return currentResult;
 }

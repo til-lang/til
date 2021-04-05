@@ -220,6 +220,7 @@ class ExecList : BaseList
     override ListItem run(Escopo escopo)
     {
         trace("ExecList.run: ", this);
+        trace(" scope:", escopo);
         // How to run a program:
         // 1- Run every item in the list:
         // Atoms and string will eventually substitute.
@@ -401,11 +402,12 @@ class CommonList : BaseList
     {
         // TODO: create a CHAIN of Ranges.
         trace("CommonList.run: ", this);
+        trace(" scope:", escopo);
         Range[] ranges;
 
         foreach(item; this.items)
         {
-            trace(" - item:", item);
+            trace(" - item: ", item);
             auto result = item.run(escopo);
             // TODO: evaluate result.scopeExit.
             auto items = result.items();
@@ -525,12 +527,18 @@ class Atom : ListItem
 
     this(string s)
     {
-        this.repr = s;
+        this._repr = s;
     }
     this(ulong i)
     {
         this.integer = cast(int) i;
         this._repr = to!string(i);
+    }
+    this(bool b)
+    {
+        this.boolean = b;
+        this.integer = to!int(b);
+        this._repr = to!string(b);
     }
 
     // Utilities and operators:
@@ -571,6 +579,7 @@ class Atom : ListItem
     {
         if (this.repr[0..1] == "$")
         {
+            trace(" Atom.run: scope: ", escopo);
             string key = this.repr[1..$];
             // trace(" Atom: ", key);
             // trace(escopo);

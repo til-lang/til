@@ -38,7 +38,7 @@ class Procedure
         );
 
 
-        auto procedureScope = new Escopo(escopo);
+        auto procedureScope = new DefaultEscopo(escopo, "proc " ~ this.name);
 
         foreach(index, parameter; this.parameters)
         {

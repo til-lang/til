@@ -1,0 +1,11 @@
+import std.io as io
+
+set y 5
+
+foreach x {[range 10]} {
+    if {($x < $y) || (2 * $x) < $y + 1} {
+        io.out "a"
+    } else {
+        io.out "b"
+    }
+}

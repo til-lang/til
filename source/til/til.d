@@ -16,7 +16,7 @@ mixin(grammar(`
         String            <- ["] (Substitution / NotSubstitution)* ["]
         Substitution      <~ "$" [A-Za-z0-9_.]+
         NotSubstitution   <~ (!doublequote !"$" .)*
-        Atom              <- Float / Integer / Boolean / Name / CommonAtom
+        Atom              <- Float / Integer / Boolean / Name / CommonAtom / Parentesis / Operator
         CommonAtom        <~ [$A-Za-z0-9_<>+\-_=.:&]+
         Name              <- NamePart ("." NamePart)*
         NamePart          <~ [A-Za-z] [A-Za-z0-9_]*
@@ -25,4 +25,7 @@ mixin(grammar(`
         Boolean           <- BooleanTrue / BooleanFalse
         BooleanTrue       <~ "true" / "yes"
         BooleanFalse      <~ "false" / "no"
+        Parentesis        <~ "(" / ")"
+        Operator          <~ "||" / "&&" / [&|+\-*/]
+
     `));
