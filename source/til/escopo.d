@@ -45,6 +45,12 @@ class Escopo
     abstract void loadCommands()
     {
     }
+    Escopo importModule(string name)
+    {
+        auto theModule = this.availableModules[name];
+        this.namespaces[name] = theModule;
+        return theModule;
+    }
 
     // Execution
     ListItem run(ListItem program)
@@ -104,11 +110,15 @@ class Escopo
     Result delegate(NamePath, Args) getCommand(NamePath path)
     {
         string head = path[0];
+        trace("getCommand: ", head);
+        trace("scope: ", this);
 
         auto namespace = this.namespaces.get(head, null);
         if (namespace !is null)
         {
-            return namespace.getCommand(path[1..$]);
+            NamePath newPath = path[1..$];
+            trace(" searching for ", newPath, " inside namespace ", head);
+            return namespace.getCommand(newPath);
         }
 
         ListItem delegate(NamePath, Args) handler = this.commands.get(head, null);
@@ -395,9 +405,10 @@ class DefaultEscopo : Escopo
     // --------------------------------------------
     Result cmd_import(NamePath path, Args arguments)
     {
-        // import std as x
-        auto modulePath = arguments.consume().asString;
-        string newName = modulePath;
+        // import std.io as x
+        auto modulePath = arguments.consume().namePath;
+        string newName = null;
+
         if (!arguments.empty)
         {
             auto as = arguments.consume().asString;
@@ -410,17 +421,39 @@ class DefaultEscopo : Escopo
             newName = arguments.consume().asString;
         }
         tracef("IMPORT %s AS %s", modulePath, newName);
-        auto theModule = this.availableModules.get(modulePath, null);
-        if (theModule is null)
+
+        // Check if the submodule actually exists:
+        Escopo target = this;
+        foreach(namePart; modulePath)
         {
-            // TODO: inform which module:
-            throw new InvalidException("Module not found");
+            target = target.availableModules.get(namePart, null);
+            if (target is null)
+            {
+                throw new InvalidException(
+                    "Module "
+                    ~ to!string(modulePath)
+                    ~ " not found"
+                );
+            }
         }
-        this.namespaces[newName] = theModule;
+        if (newName is null)
+        {
+            Escopo m = this;
+            foreach(namePart; modulePath)
+            {
+                m = m.importModule(namePart);
+            }
+        }
+        else
+        {
+            // An alias sends us direct to the submodule:
+            this.namespaces[newName] = target;
+        }
+
         return new Atom(newName);
     }
 
-    // TESTES:
+    // TESTE:
     Result cmd_range(NamePath path, Args arguments)
     {
         class Range : InfiniteRange

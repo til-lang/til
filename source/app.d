@@ -8,7 +8,7 @@ import til.nodes;
 import til.til;
 
 // Modules:
-import til.std.io;
+import til.std;
 import til.libs.posix.shell;
 
 
@@ -48,7 +48,7 @@ void main()
 
     // "Third-party" modules:
     escopo.availableModules["posix.shell"] = new Shell();
-    escopo.availableModules["std.io"] = new IO();
+    escopo.availableModules["std"] = new Std();
 
     auto returnedValue = escopo.run(program);
     trace("returnedValue: ", returnedValue);

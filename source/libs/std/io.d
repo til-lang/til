@@ -10,6 +10,8 @@ import til.nodes;
 
 class IO : Escopo
 {
+    string name = "io";
+
     Result cmd_out(NamePath path, Args arguments)
     {
         string s = to!string(arguments
