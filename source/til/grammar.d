@@ -113,6 +113,30 @@ ListItem[] analyseListItems(ParseTree p)
     return items;
 }
 
+ListItem[] analyseSimpleListItems(ParseTree p)
+{
+    ListItem[] items;
+
+    foreach(child; p.children)
+    {
+        switch(child.name)
+        {
+            case "Til.List":
+                auto li = analyseListItems(child);
+                if (li !is null)
+                {
+                    return li;
+                }
+                break;
+            default:
+                throw new InvalidException(
+                    "Invalid Item inside SimpleList"
+                );
+        }
+    }
+    return items;
+}
+
 bool isPipe(ParseTree p)
 {
     return p.children[0].name == "Til.Pipe";
@@ -130,6 +154,8 @@ ListItem analyseListItem(ParseTree p)
                 return new ExecList(analyseListItems(child));
             case "Til.SubList":
                 return new SubList(analyseListItems(child));
+            case "Til.SimpleList":
+                return new SimpleList(analyseSimpleListItems(child));
             case "Til.String":
                 return analyseString(child);
             case "Til.Atom":
@@ -197,9 +223,6 @@ Atom analyseAtom(ParseTree p)
                 );
                 atom.type = ObjectTypes.Boolean;
                 break;
-            case "Til.Parentesis":
-                atom.type = ObjectTypes.Parentesis;
-                break;
             case "Til.Operator":
                 atom.type = ObjectTypes.Operator;
                 break;
@@ -218,6 +241,10 @@ string[] extractAtomNamePath(ParseTree p)
         {
             case "Til.NamePart":
                 thePath ~= child.matches[0];
+                break;
+            case "Til.QuestionMark":
+                // Appends the "?" in the end of the last part:
+                thePath[$-1] ~= child.matches[0];
                 break;
             default:
                 throw new Exception(

@@ -1,10 +1,10 @@
 import std.io as io
 
-proc f {x} {
+proc f (x) {
     return "-$x-"
 }
 
-proc s {x} {
+proc s (x) {
     return ">$x<"
 }
 

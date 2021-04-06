@@ -1,0 +1,16 @@
+import std.io as io
+import std.stack as s
+
+foreach word ("arara" "ovo" "algo") {
+    io.out $word
+    $word |> s.dup |> s.reverse |> s.equals? |> io.out
+    if ([$word |> s.dup |> s.reverse |> s.equals?]) {
+        io.out "$word is a palindrome"
+    }
+}
+
+io.out "---"
+
+"duplicate!" |> s.dup |> io.out
+"duplicate!" |> s.dup |> s.reverse |> io.out
+"duplicate!" |> s.dup |> s.reverse |> s.equals? |> io.out

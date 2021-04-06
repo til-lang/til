@@ -1,20 +1,20 @@
 import std.io as io
 
-proc pass {a b} {
+proc pass (a b) {
     return $a $b
 }
 
-proc list {} {
-    return {11 22}
+proc list () {
+    return (11 22)
 }
-proc open_list {} {
+proc open_list () {
     return op en
 }
 
-proc receive3 {a b c} {
+proc receive3 (a b c) {
     return "a:$a b:$b c:$c"
 }
-proc receive4 {a b c d} {
+proc receive4 (a b c d) {
     return "a:$a b:$b c:$c d:$d"
 }
 

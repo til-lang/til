@@ -5,7 +5,7 @@ range.zero_to 500 |> io.out
 io.out "---"
 "===" |> io.out
 
-foreach x {[range.zero_to 3]} {
+foreach x ([range.zero_to 3]) {
     io.out $x
 }
 io.out "---"

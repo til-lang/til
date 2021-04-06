@@ -14,13 +14,13 @@ class Procedure
     string name;
     // proc f {x=10}
     // → parameters["x"] = "10"
-    ListItem[] parameters;
+    ListItem parameters;
     ListItem body;
 
     this(string name, ListItem parameters, ListItem body)
     {
         this.name = name;
-        this.parameters = parameters.atoms;
+        this.parameters = parameters;
         this.body = body;
 
         trace(
@@ -40,15 +40,14 @@ class Procedure
 
         auto procedureScope = new DefaultEscopo(escopo, "proc " ~ this.name);
 
-        foreach(index, parameter; this.parameters)
+        foreach(index, parameterName; this.parameters.strings)
         {
-            // TODO: save parameters as strings already:
-            auto parameterName = parameter.asString;
             if (arguments.empty)
             {
+                trace("parameterName:", parameterName);
                 throw new InvalidException(
                     "Wrong number of parameters to command "
-                    ~ name
+                    ~ "\"" ~ name ~ "\"."
                 );
             }
             else
@@ -61,6 +60,8 @@ class Procedure
         procedureScope[["args"]] = new SubList(arguments);
 
         trace(" body.run: " ~ to!string(this.body) ~ ";");
-        return new ExecList(this.body.items).run(procedureScope);
+
+        auto result = new ExecList(this.body.items).run(procedureScope);
+        return result;
     }
 }

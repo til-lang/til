@@ -29,7 +29,6 @@ enum ObjectTypes
     String,
     Name,
     Atom,
-    Parentesis,
     Operator,
     Float,
     Integer,
@@ -41,7 +40,7 @@ enum ObjectTypes
 // compose a list (including Lists):
 class ListItem
 {
-    ObjectTypes type = ObjectTypes.Undefined;
+    ObjectTypes type;
     ulong defaultLength = 0;
     ScopeExitCodes scopeExit;
     string[] _namePath;
@@ -91,6 +90,11 @@ class ListItem
         return a;
     }
 
+    string[] strings()
+    {
+        return [this.asString];
+    }
+
     // Stubs:
     ulong length() {return defaultLength;}
     abstract string asString();
@@ -98,6 +102,7 @@ class ListItem
     abstract float asFloat();
     abstract ListItem inverted();
 
+    ListItem run(Escopo escopo, bool force) {return this.run(escopo);}
     ListItem run(Escopo escopo) {return null;}
     Range items() {return null;}
 }
@@ -108,19 +113,21 @@ class BaseList : ListItem
 
     this()
     {
-        this._items = new StaticItems([]);
+        this([]);
     }
     this(ListItem item)
     {
-        this._items = new StaticItems([item]);
+        this([item]);
     }
     this(ListItem[] items)
     {
         this._items = new StaticItems(items);
+        this.type = ObjectTypes.List;
     }
     this(Range items)
     {
         this._items = items;
+        this.type = ObjectTypes.List;
     }
 
     // Methods:
@@ -136,7 +143,15 @@ class BaseList : ListItem
     {
         throw new Exception("Cannot convert a List into an float");
     }
-
+    override string[] strings()
+    {
+        string[] s;
+        foreach(item; this.items)
+        {
+            s ~= item.asString;
+        }
+        return s;
+    }
     override ListItem inverted()
     {
         throw new Exception("Cannot invert a List!");
@@ -243,18 +258,13 @@ class ExecList : BaseList
             // as if it as a command:
             result = runCommand(subList.items, escopo);
             trace(
-                " → ", result
+                "runCommand:", item, " → ", result
             );
             if (result is null)
             {
-                /*
                 throw new Exception(
                     "Command not found: " ~ to!string(subList)
                 );
-                */
-                // TESTE:
-                // TODO: make it throw the Exception.
-                result = new SubList();
             }
             trace("result: ", result, " (", result.scopeExit, ")");
 
@@ -310,15 +320,79 @@ class ExecList : BaseList
         // a command???
         if (cmd is null)
         {
-            // return items[0];  <-- working, but horrendous.
-            // XXX: should it be a CommonList, maybe?
-            // BUG: HEEEY! We consumed the head, already!
-            return new SubList(backup);
+            return new SimpleList(backup);
         }
         else
         {
             return escopo.runCommand(cmd, tail);
         }
+    }
+}
+
+class SimpleList : BaseList
+{
+    /*
+       A SimpleList contains only ONE List inside it.
+       Its primary use is for passing parameters
+       for `if`, for instance, like
+       if ($x > 10) {...}
+       Also, its asInteger, asFloat and asBoolean methods
+       must be implemented (so that `if`, for instance,
+       can simply call it without much worries).
+    */
+
+    this()
+    {
+        super();
+    }
+    this(ListItem item)
+    {
+        super(item);
+    }
+    this(ListItem[] items)
+    {
+        super(items);
+    }
+    this(Range items)
+    {
+        super(items);
+    }
+
+    // -----------------------------
+    // Utilities and operators:
+    override string toString()
+    {
+        string s = this.asString;
+        return "(" ~ s ~ ")";
+    }
+
+    override ListItem run(Escopo escopo, bool force)
+    {
+        if (!force)
+        {
+            return this.run(escopo);
+        }
+        else
+        {
+            return new CommonList(this.items).run(escopo);
+        }
+    }
+    override ListItem run(Escopo escopo)
+    {
+        /*
+        Returning itself has some advantages:
+        1- We can use SimpleLists as "liquid" lists
+        the same way as SubLists (if a proc returns only
+        a SimpleList it is "diluted" in the CommonList
+        that called it as a command, like in
+        set eagle [f 15 E]
+         → set eagle "strike" "eagle"
+        2- It is more suitable to return SimpleLists
+        instead of SubLists because semantically
+        the returns are only one list, not
+        a list of lists.
+        */
+        return this;
     }
 }
 
@@ -349,6 +423,17 @@ class SubList : BaseList
         return "{" ~ s ~ "}";
     }
 
+    override ListItem run(Escopo escopo, bool force)
+    {
+        if (!force)
+        {
+            return this.run(escopo);
+        }
+        else
+        {
+            return new ExecList(this.items).run(escopo);
+        }
+    }
     override ListItem run(Escopo escopo)
     {
         trace("SubList.run: ", this);
@@ -402,7 +487,7 @@ class CommonList : BaseList
         {
             trace(" - item: ", item);
             auto result = item.run(escopo);
-            // TODO: evaluate result.scopeExit.
+            // XXX: should we evaluate result.scopeExit?
             auto items = result.items();
             if (items is null)
             {
@@ -414,15 +499,15 @@ class CommonList : BaseList
             else if (result != item)
             // else if (result.scopeExit == ScopeExitCodes.ListSuccess)
             {
-                // ExecLists should return a CommonList
-                // so that we can "expand" the result, here:
+                // ExecLists should return a CommonList so
+                // that we can "expand" the result, here:
                 trace(" CommonList.ranges ~= items");
                 trace("  ", result, " != ", item);
                 ranges ~= items;
             }
             else
             {
-                // A proper SubLists, that evaluates to itself:
+                // A proper SubList/SimpleList, that evaluates to itself:
                 trace(" CommonList.ranges ← new StaticItems(SubList)");
                 trace("  ", result);
                 ranges ~= new StaticItems(result);
@@ -451,11 +536,13 @@ class String : ListItem
     this(string s)
     {
         this.parts ~= s;
+        this.type = ObjectTypes.String;
     }
     this(string[] parts, string[int] substitutions)
     {
         this.parts = parts;
         this.substitutions = substitutions;
+        this.type = ObjectTypes.String;
     }
 
     // Operators:
@@ -514,7 +601,6 @@ class String : ListItem
     {
         throw new Exception("Cannot convert a String into an float");
     }
-
     override ListItem inverted()
     {
         string newRepr;
@@ -611,7 +697,17 @@ class Atom : ListItem
         if (firstChar == '$')
         {
             string key = repr[1..$];
-            return escopo[key];
+            auto value = escopo[key];
+            if (value is null)
+            {
+                throw new Exception(
+                    "Key not found: " ~ key
+                );
+            }
+            else
+            {
+                return value;
+            }
         }
         else if (repr.length >= 3 && firstChar == '-' && repr[1] == '$')
         {
@@ -673,7 +769,6 @@ class Atom : ListItem
                 );
         }
     }
-
 
     override ListItem inverted()
     {

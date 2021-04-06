@@ -3,10 +3,20 @@ module til.logic;
 import std.conv;
 import std.experimental.logger;
 
-import til.ranges;
+import til.escopo;
+import til.math;
 import til.nodes;
+import til.ranges;
 
-bool boolean(Range items)
+
+bool boolean(Escopo escopo, Range items)
+{
+    // Resolve any math beforehand:
+    auto resolvedItems = int_run(escopo, items);
+    return pureBoolean(escopo, resolvedItems);
+}
+
+bool pureBoolean(Escopo escopo, Range items)
 {
     /***************************************************
     Now this is a somewhat "clever" implementation
@@ -95,16 +105,6 @@ bool boolean(Range items)
     }
 
     // -----------------------------------------------
-    void parentesisOpen()
-    {
-        // Consume the "(":
-        items.popFront();
-
-        auto newResult = boolean(items);
-        currentResult = currentResult || newResult;
-    }
-
-    // -----------------------------------------------
     // Logical operators:
     /*
     About `and` & `or`:
@@ -117,7 +117,7 @@ bool boolean(Range items)
     {
         // Consume the `&&`:
         items.popFront();
-        auto newResult = boolean(items);
+        auto newResult = escopo.boolean(items);
         trace(" and.newResult: ", to!string(newResult));
         currentResult = currentResult && newResult;
         trace(" and.currentResult: ", to!string(currentResult));
@@ -145,18 +145,13 @@ bool boolean(Range items)
                 continue;
             }
         }
-        else if (item.type == ObjectTypes.Parentesis)
+        else if (item.type == ObjectTypes.List)
         {
-            if (s == "(")
-            {
-                parentesisOpen();
-                continue;
-            }
-            else if (s == ")")
-            {
-                // Time to leave:
-                break;
-            }
+            auto newResult = escopo.boolean(
+                new CommonList(item.items).run(escopo).items
+            );
+            currentResult = currentResult || newResult;
+            continue;
         }
 
         if (item.type == ObjectTypes.Operator)

@@ -76,7 +76,10 @@ class Escopo
     // escopo[["std", "out"]] = {1 2 3}
     void opIndexAssign(ListItem value, NamePath path)
     {
+        trace(">>> ", path);
+        trace("  > ", value.toString());
         // TODO: navigate through path...
+        trace(" opIndexAssign: ", path, " ", value);
         string name = to!string(path.joiner("."));
         variables[name] = value;
         trace(name, " ← ", value);
@@ -188,7 +191,42 @@ class Escopo
         }
         else
         {
-            return handler(path, arguments);
+            auto result = handler(path, arguments);
+
+            // XXX : this is a kind of "sefaty check".
+            // It would be nice to NOT run this part
+            // in "release" code.
+            if (result is null)
+            {
+                throw new Exception(
+                    "Command "
+                    ~ to!string(path)
+                    ~ " returned null. The implementation"
+                    ~ " is probably wrong."
+                );
+            }
+
+            if (arguments.empty)
+            {
+                return result;
+            }
+            else
+            {
+                trace(" remaining arguments: ", arguments);
+                auto items = result.items;
+                if (items is null)
+                {
+                    return new SimpleList(
+                        new ChainedItems([new StaticItems([result]), arguments])
+                    );
+                }
+                else
+                {
+                    return new SimpleList(
+                        new ChainedItems([result.items, arguments])
+                    );
+                }
+            }
         }
     }
 }
@@ -250,12 +288,13 @@ class DefaultEscopo : Escopo
     {
         // TODO: navigate through arguments[0].namePath...
         auto varPath = arguments.consume().namePath;
-        trace(" set: ", arguments);
-        auto value = new SubList(arguments);
+        trace(" set: ", varPath, " ", arguments);
+        auto value = new SimpleList(arguments);
         // XXX : should we "unroll" the value???
         // PROBABLY NOT.
-        // -- variables["x"] = Range;
-        // io.out $x  <-- THAT will consume the Range.
+        // -- variables["x"] = list-with-a-Range;
+        // io.out $x <-- THAT will consume the Range.
+        // (We can save infinite ranges this way, too.)
         this[varPath] = value;
         return value;
     }
@@ -290,24 +329,24 @@ class DefaultEscopo : Escopo
 
         // Run the condition:
         bool result = false;
-        auto conditionItems = BaseList.flatten(condition.items);
-        trace(" → if ", conditionItems, " then ", thenBody);
-        auto conditions = new CommonList(conditionItems).run(this);
+
+        auto conditions = condition.run(this, true);
+
         trace(" -→ if ", conditions, " then ", thenBody);
-        result = boolean(conditions.items);
+        result = this.boolean(conditions.items);
         trace(" --- result: ", result);
         if (result)
         {
-            return new ExecList(thenBody.items).run(this);
+            return thenBody.run(this, true);
         }
         else if (elseBody !is null)
         {
             trace(" elseBody.items: ", elseBody.items);
-            return new ExecList(elseBody.items).run(this);
+            return elseBody.run(this, true);
         }
         else
         {
-            return new SubList();
+            return new SimpleList();
         }
     }
 
@@ -323,23 +362,17 @@ class DefaultEscopo : Escopo
         trace(" FOREACH ", argNames, " in ", argRange, ":");
         trace("         ", argBody);
 
-        auto anItems = argNames.items;
-        ListItem[] names;
-        if (anItems is null)
-        {
-            names = [argNames];
-        }
-        else {
-            names = new CommonList(anItems).atoms;
-        }
+        string[] names = argNames.strings;
         trace(" names: ", names);
-        auto range = new CommonList(argRange.items).run(this);
+        auto range = argRange.run(this, true);
         trace(" range: ", range);
 
         Result result;
         foreach(item; range.items)
         {
-            auto loopScope = new DefaultEscopo(this, "foreach " ~ to!string(item));
+            auto loopScope = new DefaultEscopo(
+                this, "foreach<" ~ to!string(item) ~ ">"
+            );
             trace(" item: ", item);
             auto subItems = item.items;
             if (subItems is null)
@@ -347,17 +380,16 @@ class DefaultEscopo : Escopo
                 foreach(index, name; names)
                 {
                     trace("   name: ", name);
-                    loopScope[name.namePath] = item;
+                    loopScope[name] = item;
                 }
             }
             else
             {
-                ListItem[] plainItems = BaseList.flatten(subItems);
-                foreach(index, name; names)
+                foreach(name; names)
                 {
                     trace("   name: ", name);
-                    trace("   plainItems: ", plainItems);
-                    loopScope[name.namePath] = plainItems[index];
+                    trace("   subItems: ", subItems);
+                    loopScope[name] = subItems.consume();
 
                     // TODO: analyse each result.scopeExit!
                     // TODO (later): optionally **inline** loops.
@@ -372,11 +404,12 @@ class DefaultEscopo : Escopo
             }
             trace("loopScope: ", loopScope);
             trace("argBody.items: ", argBody.items);
-            result = new ExecList(argBody.items).run(loopScope);
+            result = argBody.run(loopScope, true);
         }
 
         trace(" ----- FOREACH END -----");
-        return null;
+        // Return whatever was the result of the last iteration:
+        return result;
     }
 
     Result cmd_proc(NamePath cmd, Args arguments)
@@ -417,7 +450,7 @@ class DefaultEscopo : Escopo
     Result cmd_return(NamePath cmdName, Args arguments)
     {
         trace(" --- RETURN: ", arguments);
-        auto returnValue = new SubList(arguments);
+        auto returnValue = new SimpleList(arguments.exhaust());
         returnValue.scopeExit = ScopeExitCodes.ReturnSuccess;
         return returnValue;
     }

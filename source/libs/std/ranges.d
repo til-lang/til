@@ -51,7 +51,7 @@ class Range : InfiniteRange
     }
     override bool empty()
     {
-        return (current >= limit);
+        return (current > limit);
     }
     override Range save()
     {

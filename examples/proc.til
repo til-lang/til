@@ -1,13 +1,19 @@
 import std.io as io
 
-proc f {x y z} {
+proc f (x y z) {
+    io.out "x is $x"
     set x [g $x]
+    io.out "g(x) becomes $x"
+    io.out "y is $y"
+    io.out "z is $z"
     return $x $y $z
 }
 
-proc g {a} {
+proc g (a) {
     return ">$a<"
 }
 
+io.out [g "blebs"]
+io.out [f 100 200 300]
 set x [f 1 2 3] [g 4]
 io.out $x

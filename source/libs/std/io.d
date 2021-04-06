@@ -15,19 +15,21 @@ class IO : Escopo
     Result cmd_out(NamePath path, Args arguments)
     {
         string s = to!string(arguments
+            .save()
             .map!(x => x.asString)
             .joiner(" "));
         stdout.writeln(s);
-        return null;
+        return new SimpleList(arguments);
     }
 
     Result cmd_err(NamePath path, Args arguments)
     {
         string s = to!string(arguments
+            .save()
             .map!(x => x.asString)
             .joiner(" "));
         stderr.writeln(s);
-        return null;
+        return new SimpleList(arguments);
     }
 
 

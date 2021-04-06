@@ -1,6 +1,7 @@
 module til.ranges;
 
 import std.conv;
+import std.experimental.logger;
 import std.range;
 
 import til.nodes;
@@ -60,6 +61,7 @@ class Range
             return x;
         }
     }
+    abstract Range exhaust();
 }
 
 class InfiniteRange : Range
@@ -71,6 +73,15 @@ class InfiniteRange : Range
     override bool empty()
     {
         return false;
+    }
+    override Range exhaust()
+    {
+        /*
+        We COULD "exhaust" an InfiniteRange by forcing
+        the remaining range to be empty.
+        But not now...
+        */
+        throw new Exception("Trying to exhaust an InfiniteRange");
     }
 
     /*
@@ -137,33 +148,51 @@ class StaticItems : Range
     {
         currentIndex++;
     }
+    override Range exhaust()
+    {
+        auto copy = this.save();
+        this.currentIndex = this._length;
+        return copy;
+    }
 }
 
 class ChainedItems : Range
 {
-    Range[] _generators;
+    Range[] _ranges;
     ulong currentRangeIndex = 0;
     ulong _length;
 
     this(Range[] generators)
     {
-        this._generators = generators;
         foreach(g; generators)
         {
-            this._length += g.length;
+            if (!g.empty)
+            {
+                this._ranges ~= g;
+                this._length += g.length;
+            }
         }
     }
 
     override string asString()
     {
+        if (this.empty)
+        {
+            return "<ChainedItems:empty>";
+        }
         return this.front.asString;
     }
     override string toString()
     {
-        string s = "ChainedItems(\n";
-        foreach(idx, g; _generators)
+        if (this.empty)
         {
-            s ~= g.toString();
+            return "ChainedItems:empty";
+        }
+
+        string s = "ChainedItems(\n";
+        foreach(idx, g; _ranges)
+        {
+            s ~= g.save().toString();
             if (currentRangeIndex == idx)
             {
                 s ~= " ←\n";
@@ -179,32 +208,52 @@ class ChainedItems : Range
 
     Range currentRange()
     {
-        if (currentRangeIndex >= this._generators.length)
+        if (currentRangeIndex >= this._ranges.length)
         {
             return null;
         }
-        return this._generators[currentRangeIndex];
+        return this._ranges[currentRangeIndex];
     }
     Range getNextRange()
     {
         auto idx = currentRangeIndex + 1;
-        if (idx >= _generators.length)
+        if (idx >= _ranges.length)
         {
             return null;
         }
-        return _generators[idx];
+        return _ranges[idx];
     }
 
     override ChainedItems save()
     {
-        Range[] copies;
-        foreach(g; _generators)
+        if (this.empty)
         {
-            copies ~= g.save();
+            // TESTE:
+            return new ChainedItems([]);
+        }
+
+        Range[] copies;
+        auto index = this.currentRangeIndex;
+        foreach(g; _ranges)
+        {
+            if (g.empty)
+            {
+                index--;
+            }
+            else
+            {
+                copies ~= g.save();
+            }
         }
         auto result = new ChainedItems(copies);
-        result.currentRangeIndex = this.currentRangeIndex;
+        result.currentRangeIndex = index;
         return result;
+    }
+    override Range exhaust()
+    {
+        auto copy = this.save();
+        this.currentRangeIndex = this._ranges.length;
+        return copy;
     }
 
     override ulong length()
@@ -225,12 +274,20 @@ class ChainedItems : Range
         else
         {
             c = this.getNextRange();
-            return (c is null);
+            return (c is null || c.empty);
         }
     }
     override ListItem front()
     {
-        return currentRange.front();
+        auto c = this.currentRange;
+        if (c is null)
+        {
+            throw new Exception(
+                "Trying to get .front from probably"
+                ~ " empty ChainedItems Range"
+            );
+        }
+        return c.front();
     }
     override void popFront()
     {

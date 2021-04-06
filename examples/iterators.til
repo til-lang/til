@@ -1,15 +1,15 @@
 import std.io as io
 import posix.shell as sh
 
-proc ls {} {
+proc ls () {
     return a b c
 }
 
-foreach {fname} {[ls]} {
+foreach (fname) ([ls]) {
     io.out $fname
 }
 
-foreach {filename} {[sh.ls "/usr/lib64"]} {
+foreach (filename) ([sh.ls "/usr/lib64"]) {
     $filename |> io.out
 }
 

@@ -1,0 +1,18 @@
+import std.io as std
+
+set a 1
+set b 2
+
+if ($a > $b + 3) {
+    std.out "Wrong!"
+} else {
+    std.out "Correct."
+}
+
+if ($a + 1 >= $b) {
+    std.out "Correct."
+} else {
+    std.out "Wrong!"
+}
+
+std.out "End"
