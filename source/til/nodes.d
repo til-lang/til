@@ -231,7 +231,6 @@ class ExecList : BaseList
     override ListItem run(Escopo escopo)
     {
         trace("ExecList.run: ", this);
-        trace(" scope:", escopo);
         // How to run a program:
         // 1- Run every item in the list:
         // Atoms and string will eventually substitute.
@@ -374,6 +373,7 @@ class SimpleList : BaseList
         }
         else
         {
+            // return this.forceRun(escopo);
             return new CommonList(this.items).run(escopo);
         }
     }
@@ -393,6 +393,15 @@ class SimpleList : BaseList
         a list of lists.
         */
         return this;
+    }
+    ListItem forceRun(Escopo escopo)
+    {
+        ListItem[] items;
+        foreach(item; this.items)
+        {
+            items ~= item.run(escopo);
+        }
+        return new SimpleList(items);
     }
 }
 
@@ -480,7 +489,6 @@ class CommonList : BaseList
     {
         // TODO: create a CHAIN of Ranges.
         trace("CommonList.run: ", this);
-        trace(" scope:", escopo);
         Range[] ranges;
 
         foreach(item; this.items)
@@ -492,7 +500,6 @@ class CommonList : BaseList
             if (items is null)
             {
                 // An Atom or String
-                trace(" CommonList.ranges ← new StaticItems(Atom/String)");
                 trace("  ", result);
                 ranges ~= new StaticItems(result);
             }
@@ -501,14 +508,12 @@ class CommonList : BaseList
             {
                 // ExecLists should return a CommonList so
                 // that we can "expand" the result, here:
-                trace(" CommonList.ranges ~= items");
                 trace("  ", result, " != ", item);
                 ranges ~= items;
             }
             else
             {
                 // A proper SubList/SimpleList, that evaluates to itself:
-                trace(" CommonList.ranges ← new StaticItems(SubList)");
                 trace("  ", result);
                 ranges ~= new StaticItems(result);
             }

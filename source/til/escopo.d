@@ -136,7 +136,6 @@ class Escopo
             head = path[0];
         }
         trace("getCommand: ", head);
-        trace("scope: ", this);
 
         auto namespace = this.namespaces.get(head, null);
         if (namespace !is null)
@@ -182,7 +181,6 @@ class Escopo
         */
 
         trace("runCommand:", path, " : ", arguments);
-        trace(" running in scope:", this);
         auto handler = this.getCommand(path);
         if (handler is null)
         {
@@ -325,7 +323,6 @@ class DefaultEscopo : Escopo
         {
             elseBody = null;
         }
-        trace("cmd_if.scope: ", this);
 
         // Run the condition:
         bool result = false;

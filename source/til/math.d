@@ -69,7 +69,7 @@ Args int_run(Escopo escopo, Args items, ListItem function(ListItem, ListItem, Li
         void operate(ListItem t2)
         {
             auto newResult = resolver(operator, t1, t2);
-            trace(" newResult for ", operator, ": ", newResult);
+            trace(" newResult for ", t1, operator, t2, ": ", newResult);
 
             if (newResult is null)
             {
@@ -97,7 +97,25 @@ Args int_run(Escopo escopo, Args items, ListItem function(ListItem, ListItem, Li
         if (item.type == ObjectTypes.List)
         {
             // The next item is the result from the list:
-            item = int_resolve(escopo, item.run(escopo, true).items);
+            // item = int_resolve(escopo, item.run(escopo, true).items);
+            Args rList = escopo.int_run(item.run(escopo, true).items);
+            /*
+            rList can be both a proper result like
+            StaticItems([:12])
+            or an semi-unresolved list like
+            StaticItems([:12 < :13])
+            */
+            if (rList.length == 1)
+            {
+                item = rList.consume();
+                trace(" rList item consumed. item: ", item);
+            }
+            else
+            {
+                item = new SimpleList(rList);
+                // newItems ~= item;
+                trace(" rList incorporated. newItems: ", newItems);
+            }
         }
 
         /*
@@ -121,7 +139,7 @@ Args int_run(Escopo escopo, Args items, ListItem function(ListItem, ListItem, Li
     {
         newItems ~= lastItem;
     }
-    trace("  returning ", newItems);
+    trace("  (", items, ") returning ", newItems);
     return new StaticItems(newItems);
 }
 
