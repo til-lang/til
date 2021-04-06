@@ -224,7 +224,7 @@ class ChainedItems : Range
         return _ranges[idx];
     }
 
-    override ChainedItems save()
+    override Range save()
     {
         if (this.empty)
         {
@@ -232,8 +232,18 @@ class ChainedItems : Range
             return new ChainedItems([]);
         }
 
+        /*
+        A ChainedItems Range with only one range
+        left should return this range.
+        */
+        auto x = currentRangeIndex - 1;
+        if (x == _ranges.length)
+        {
+            return _ranges[x].save();
+        }
+
         Range[] copies;
-        auto index = this.currentRangeIndex;
+        auto index = currentRangeIndex;
         foreach(g; _ranges)
         {
             if (g.empty)
