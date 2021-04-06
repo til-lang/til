@@ -94,6 +94,8 @@ class ListItem
     // Stubs:
     ulong length() {return defaultLength;}
     abstract string asString();
+    abstract int asInteger();
+    abstract float asFloat();
     abstract ListItem inverted();
 
     ListItem run(Escopo escopo) {return null;}
@@ -125,6 +127,14 @@ class BaseList : ListItem
     override string asString()
     {
         return this.items.asString;
+    }
+    override int asInteger()
+    {
+        throw new Exception("Cannot convert a List into an integer");
+    }
+    override float asFloat()
+    {
+        throw new Exception("Cannot convert a List into an float");
     }
 
     override ListItem inverted()
@@ -496,6 +506,14 @@ class String : ListItem
     {
         return to!string(this.parts.joiner(""));
     }
+    override int asInteger()
+    {
+        throw new Exception("Cannot convert a String into an integer");
+    }
+    override float asFloat()
+    {
+        throw new Exception("Cannot convert a String into an float");
+    }
 
     override ListItem inverted()
     {
@@ -621,6 +639,41 @@ class Atom : ListItem
     {
         return this.repr;
     }
+
+    override int asInteger()
+    {
+        switch(this.type)
+        {
+            case ObjectTypes.Integer:
+                return this.integer;
+            case ObjectTypes.Float:
+                return cast(int)this.floatingPoint;
+            default:
+                throw new Exception(
+                    "Cannot convert a "
+                    ~ to!string(this.type)
+                    ~ " into an integer"
+                );
+        }
+    }
+
+    override float asFloat()
+    {
+        switch(this.type)
+        {
+            case ObjectTypes.Float:
+                return this.floatingPoint;
+            case ObjectTypes.Integer:
+                return cast(float)this.integer;
+            default:
+                throw new Exception(
+                    "Cannot convert a "
+                    ~ to!string(this.type)
+                    ~ " into a float"
+                );
+        }
+    }
+
 
     override ListItem inverted()
     {

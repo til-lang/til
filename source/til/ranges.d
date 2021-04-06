@@ -36,9 +36,29 @@ class Range
 
     ListItem consume()
     {
-        ListItem x = this.front;
-        this.popFront();
-        return x;
+        if (this.empty)
+        {
+            return null;
+        }
+        else
+        {
+            ListItem x = this.front;
+            this.popFront();
+            return x;
+        }
+    }
+    ListItem consume(int defaultValue)
+    {
+        if (this.empty)
+        {
+            return new Atom(defaultValue);
+        }
+        else
+        {
+            ListItem x = this.front;
+            this.popFront();
+            return x;
+        }
     }
 }
 

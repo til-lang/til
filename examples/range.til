@@ -1,10 +1,17 @@
 import std.io as io
+import std.ranges as range
 
-range 50000 |> io.out
+range.zero_to 500 |> io.out
 io.out "---"
 "===" |> io.out
 
-foreach x {[range 70000]} {
+foreach x {[range.zero_to 3]} {
     io.out $x
 }
 io.out "---"
+
+range 10 20 2 |> io.out
+io.out "---"
+range 20 30 |> io.out
+io.out "---"
+range 10 |> io.out

@@ -7,11 +7,11 @@ import std.experimental.logger;
 import std.string : strip;
 
 import til.exceptions;
-import til.ranges;
 import til.grammar;
 import til.logic;
 import til.nodes;
 import til.procedures;
+import til.ranges;
 import til.til;
 
 alias Args = Range;
@@ -100,7 +100,11 @@ class Escopo
         foreach(name, value; variables)
         {
             r ~= "  " ~ name ~ "=<"
-                 ~ to!string(value) ~ ">";
+                 ~ to!string(value) ~ ">\n";
+        }
+        foreach(namespace; namespaces.byKey)
+        {
+            r ~= "+" ~ namespace ~ "\n";
         }
         r ~= ".";
         return r;
@@ -109,7 +113,25 @@ class Escopo
     // Commands
     Result delegate(NamePath, Args) getCommand(NamePath path)
     {
-        string head = path[0];
+        string head;
+        if (path.length == 0)
+        {
+            // throw new Exception("Command not found");
+            /*
+            We imported a module, like
+            import fvector
+            ...
+            Can't we call the module itself? Like
+            set my_vector [fvector 250]
+            ?
+            Yeah, I think we should...
+            */
+            head = "MAIN";
+        }
+        else
+        {
+            head = path[0];
+        }
         trace("getCommand: ", head);
         trace("scope: ", this);
 
@@ -126,6 +148,7 @@ class Escopo
         {
             if (this.parent is null)
             {
+                error("Command not found: " ~ head);
                 return null;
             }
             else
@@ -160,7 +183,7 @@ class Escopo
         auto handler = this.getCommand(path);
         if (handler is null)
         {
-            trace("NO COMMAND FOUND FOR ", path);
+            error("Not found: " ~ to!string(path));
             return null;
         }
         else
@@ -220,9 +243,6 @@ class DefaultEscopo : Escopo
 
         // Modules
         this.commands["import"] = &this.cmd_import;
-
-        // Tests:
-        this.commands["range"] = &this.cmd_range;
     }
 
     // Commands:
@@ -451,50 +471,5 @@ class DefaultEscopo : Escopo
         }
 
         return new Atom(newName);
-    }
-
-    // TESTE:
-    Result cmd_range(NamePath path, Args arguments)
-    {
-        class Range : InfiniteRange
-        {
-            int current = 0;
-            int limit = 0;
-
-            this(int limit)
-            {
-                this.limit = limit;
-            }
-
-            override string toString()
-            {
-                return "range(0," ~ to!string(limit) ~ ")";
-            }
-
-            override void popFront()
-            {
-                current++;
-            }
-            override ListItem front()
-            {
-                return new Atom(current);
-            }
-            override bool empty()
-            {
-                return (current >= limit);
-            }
-            override Range save()
-            {
-                auto x = new Range(limit);
-                x.current = current;
-                return x;
-            }
-        }
-
-        // TODO: use asInteger:
-        auto limit = arguments.consume().asString;
-        tracef(" range.limit:%s", limit);
-        auto range = new Range(to!int(limit));
-        return new SubList(range);
     }
 }
