@@ -1,7 +1,7 @@
 module til.procedures;
 
-import std.conv;
-import std.experimental.logger;
+import std.conv : to;
+import std.experimental.logger : trace;
 
 import til.escopo;
 import til.exceptions;

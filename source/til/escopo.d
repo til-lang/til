@@ -1,9 +1,8 @@
 module til.escopo;
 
 import std.algorithm.iteration : map, joiner;
-import std.array;
 import std.conv : to;
-import std.experimental.logger;
+import std.experimental.logger : trace, error;
 import std.string : strip;
 
 import til.exceptions;
@@ -14,8 +13,10 @@ import til.procedures;
 import til.ranges;
 import til.til;
 
+
 alias Args = Range;
 alias Result = ListItem;
+
 
 class Escopo
 {
@@ -160,7 +161,16 @@ class Escopo
                     head,
                     " IN PARENT SCOPE <<<"
                 );
-                return this.parent.getCommand(path);
+                handler = parent.getCommand(path);
+                if (handler !is null)
+                {
+                    auto reference = parent.namespaces.get(head, null);
+                    if (reference !is null)
+                    {
+                        this.namespaces[head] = reference;
+                    }
+                }
+                return handler;
             }
         }
         else
@@ -171,15 +181,6 @@ class Escopo
 
     Result runCommand(NamePath path, Args arguments)
     {
-        // Normally the end of the program, where
-        // all that is left is a simple result:
-        /*
-        if (path.length == 0)
-        {
-            return null;
-        }
-        */
-
         trace("runCommand:", path, " : ", arguments);
         auto handler = this.getCommand(path);
         if (handler is null)
@@ -187,44 +188,44 @@ class Escopo
             error("Not found: " ~ to!string(path));
             return null;
         }
+
+        return runCommandWithHandler(
+            path, arguments, handler
+        );
+    }
+
+    Result runCommandWithHandler(NamePath path, Args arguments, Result delegate (NamePath, Args) handler)
+    {
+        auto result = handler(path, arguments);
+
+        // XXX : this is a kind of "sefaty check".
+        // It would be nice to NOT run this part
+        // in "release" code.
+        if (result is null)
+        {
+            throw new Exception(
+                "Command "
+                ~ to!string(path)
+                ~ " returned null. The implementation"
+                ~ " is probably wrong."
+            );
+        }
+
+        if (arguments.empty)
+        {
+            return result;
+        }
         else
         {
-            auto result = handler(path, arguments);
-
-            // XXX : this is a kind of "sefaty check".
-            // It would be nice to NOT run this part
-            // in "release" code.
-            if (result is null)
+            trace(" remaining arguments: ", arguments);
+            auto items = result.items;
+            if (items is null)
             {
-                throw new Exception(
-                    "Command "
-                    ~ to!string(path)
-                    ~ " returned null. The implementation"
-                    ~ " is probably wrong."
-                );
+                items = new StaticItems([result]);
             }
-
-            if (arguments.empty)
-            {
-                return result;
-            }
-            else
-            {
-                trace(" remaining arguments: ", arguments);
-                auto items = result.items;
-                if (items is null)
-                {
-                    return new SimpleList(
-                        new ChainedItems([new StaticItems([result]), arguments])
-                    );
-                }
-                else
-                {
-                    return new SimpleList(
-                        new ChainedItems([result.items, arguments])
-                    );
-                }
-            }
+            return new SimpleList(
+                new ChainedItems([items, arguments])
+            );
         }
     }
 }
@@ -274,6 +275,8 @@ class DefaultEscopo : Escopo
         this.commands["set"] = &this.cmd_set;
         this.commands["if"] = &this.cmd_if;
         this.commands["foreach"] = &this.cmd_foreach;
+        this.commands["continue"] = &this.cmd_continue;
+        this.commands["break"] = &this.cmd_break;
         this.commands["proc"] = &this.cmd_proc;
         this.commands["return"] = &this.cmd_return;
 
@@ -364,24 +367,49 @@ class DefaultEscopo : Escopo
         auto range = argRange.run(this, true);
         trace(" range: ", range);
 
+        auto loopScope = new DefaultEscopo(
+            this, "foreach<" ~ to!string(range) ~ ">"
+        );
+
         Result result;
-        foreach(item; range.items)
+
+        // The first iteration checks if our range items
+        // are atoms or lists:
+        Range theItems = range.items;
+        ListItem firstItem = theItems.save().consume();
+
+        // Some helper functions to accelerate things a little bit:
+        ListItem iterateWithAtoms(Range items)
         {
-            auto loopScope = new DefaultEscopo(
-                this, "foreach<" ~ to!string(item) ~ ">"
-            );
-            trace(" item: ", item);
-            auto subItems = item.items;
-            if (subItems is null)
+            foreach(item; items)
             {
-                foreach(index, name; names)
+                trace(" item: ", item);
+                foreach(name; names)
                 {
                     trace("   name: ", name);
                     loopScope[name] = item;
                 }
+                trace("loopScope: ", loopScope);
+                trace("argBody.items: ", argBody.items);
+                result = argBody.run(loopScope, true);
+                if (result.scopeExit == ScopeExitCodes.Break)
+                {
+                    break;
+                }
+                else if (result.scopeExit == ScopeExitCodes.Continue)
+                {
+                    continue;
+                }
             }
-            else
+            result.scopeExit = ScopeExitCodes.Proceed;
+            return result;
+        }
+        ListItem iterateWithLists(Range items)
+        {
+            foreach(item; range.items)
             {
+                trace(" item: ", item);
+                auto subItems = item.items;
                 foreach(name; names)
                 {
                     trace("   name: ", name);
@@ -398,15 +426,47 @@ class DefaultEscopo : Escopo
                     // could be provided dynamically, so we would turn
                     // this loop range into an... actual range.
                 }
+                trace("loopScope: ", loopScope);
+                trace("argBody.items: ", argBody.items);
+                result = argBody.run(loopScope, true);
+                if (result.scopeExit == ScopeExitCodes.Break)
+                {
+                    break;
+                }
+                else if (result.scopeExit == ScopeExitCodes.Continue)
+                {
+                    continue;
+                }
             }
-            trace("loopScope: ", loopScope);
-            trace("argBody.items: ", argBody.items);
-            result = argBody.run(loopScope, true);
+            result.scopeExit = ScopeExitCodes.Proceed;
+            return result;
         }
+        // --------------------------------
 
-        trace(" ----- FOREACH END -----");
-        // Return whatever was the result of the last iteration:
-        return result;
+        // TODO: what if firstItem is null???
+        if (firstItem.items is null)
+        {
+            return iterateWithAtoms(theItems);
+        }
+        else
+        {
+            return iterateWithLists(theItems);
+        }
+    }
+    Result cmd_break(NamePath cmdName, Args arguments)
+    {
+        trace(" --- BREAK: ", arguments);
+        auto returnValue = new SimpleList(arguments.exhaust());
+        returnValue.scopeExit = ScopeExitCodes.Break;
+        return returnValue;
+    }
+    Result cmd_continue(NamePath cmdName, Args arguments)
+    {
+        trace(" --- CONTINUE: ", arguments);
+        // XXX : should not have any arguments...
+        auto returnValue = new SimpleList(arguments.exhaust());
+        returnValue.scopeExit = ScopeExitCodes.Continue;
+        return returnValue;
     }
 
     Result cmd_proc(NamePath cmd, Args arguments)
@@ -470,7 +530,7 @@ class DefaultEscopo : Escopo
             }
             newName = arguments.consume().asString;
         }
-        tracef("IMPORT %s AS %s", modulePath, newName);
+        trace("IMPORT ", modulePath, " AS ", newName);
 
         // Check if the submodule actually exists:
         Escopo target = this;

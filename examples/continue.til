@@ -1,0 +1,17 @@
+import std.io as io
+import std.ranges as range
+
+set result [
+    set r 0
+    foreach x ([range 1000]) {
+        if ($x >= 5) {
+            continue
+        }
+        io.out $x
+        set r $x
+    }
+    io.out "end"
+    return $r
+]
+
+io.out "Result: $result"

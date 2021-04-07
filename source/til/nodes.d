@@ -4,7 +4,7 @@ module til.nodes;
 import std.algorithm.iteration : map, joiner;
 import std.array : join;
 import std.conv : to;
-import std.experimental.logger;
+import std.experimental.logger : trace;
 
 import til.escopo;
 import til.exceptions;
@@ -20,6 +20,8 @@ enum ScopeExitCodes
     ReturnSuccess,    // returned without errors
     Failure,          // terminated with errors
     ListSuccess,      // A list was executed with success
+    Break,            // Break the current loop
+    Continue,         // Continue to the next iteraction
 }
 
 enum ObjectTypes
@@ -255,6 +257,7 @@ class ExecList : BaseList
             );
             // After that, we can already treat the SubList
             // as if it as a command:
+
             result = runCommand(subList.items, escopo);
             trace(
                 "runCommand:", item, " → ", result
@@ -286,6 +289,13 @@ class ExecList : BaseList
                     throw new Exception("Failure: " ~ to!string(item));
 
                 // -----------------
+                // Loops:
+                case ScopeExitCodes.Break:
+                    return result;
+                case ScopeExitCodes.Continue:
+                    return result;
+
+                // -----------------
                 // List execution:
                 case ScopeExitCodes.ListSuccess:
                     result.scopeExit = ScopeExitCodes.Proceed;
@@ -300,7 +310,6 @@ class ExecList : BaseList
 
     ListItem runCommand(Range items, Escopo escopo)
     {
-        trace("nodes.runCommand:", items);
         // ----- 2 -----
 
         // Backup the contents, in case this is NOT a command.
@@ -532,16 +541,74 @@ class CommonList : BaseList
     }
 }
 
-class String : ListItem
+// A string without substitutions:
+class SimpleString : ListItem
+{
+    string repr;
+    ulong defaultLength = 1;
+
+    this()
+    {
+    }
+    this(string s)
+    {
+        this.repr = s;
+        this.type = ObjectTypes.String;
+    }
+
+    // Operators:
+    override string toString()
+    {
+        return '"' ~ this.repr ~ '"';
+    }
+
+    override ListItem run(Escopo escopo)
+    {
+        return this;
+    }
+
+    override string asString()
+    {
+        return this.repr;
+    }
+    override int asInteger()
+    {
+        throw new Exception("Cannot convert a String into an integer");
+    }
+    override float asFloat()
+    {
+        throw new Exception("Cannot convert a String into an float");
+    }
+    override ListItem inverted()
+    {
+        string newRepr;
+        string repr = this.asString;
+        if (repr[0] == '-')
+        {
+            newRepr = repr[1..$];
+        }
+        else
+        {
+            newRepr = "-" ~ repr;
+        }
+        return new SimpleString(newRepr);
+    }
+}
+
+class String : SimpleString
 {
     ulong defaultLength = 1;
     string[] parts;
     string[int] substitutions;
 
+    this()
+    {
+    }
     this(string s)
     {
-        this.parts ~= s;
-        this.type = ObjectTypes.String;
+        throw new Exception(
+            "Strings should be used only when there are substitutions"
+        );
     }
     this(string[] parts, string[int] substitutions)
     {
@@ -560,11 +627,6 @@ class String : ListItem
 
     override ListItem run(Escopo escopo)
     {
-        if (this.substitutions.length == 0)
-        {
-            return this;
-        }
-
         string result;
         string subst;
         string value;
@@ -591,34 +653,12 @@ class String : ListItem
         }
 
         trace(" - string " ~ to!string(this) ~ " → " ~ result);
-        return new String(result);
+        return new SimpleString(result);
     }
 
     override string asString()
     {
         return to!string(this.parts.joiner(""));
-    }
-    override int asInteger()
-    {
-        throw new Exception("Cannot convert a String into an integer");
-    }
-    override float asFloat()
-    {
-        throw new Exception("Cannot convert a String into an float");
-    }
-    override ListItem inverted()
-    {
-        string newRepr;
-        string repr = this.asString;
-        if (repr[0] == '-')
-        {
-            newRepr = repr[1..$];
-        }
-        else
-        {
-            newRepr = "-" ~ repr;
-        }
-        return new String(newRepr);
     }
 }
 
@@ -629,12 +669,14 @@ class Atom : ListItem
     bool boolean;
     string _repr;
     ulong defaultLength = 1;
+    bool hasSubstitution = true;
     NamePath _namePath;
     ScopeExitCodes _scopeExit;
+    Result delegate(NamePath, Args) cmdHandler = null;
 
     this(string s)
     {
-        this._repr = s;
+        this.repr = s;
     }
     this(string s, ObjectTypes t)
     {
@@ -659,6 +701,7 @@ class Atom : ListItem
         this.integer = to!int(b);
         this._repr = to!string(b);
         this.type = ObjectTypes.Boolean;
+        this.hasSubstitution = false;
     }
 
     // Utilities and operators:
@@ -692,11 +735,21 @@ class Atom : ListItem
     {
         this._repr = s;
         this._namePath = [s];
+
+        this.hasSubstitution = (
+            s[0] == '$' || s.length >= 3 && s[0] == '-' && s[1] == '$'
+        );
+
         return s;
     }
 
     override ListItem run(Escopo escopo)
     {
+        if (!this.hasSubstitution)
+        {
+            return this;
+        }
+
         string repr = this.repr;
         char firstChar = repr[0];
         if (firstChar == '$')
@@ -732,6 +785,7 @@ class Atom : ListItem
             return value.inverted;
         }
         else {
+            this.hasSubstitution = false;
             return this;
         }
     }

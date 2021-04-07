@@ -1,0 +1,13 @@
+import std.io as io
+import std.ranges as range
+
+set result [
+    foreach x ([range 1000]) {
+        if ($x >= 5) {
+            break "Last item was $x"
+        }
+        io.out $x
+    }
+]
+
+io.out "Result: $result"

@@ -1,8 +1,8 @@
 module til.ranges;
 
-import std.conv;
-import std.experimental.logger;
-import std.range;
+import std.conv : to;
+import std.experimental.logger : trace;
+// import std.range;
 
 import til.nodes;
 
@@ -162,9 +162,9 @@ class ChainedItems : Range
     ulong currentRangeIndex = 0;
     ulong _length;
 
-    this(Range[] generators)
+    this(Range[] ranges)
     {
-        foreach(g; generators)
+        foreach(g; ranges)
         {
             if (!g.empty)
             {

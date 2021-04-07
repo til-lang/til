@@ -1,6 +1,6 @@
 module til.grammar;
 
-import std.array;
+import std.array : join;
 import std.conv : to;
 import std.experimental.logger;
 
@@ -174,7 +174,7 @@ ListItem analyseListItem(ParseTree p)
 }
 
 // Strings:
-String analyseString(ParseTree p)
+SimpleString analyseString(ParseTree p)
 {
     string[] parts;
     string[int] substitutions;
@@ -191,7 +191,16 @@ String analyseString(ParseTree p)
                 parts ~= child.matches[0];
         }
     }
-    return new String(parts, substitutions);
+    if (substitutions.length == 0)
+    {
+        // XXX: Is it possible to not have any substitutions
+        // and yet have many parts?
+        return new SimpleString(parts[0]);
+    }
+    else
+    {
+        return new String(parts, substitutions);
+    }
 }
 
 Atom analyseAtom(ParseTree p)
