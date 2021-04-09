@@ -2,24 +2,26 @@ module til.std.stack;
 
 import std.algorithm.mutation : reverse;
 import std.conv;
-import std.experimental.logger;
+import std.experimental.logger : trace;
 
-import til.escopo;
 import til.nodes;
 
+CommandHandler[string] commands;
 
-class Stack : Escopo
+// Commands:
+static this()
 {
-    string name = "stack";
-
-    Result cmd_dup(NamePath path, Args args)
+    commands["dup"] = (Process escopo, string path, CommandResult result)
     {
-        auto head = args.consume();
-        return new SubList([head, head]);
-    }
-    Result cmd_reverse(NamePath path, Args args)
+        auto head = escopo.pop();
+        escopo.push(head);
+        escopo.push(head);
+        result.exitCode = ExitCode.CommandSuccess;
+        return result;
+    };
+    commands["reverse"] = (Process escopo, string path, CommandResult result)
     {
-        auto head = args.consume();
+        auto head = escopo.pop();
         if (head.type != ObjectTypes.String)
         {
             throw new Exception(
@@ -28,21 +30,22 @@ class Stack : Escopo
                 ~ " (" ~ head.asString ~ ")"
             );
         }
-        char[] r = reverse!(char[])(cast(char[])head.asString);
-        return new String(cast(string)r);
-    }
-    Result cmd_equals(NamePath path, Args args)
-    {
-        auto t1 = args.consume();
-        auto t2 = args.consume();
-        // XXX: compare based on types, maybe.
-        return new Atom(t1.asString == t2.asString);
-    }
+        string copy = "";
+        copy ~= head.asString;
+        char[] r = reverse!(char[])(cast(char[])copy);
+        escopo.push(new SimpleString(cast(string)r));
 
-    override void loadCommands()
+        result.exitCode = ExitCode.CommandSuccess;
+        return result;
+    };
+    commands["equals?"] = (Process escopo, string path, CommandResult result)
     {
-        this.commands["dup"] = &cmd_dup;
-        this.commands["reverse"] = &cmd_reverse;
-        this.commands["equals?"] = &cmd_equals;
-    }
+        trace("equals? escopo:", escopo);
+        auto t1 = escopo.pop();
+        auto t2 = escopo.pop();
+        trace("equals? ", t1, t2);
+        escopo.push(new Atom(t1.asString == t2.asString));
+        result.exitCode = ExitCode.CommandSuccess;
+        return result;
+    };
 }

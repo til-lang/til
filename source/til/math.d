@@ -2,23 +2,23 @@ module til.math;
 
 import std.conv : to;
 import std.experimental.logger : trace;
+import std.range;
 
-import til.escopo;
 import til.nodes;
 import til.ranges;
 
 
-ListItem int_resolve(Escopo escopo, Args items)
+ListItem int_resolve(Process escopo, Items items)
 {
-    Args r = int_run(escopo, items);
+    Items r = int_run(escopo, items);
 
     // Resolve:
     // (We will assume r2 already has only one ListItem/Atom
     // that represents the result.)
-    return r.consume();
+    return r.front;
 }
 
-Args int_run(Escopo escopo, Args items)
+Items int_run(Process escopo, Items items)
 {
     /*
     (1 + 2 * 3)
@@ -26,17 +26,17 @@ Args int_run(Escopo escopo, Args items)
     run precedence_2 → (7)
     resolve → 7
     */
-    Args r1 = int_run(escopo, items, &int_precedence_1);
-    Args r2 = int_run(escopo, r1, &int_precedence_2);
+    Items r1 = int_run(escopo, items, &int_precedence_1);
+    Items r2 = int_run(escopo, r1, &int_precedence_2);
     return r2;
 }
 
-Args int_run(Escopo escopo, Args items, ListItem function(ListItem, ListItem, ListItem) resolver)
+Items int_run(Process escopo, Items items, ListItem function(ListItem, ListItem, ListItem) resolver)
 {
     /*
     set x [math.run 1 + 1]
     */
-    trace(" MATH.resolve: ", items);
+    trace(" MATH.int_run: ", items);
 
     ListItem lastItem;
     ListItem[] newItems;
@@ -98,7 +98,8 @@ Args int_run(Escopo escopo, Args items, ListItem function(ListItem, ListItem, Li
         {
             // The next item is the result from the list:
             // item = int_resolve(escopo, item.run(escopo, true).items);
-            Args rList = escopo.int_run(item.run(escopo, true).items);
+            auto x = item.evaluate(escopo, true);
+            Items rList = escopo.int_run((cast(BaseList)x).items);
             /*
             rList can be both a proper result like
             StaticItems([:12])
@@ -107,8 +108,9 @@ Args int_run(Escopo escopo, Args items, ListItem function(ListItem, ListItem, Li
             */
             if (rList.length == 1)
             {
-                item = rList.consume();
-                trace(" rList item consumed. item: ", item);
+                // XXX ?
+                item = rList[0];
+                trace(" rList[0]: ", item);
             }
             else
             {
@@ -140,7 +142,7 @@ Args int_run(Escopo escopo, Args items, ListItem function(ListItem, ListItem, Li
         newItems ~= lastItem;
     }
     trace("  (", items, ") returning ", newItems);
-    return new StaticItems(newItems);
+    return newItems;
 }
 
 ListItem int_precedence_1(ListItem operator, ListItem t1, ListItem t2)

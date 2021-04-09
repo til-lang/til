@@ -2,21 +2,22 @@ module til.logic;
 
 import std.conv : to;
 import std.experimental.logger : trace;
+import std.range : popFront;
 
-import til.escopo;
 import til.math;
 import til.nodes;
 import til.ranges;
 
 
-bool boolean(Escopo escopo, Range items)
+bool boolean(Process escopo, Items items)
 {
+    trace(" BOOLEAN ANALYSIS: ", items);
     // Resolve any math beforehand:
     auto resolvedItems = int_run(escopo, items);
     return pureBoolean(escopo, resolvedItems);
 }
 
-bool pureBoolean(Escopo escopo, Range items)
+bool pureBoolean(Process escopo, Items items)
 {
     /***************************************************
     Now this is a somewhat "clever" implementation
@@ -38,7 +39,7 @@ bool pureBoolean(Escopo escopo, Range items)
     must evaluate ALL the conditions, always...)
     ****************************************************/
 
-    trace(" BOOLEAN ANALYSIS: ", items);
+    trace(" PURE BOOLEAN: ", items);
 
     ListItem lastItem;
     bool currentResult = false;
@@ -113,11 +114,10 @@ bool pureBoolean(Escopo escopo, Range items)
     Take for instance `f or t and t`. It should return true.
     (The explicit version would be `(f or t) and t`.)
     */
-    void and()
+    void and(ulong index)
     {
-        // Consume the `&&`:
-        items.popFront();
-        auto newResult = escopo.boolean(items);
+        // (index+1 = consume the `&&`)
+        auto newResult = escopo.boolean(items[index+1..$]);
         trace(" and.newResult: ", to!string(newResult));
         currentResult = currentResult && newResult;
         trace(" and.currentResult: ", to!string(currentResult));
@@ -125,7 +125,7 @@ bool pureBoolean(Escopo escopo, Range items)
 
     // -----------------------------------------------
     // The loop:
-    foreach(item; items)
+    foreach(index, item; items)
     {
         string s = item.asString;
         trace("s: ", s, " ", to!string(item.type));
@@ -134,7 +134,7 @@ bool pureBoolean(Escopo escopo, Range items)
         {
             if (s == "&&")
             {
-                and();
+                and(index);
                 trace(" returning from AND: ", to!string(currentResult));
                 break;
             }
@@ -148,7 +148,7 @@ bool pureBoolean(Escopo escopo, Range items)
         else if (item.type == ObjectTypes.List)
         {
             auto newResult = escopo.boolean(
-                new CommonList(item.items).run(escopo).items
+                (cast(SimpleList)item.evaluate(escopo, true)).items
             );
             currentResult = currentResult || newResult;
             continue;
@@ -158,6 +158,10 @@ bool pureBoolean(Escopo escopo, Range items)
         {
             operatorHandler(s, item);
             continue;
+        }
+        else if (item.type == ObjectTypes.Boolean)
+        {
+            currentResult = currentResult || item.asBoolean;
         }
         // Not an operator? Must be a value...
         currentHandler(s, item);

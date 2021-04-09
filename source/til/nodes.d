@@ -2,26 +2,46 @@ module til.nodes;
 
 
 import std.algorithm.iteration : map, joiner;
+import std.range : back, popBack, retro;
 import std.array : join;
 import std.conv : to;
-import std.experimental.logger : trace;
+import std.experimental.logger : error, trace;
 
-import til.escopo;
 import til.exceptions;
 import til.ranges;
-import til.grammar;
+
+alias Items = ListItem[];
+alias Cmd = string;
+alias CommandHandler = CommandResult delegate(Process, Cmd, CommandResult);
 
 
-alias NamePath = string[];
-
-enum ScopeExitCodes
+enum ExitCode
 {
+    Undefined,
     Proceed,          // keep running
     ReturnSuccess,    // returned without errors
     Failure,          // terminated with errors
-    ListSuccess,      // A list was executed with success
+    CommandSuccess,   // A command was executed with success
     Break,            // Break the current loop
     Continue,         // Continue to the next iteraction
+}
+
+struct CommandResult
+{
+    ExitCode exitCode = ExitCode.Proceed;
+    int argumentCount = 0;
+    int returnedItemsCount = 0;
+    Range stream = null;
+
+    ListItem[] arguments(Process escopo)
+    {
+        return escopo.pop(argumentCount);
+    }
+    void push(Process escopo, ListItem item)
+    {
+        escopo.push(item);
+        returnedItemsCount++;
+    }
 }
 
 enum ObjectTypes
@@ -37,81 +57,417 @@ enum ObjectTypes
     Boolean,
 }
 
+class Process
+{
+    SubProgram program;
+    Process parent;
+
+    ListItem[] stack;
+    ListItem[string] variables;
+
+    this(Process parent)
+    {
+        this.parent = parent;
+        this.program = parent.program;
+    }
+    this(Process parent, SubProgram program)
+    {
+        this.parent = parent;
+        this.program = program;
+    }
+
+    // The "heap":
+    // auto x = escopo["x"];
+    ListItem opIndex(string name)
+    {
+        ListItem value = this.variables.get(name, null);
+        if (value is null && this.parent !is null)
+        {
+            return this.parent[name];
+        }
+        else
+        {
+            return value;
+        }
+    }
+    // escopo["x"] = new Atom(123);
+    void opIndexAssign(ListItem value, string name)
+    {
+        variables[name] = value;
+    }
+
+    // The Stack:
+    /*
+       You see, for the user it doesn't really matter
+       how we implement this, so we use the back
+       of an Array as the top of the stack, but
+       doing otherwise wouldn't be noticed
+       by anyone.
+    */
+    ListItem pop()
+    {
+        auto item = this.stack.back;
+        this.stack.popBack();
+        trace("POPPED:", item);
+        return item;
+    }
+    ListItem[] pop(int count)
+    {
+        ListItem[] items;
+        for(int i = 0; i < count; i++)
+        {
+            // TODO: check if we reached stack bottom.
+            items ~= this.pop();
+        }
+        return items;
+    }
+    void push(ListItem item)
+    {
+        trace("PUSH:", item);
+        this.stack ~= item;
+    }
+
+    // Debugging information about itself:
+    override string toString()
+    {
+        string s = "Process(" ~ program.name ~ "):\n";
+
+        s ~= "STACK:" ~ to!string(stack) ~ "\n";
+        foreach(name, value; variables)
+        {
+            s ~= " " ~ name ~ "=<" ~ to!string(value) ~">\n";
+        }
+
+        s ~= "COMMANDS:\n";
+        foreach(name; program.commands.byKey)
+        {
+            s ~= " " ~ name ~ " ";
+        }
+        s ~= "\n";
+        return s;
+    }
+
+    CommandResult run()
+    {
+        CommandResult result;
+        // TODO: check if this.program !is null
+        return this.run(this.program, result);
+    }
+    CommandResult run(SubProgram subprogram)
+    {
+        CommandResult result;
+        return this.run(subprogram, result);
+    }
+    CommandResult run(SubProgram subprogram, CommandResult lastResult)
+    {
+        foreach(pipeline; subprogram.pipelines)
+        {
+            trace("running next pipeline");
+            trace("running pipeline:", pipeline);
+            lastResult = pipeline.run(this, lastResult);
+            trace("  pipeline.result:", lastResult);
+
+            final switch(lastResult.exitCode)
+            {
+                case ExitCode.Undefined:
+                    throw new Exception(to!string(pipeline) ~ " returned Undefined");
+
+                case ExitCode.Proceed:
+                    // That is the expected result.
+                    // So we just proceed.
+                    break;
+
+                // -----------------
+                // Proc execution:
+                case ExitCode.ReturnSuccess:
+                    // ReturnSuccess is received here when
+                    // we are still INSIDE A PROC.
+                    // We return the result, but out caller
+                    // doesn't necessarily have to break:
+                    lastResult.exitCode = ExitCode.CommandSuccess;
+                    return lastResult;
+
+                case ExitCode.Failure:
+                    throw new Exception("Failure: " ~ to!string(lastResult));
+
+                // -----------------
+                // Loops:
+                case ExitCode.Break:
+                case ExitCode.Continue:
+                    return lastResult;
+
+                // -----------------
+                // Pipeline execution:
+                case ExitCode.CommandSuccess:
+                    throw new Exception(
+                        to!string(pipeline) ~ " returned CommandSuccess."
+                        ~ " Expected a Proceed exit code."
+                    );
+            }
+        }
+
+        // Returns the result of the last expression:
+        trace("SubProgram.RETURNING ", lastResult);
+        return lastResult;
+    }
+
+    ListItem runSubprocess(SubProgram subprogram)
+    {
+        auto subprocess = new Process(this, subprogram);
+        subprocess.run();
+        // It's expected to find the result
+        // as the last item in the stack:
+        return subprocess.pop();
+    }
+
+    // Commands
+    CommandHandler getCommand(string name)
+    {
+        return this.getCommand(name, true);
+    }
+    CommandHandler getCommand(string name, bool tryGlobal)
+    {
+        /*
+        This codebase is not much inclined to
+        *early returns*, but in this case
+        that is the option that makes
+        more sense.
+        */
+
+        // Local command:
+        CommandHandler handler = this.program.commands.get(name, null);
+        if (handler !is null) return handler;
+
+        // Global command:
+        if (tryGlobal)
+        {
+            handler = this.program.globalCommands.get(name, null);
+            if (handler !is null) return handler;
+        }
+
+        // Parent:
+        if (this.parent !is null)
+        {
+            trace(
+                ">>> SEARCHING FOR COMMAND ",
+                name,
+                " IN PARENT SCOPE <<<"
+            );
+            handler = parent.getCommand(name, false);
+            if (handler !is null) return handler;
+        }
+
+        error("Command not found: " ~ name);
+        return null;
+    }
+}
+
+class SubProgram
+{
+    string name = "<SubProgram>";
+    Pipeline[] pipelines;
+
+    CommandHandler[string] commands;
+    static CommandHandler[string] globalCommands;
+
+    static CommandHandler[string][string] availableModules;
+
+    this(Pipeline[] pipelines)
+    {
+        this.pipelines = pipelines;
+    }
+
+    void registerGlobalCommands(CommandHandler[string] commands)
+    {
+        foreach(key, value; commands)
+        {
+            this.globalCommands[key] = value;
+        }
+    }
+    void addModule(string key, CommandHandler[string] commands)
+    {
+        availableModules[key] = commands;
+    }
+
+    // TODO : improve it with information useful for debugging:
+    override string toString()
+    {
+        string s = "SubProgram " ~ this.name ~ ":\n";
+        foreach(pipeline; pipelines)
+        {
+            s ~= to!string(pipeline) ~ "\n";
+        }
+        return s;
+    }
+    string asString()
+    {
+        return to!string(pipelines
+            .map!(x => x.asString)
+            .joiner("\n"));
+    }
+}
+
+class Pipeline
+{
+    /*
+    >>cmd1 a b > cmd2 > cmd3 x<<
+    */
+    Command[] commands;
+
+    this(Command[] commands)
+    {
+        this.commands = commands;
+    }
+
+    override string toString()
+    {
+        return "<<" ~ this.asString ~ ">>";
+    }
+    string asString()
+    {
+        return to!string(commands
+            .map!(x => to!string(x))
+            .joiner(" > "));
+    }
+
+    CommandResult run(Process escopo, CommandResult lastResult)
+    {
+        foreach(command; commands)
+        {
+            trace("running command:", command);
+            lastResult = command.run(escopo, lastResult);
+            trace("  result: ", lastResult);
+
+            final switch(lastResult.exitCode)
+            {
+                case ExitCode.Undefined:
+                    throw new Exception(to!string(command) ~ " returned Undefined");
+
+                case ExitCode.Proceed:
+                    throw new InvalidException(
+                        "Commands should not return `Proceed`: " ~ to!string(lastResult));
+
+                // -----------------
+                // Proc execution:
+                case ExitCode.ReturnSuccess:
+                    // ReturnSuccess is received here when
+                    // we are still INSIDE A PROC.
+                    // We return the result, but out caller
+                    // doesn't necessarily have to break:
+                    return lastResult;
+
+                case ExitCode.Failure:
+                    throw new Exception("Failure: " ~ to!string(lastResult));
+
+                // -----------------
+                // Loops:
+                case ExitCode.Break:
+                case ExitCode.Continue:
+                    return lastResult;
+
+                // -----------------
+                // List execution:
+                case ExitCode.CommandSuccess:
+                    // pass
+                    break;
+            }
+        }
+        // The expected result of a pipeline is "Proceed".
+        lastResult.exitCode = ExitCode.Proceed;
+        return lastResult;
+    }
+}
+
+class Command
+{
+    string name;
+    Items arguments;
+
+    this(string name, Items arguments)
+    {
+        this.name = name;
+        this.arguments = arguments;
+        trace("new Command:", name, " ", arguments);
+    }
+
+    override string toString()
+    {
+        // return "cmd(" ~ this.name ~ to!string(this.arguments) ~ ")";
+        return "cmd(" ~ this.name ~ ")";
+    }
+
+    CommandResult run(Process escopo, CommandResult lastResult)
+    {
+        trace("Command.run");
+        trace(" inside Process ", escopo);
+        // Evaluate and push each argument, starting from
+        // the last one:
+        lastResult.argumentCount = 0;
+        trace(" pushing arguments");
+        trace(this.arguments);
+        foreach(argument; this.arguments.retro)
+        {
+            trace(" ", argument);
+            lastResult.argumentCount++;
+            escopo.push(argument.evaluate(escopo));
+        }
+
+        // Run the command:
+        trace(" finding handler for ", this.name);
+        auto handler = escopo.getCommand(this.name);
+        if (handler is null)
+        {
+            error("Command not found: " ~ this.name);
+            lastResult.exitCode = ExitCode.Failure;
+            return lastResult;
+        }
+
+        // We set the exitCode to Undefined as a fla
+        // to check if the hander is really doing
+        // the basics, at least.
+        lastResult.exitCode = ExitCode.Undefined;
+        trace(" calling handler...");
+        lastResult = handler(escopo, this.name, lastResult);
+
+        // XXX : this is a kind of "sefaty check".
+        // It would be nice to NOT run this part
+        // in "release" code.
+        if (lastResult.exitCode == ExitCode.Undefined)
+        {
+            throw new Exception(
+                "Command "
+                ~ to!string(name)
+                ~ " returned Undefined. The implementation"
+                ~ " is probably wrong."
+            );
+        }
+        return lastResult;
+    }
+
+}
+
 
 // A base class for all kind of items that
 // compose a list (including Lists):
 class ListItem
 {
     ObjectTypes type;
-    ulong defaultLength = 0;
-    ScopeExitCodes scopeExit;
-    string[] _namePath;
-
-    @property
-    NamePath namePath()
-    {
-        return this._namePath;
-    }
-    @property
-    NamePath namePath(NamePath path)
-    {
-        this._namePath = path;
-        return path;
-    }
-    @property
-    NamePath namePath(string name)
-    {
-        auto path = [name];
-        this._namePath = path;
-        return path;
-    }
-
-    /*
-    {
-        {a b c}
-        d e f
-        {g h i}
-    } → a b c d e f g h i
-    */
-    ListItem[] atoms()
-    {
-        ListItem[] a;
-        // List.items returns ListItem[]
-        // Anything else returns null.
-        foreach(item; this.items)
-        {
-            auto subItems = item.items;
-            if (subItems is null)
-            {
-                a ~= item;
-            }
-            else {
-                a ~= item.atoms;
-            }
-        }
-        return a;
-    }
-
-    string[] strings()
-    {
-        return [this.asString];
-    }
 
     // Stubs:
-    ulong length() {return defaultLength;}
     abstract string asString();
     abstract int asInteger();
     abstract float asFloat();
+    abstract bool asBoolean();
     abstract ListItem inverted();
 
-    ListItem run(Escopo escopo, bool force) {return this.run(escopo);}
-    ListItem run(Escopo escopo) {return null;}
-    Range items() {return null;}
+    ListItem evaluate(Process escopo, bool force) {return this.evaluate(escopo);}
+    ListItem evaluate(Process escopo) {return null;}
 }
 
+// Base class for lists:
 class BaseList : ListItem
 {
-    private Range _items;
+    Items items;
 
     this()
     {
@@ -121,38 +477,34 @@ class BaseList : ListItem
     {
         this([item]);
     }
-    this(ListItem[] items)
+    this(Items items)
     {
-        this._items = new StaticItems(items);
-        this.type = ObjectTypes.List;
-    }
-    this(Range items)
-    {
-        this._items = items;
+        this.items = items;
         this.type = ObjectTypes.List;
     }
 
     // Methods:
     override string asString()
     {
-        return this.items.asString;
+        string s = to!string(this.items
+            .map!(x => x.asString)
+            .joiner(" "));
+        return "BaseList:(" ~ s ~ ")";
     }
     override int asInteger()
     {
+        // XXX : or can we???
         throw new Exception("Cannot convert a List into an integer");
     }
     override float asFloat()
     {
-        throw new Exception("Cannot convert a List into an float");
+        // XXX : or can we???
+        throw new Exception("Cannot convert a List into a float");
     }
-    override string[] strings()
+    override bool asBoolean()
     {
-        string[] s;
-        foreach(item; this.items)
-        {
-            s ~= item.asString;
-        }
-        return s;
+        // XXX : or can we???
+        throw new Exception("Cannot convert a List into a boolean");
     }
     override ListItem inverted()
     {
@@ -160,179 +512,64 @@ class BaseList : ListItem
         // XXX : or can?
         // XXX : should we?
     }
-
-    @property
-    override Range items()
-    {
-        return this._items.save();
-    }
-
-    // Some utilities:
-    static ListItem[] flatten(Range items)
-    {
-        ListItem[] flattened;
-
-        foreach(item; items)
-        {
-            auto nextItems = item.items;
-            if (nextItems is null)
-            {
-                // An Atom or String:
-                flattened ~= item;
-            }
-            else
-            {
-                flattened ~= BaseList.flatten(item.items);
-            }
-        }
-
-        return flattened;
-    }
 }
-
-/*
- * A word about lists and how each one should `run`:
- * 
- * A SubList always returns its items, without running them;
- * A CommonList runs each item and returns them;
- * A ExecList runs each item and tries to execute each of
- * them as a command.
- */
 
 class ExecList : BaseList
 {
-    this()
+    SubProgram subprogram;
+
+    this(SubProgram subprogram)
     {
         super();
+        this.subprogram = subprogram;
     }
-    this(ListItem item)
-    {
-        super(item);
-    }
-    this(ListItem[] items)
-    {
-        super(items);
-    }
-    this(Range items)
-    {
-        super(items);
-    }
-
-    /*
-     * A ExecList is how we represent both the program
-     * itself and any ExecList.
-     */
 
     // Utilities and operators:
     override string toString()
     {
-        string s = this.asString;
+        string s = this.subprogram.asString;
         return "[" ~ s ~ "]";
     }
 
-    override ListItem run(Escopo escopo)
+    override ListItem evaluate(Process escopo)
     {
-        trace("ExecList.run: ", this);
-        // How to run a program:
-        // 1- Run every item in the list:
-        // Atoms and string will eventually substitute.
-        // ExecLists will be run.
-        // SubLists will return themselves.
-        // 
-        // 2- Get the "command" and try to run it.
-        // If it's not a proper command, just return `this`.
+        auto result = escopo.run(this.subprogram);
+        // TODO : evaluate result, somehow.
+        return escopo.pop();
+    }
+}
 
-        // ----- 1 -----
-        ListItem result;
+class SubList : BaseList
+{
+    SubProgram subprogram;
 
-        foreach(item; this.items)
-        {
-            // Each item is supposed to be a CommonList.
-            // So running a CommonList returns a SubList with
-            // all substitutions already made:
-            auto subList = item.run(escopo);
-
-            trace(
-                " ", item, " → ", subList
-            );
-            // After that, we can already treat the SubList
-            // as if it as a command:
-
-            result = runCommand(subList.items, escopo);
-            trace(
-                "runCommand:", item, " → ", result
-            );
-            if (result is null)
-            {
-                throw new Exception(
-                    "Command not found: " ~ to!string(subList)
-                );
-            }
-            trace("result: ", result, " (", result.scopeExit, ")");
-
-            final switch(result.scopeExit)
-            {
-                case ScopeExitCodes.Proceed:
-                    break;
-
-                // -----------------
-                // Proc execution:
-                case ScopeExitCodes.ReturnSuccess:
-                    // ReturnSuccess is received here when
-                    // we are still INSIDE A PROC.
-                    // We return the result, but out caller
-                    // doesn't necessarily have to break:
-                    result.scopeExit = ScopeExitCodes.ListSuccess;
-                    return result;
-
-                case ScopeExitCodes.Failure:
-                    throw new Exception("Failure: " ~ to!string(item));
-
-                // -----------------
-                // Loops:
-                case ScopeExitCodes.Break:
-                    return result;
-                case ScopeExitCodes.Continue:
-                    return result;
-
-                // -----------------
-                // List execution:
-                case ScopeExitCodes.ListSuccess:
-                    result.scopeExit = ScopeExitCodes.Proceed;
-                    return result;
-            }
-        }
-
-        // Return the result of the last "expression":
-        trace("ExecLists.RETURNING ", result);
-        return result;
+    this(SubProgram subprogram)
+    {
+        super();
+        this.subprogram = subprogram;
     }
 
-    ListItem runCommand(Range items, Escopo escopo)
+    // -----------------------------
+    // Utilities and operators:
+    override string toString()
     {
-        // ----- 2 -----
+        string s = this.subprogram.asString;
+        return "{" ~ s ~ "}";
+    }
 
-        // Backup the contents, in case this is NOT a command.
-        // XXX: this part could be improved, probably...
-        auto backup = items.save();
-
-        // head : tail
-        ListItem head = items.consume();
-        auto tail = items;
-        trace(" List.run: ", head, " : ", tail);
-
-        // lists.order 3 4 1 2
-        NamePath cmd = head.namePath;
-        // XXX : is it the correct place to check if we
-        // are trying to execute a SubList as if it was
-        // a command???
-        if (cmd is null)
+    override ListItem evaluate(Process escopo)
+    {
+        return this.evaluate(escopo, false);
+    }
+    override ListItem evaluate(Process escopo, bool force)
+    {
+        if (!force)
         {
-            return new SimpleList(backup);
+            return this;
         }
         else
         {
-            return escopo.runCommand(cmd, tail);
+            return new ExecList(this.subprogram).evaluate(escopo);
         }
     }
 }
@@ -349,44 +586,31 @@ class SimpleList : BaseList
        can simply call it without much worries).
     */
 
-    this()
+    this(Items items)
     {
         super();
-    }
-    this(ListItem item)
-    {
-        super(item);
-    }
-    this(ListItem[] items)
-    {
-        super(items);
-    }
-    this(Range items)
-    {
-        super(items);
+        this.items = items;
     }
 
     // -----------------------------
     // Utilities and operators:
     override string toString()
     {
-        string s = this.asString;
-        return "(" ~ s ~ ")";
+        return "(" ~ to!string(this.items) ~ ")";
     }
 
-    override ListItem run(Escopo escopo, bool force)
+    override ListItem evaluate(Process escopo, bool force)
     {
         if (!force)
         {
-            return this.run(escopo);
+            return this.evaluate(escopo);
         }
         else
         {
-            // return this.forceRun(escopo);
-            return new CommonList(this.items).run(escopo);
+            return this.forceEvaluate(escopo);
         }
     }
-    override ListItem run(Escopo escopo)
+    override ListItem evaluate(Process escopo)
     {
         /*
         Returning itself has some advantages:
@@ -403,153 +627,26 @@ class SimpleList : BaseList
         */
         return this;
     }
-    ListItem forceRun(Escopo escopo)
+    ListItem forceEvaluate(Process escopo)
     {
         ListItem[] items;
         foreach(item; this.items)
         {
-            items ~= item.run(escopo);
+            items ~= item.evaluate(escopo);
         }
         return new SimpleList(items);
     }
 }
 
-class SubList : BaseList
-{
-    this()
-    {
-        super();
-    }
-    this(ListItem item)
-    {
-        super(item);
-    }
-    this(ListItem[] items)
-    {
-        super(items);
-    }
-    this(Range items)
-    {
-        super(items);
-    }
-
-    // -----------------------------
-    // Utilities and operators:
-    override string toString()
-    {
-        string s = this.asString;
-        return "{" ~ s ~ "}";
-    }
-
-    override ListItem run(Escopo escopo, bool force)
-    {
-        if (!force)
-        {
-            return this.run(escopo);
-        }
-        else
-        {
-            return new ExecList(this.items).run(escopo);
-        }
-    }
-    override ListItem run(Escopo escopo)
-    {
-        trace("SubList.run: ", this);
-        return this;
-    }
-}
-
-class CommonList : BaseList
-{
-    this()
-    {
-        super();
-    }
-    this(ListItem item)
-    {
-        super(item);
-    }
-    this(ListItem[] items)
-    {
-        super(items);
-    }
-    this(Range items)
-    {
-        super(items);
-    }
-
-    override string toString()
-    {
-        string s = this.asString;
-        return "(" ~ s ~ ")";
-    }
-    /*
-     * A "Common" List is what goes inside both
-     * Programs/ExecLists and SubLists.
-     *
-     * # (All lines: a program)
-     * set x [math.sum 1 2 3]   <- Common List
-     *       ^  ^
-     *       |  +--- A Common List inside an ExecList
-     *       +------ An ExecList
-     */
-
-    override ListItem run(Escopo escopo)
-    {
-        // TODO: create a CHAIN of Ranges.
-        trace("CommonList.run: ", this);
-        Range[] ranges;
-
-        foreach(item; this.items)
-        {
-            trace(" - item: ", item);
-            auto result = item.run(escopo);
-            // XXX: should we evaluate result.scopeExit?
-            auto items = result.items();
-            if (items is null)
-            {
-                // An Atom or String
-                trace("  ", result);
-                ranges ~= new StaticItems(result);
-            }
-            else if (result != item)
-            // else if (result.scopeExit == ScopeExitCodes.ListSuccess)
-            {
-                // ExecLists should return a CommonList so
-                // that we can "expand" the result, here:
-                trace("  ", result, " != ", item);
-                ranges ~= items;
-            }
-            else
-            {
-                // A proper SubList/SimpleList, that evaluates to itself:
-                trace("  ", result);
-                ranges ~= new StaticItems(result);
-            }
-        }
-
-        /*
-        After evaluation, we shouldn't evaluate
-        the resulting List again, so the natural
-        thinking would lead to return a SubList.
-        HOWEVER, we also want to "expand" ExecLists
-        results, so to signal that we should return
-        anything that not a SubList (we're going to
-        choose a new CommonList.)
-        */
-        return new CommonList(new ChainedItems(ranges));
-    }
-}
-
 // A string without substitutions:
-class SimpleString : ListItem
+class String : ListItem
+{
+}
+
+class SimpleString : String
 {
     string repr;
-    ulong defaultLength = 1;
 
-    this()
-    {
-    }
     this(string s)
     {
         this.repr = s;
@@ -562,7 +659,7 @@ class SimpleString : ListItem
         return '"' ~ this.repr ~ '"';
     }
 
-    override ListItem run(Escopo escopo)
+    override ListItem evaluate(Process escopo)
     {
         return this;
     }
@@ -577,7 +674,11 @@ class SimpleString : ListItem
     }
     override float asFloat()
     {
-        throw new Exception("Cannot convert a String into an float");
+        throw new Exception("Cannot convert a String into a float");
+    }
+    override bool asBoolean()
+    {
+        throw new Exception("Cannot convert a String into a boolean");
     }
     override ListItem inverted()
     {
@@ -595,23 +696,14 @@ class SimpleString : ListItem
     }
 }
 
-class String : SimpleString
+class SubstString : SimpleString
 {
-    ulong defaultLength = 1;
     string[] parts;
     string[int] substitutions;
 
-    this()
-    {
-    }
-    this(string s)
-    {
-        throw new Exception(
-            "Strings should be used only when there are substitutions"
-        );
-    }
     this(string[] parts, string[int] substitutions)
     {
+        super("");
         this.parts = parts;
         this.substitutions = substitutions;
         this.type = ObjectTypes.String;
@@ -625,7 +717,7 @@ class String : SimpleString
             .joiner("")) ~ '"';
     }
 
-    override ListItem run(Escopo escopo)
+    override ListItem evaluate(Process escopo)
     {
         string result;
         string subst;
@@ -668,11 +760,7 @@ class Atom : ListItem
     float floatingPoint;
     bool boolean;
     string _repr;
-    ulong defaultLength = 1;
     bool hasSubstitution = true;
-    NamePath _namePath;
-    ScopeExitCodes _scopeExit;
-    Result delegate(NamePath, Args) cmdHandler = null;
 
     this(string s)
     {
@@ -723,10 +811,6 @@ class Atom : ListItem
     @property
     string repr()
     {
-        if (this._repr is null)
-        {
-            this._repr = this.namePath.join(".");
-        }
         return this._repr;
 
     }
@@ -734,7 +818,6 @@ class Atom : ListItem
     string repr(string s)
     {
         this._repr = s;
-        this._namePath = [s];
 
         this.hasSubstitution = (
             s[0] == '$' || s.length >= 3 && s[0] == '-' && s[1] == '$'
@@ -743,7 +826,7 @@ class Atom : ListItem
         return s;
     }
 
-    override ListItem run(Escopo escopo)
+    override ListItem evaluate(Process escopo)
     {
         if (!this.hasSubstitution)
         {
@@ -811,7 +894,6 @@ class Atom : ListItem
                 );
         }
     }
-
     override float asFloat()
     {
         switch(this.type)
@@ -826,6 +908,21 @@ class Atom : ListItem
                     ~ to!string(this.type)
                     ~ " into a float"
                 );
+        }
+    }
+    override bool asBoolean()
+    {
+        if (this.type == ObjectTypes.Boolean)
+        {
+            return this.boolean;
+        }
+        else
+        {
+            throw new Exception(
+                "Cannot convert a "
+                ~ to!string(this.type)
+                ~ " into a boolean"
+            );
         }
     }
 

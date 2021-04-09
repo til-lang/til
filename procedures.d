@@ -3,7 +3,6 @@ module til.procedures;
 import std.conv : to;
 import std.experimental.logger : trace;
 
-import til.escopo;
 import til.exceptions;
 import til.ranges;
 import til.nodes;
@@ -12,8 +11,6 @@ import til.nodes;
 class Procedure
 {
     string name;
-    // proc f {x=10}
-    // → parameters["x"] = "10"
     ListItem parameters;
     ListItem body;
 
@@ -30,7 +27,7 @@ class Procedure
         );
     }
 
-    ListItem run(Escopo escopo, string name, Range arguments)
+    ListItem run(SubProgram escopo, string name, Range arguments)
     {
         trace(
             "proc.run:"

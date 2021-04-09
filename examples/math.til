@@ -1,7 +1,7 @@
 import std.io as io
 import std.math as math
 
-math.run 1 * 0 |> io.out
-math.run 1 + 0 |> io.out
-math.run 4 / 2 |> io.out
-math.run 5 - 2 |> io.out
+io.out [math.run 1 * 0]
+io.out [math.run 1 + 0]
+io.out [math.run 4 / 2]
+io.out [math.run 5 - 2]

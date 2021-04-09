@@ -1,23 +1,19 @@
 module til.std.math;
 
-import til.escopo;
 import til.math;
 import til.nodes;
 
+CommandHandler[string] commands;
 
-class Math : Escopo
+// Commands:
+static this()
 {
-    string name = "math";
-
-    Result cmd_run(NamePath path, Args items)
+    commands["run"] = (Process escopo, string path, CommandResult result)
     {
-        ListItem result = int_resolve(this, items);
+        auto arguments = result.arguments(escopo);
+        ListItem r = int_resolve(escopo, arguments);
+        escopo.push(r);
+        result.exitCode = ExitCode.CommandSuccess;
         return result;
-    }
-
-    override void loadCommands()
-    {
-        this.commands["run"] = &cmd_run;
-        this.commands["MAIN"] = &cmd_run;
-    }
+    };
 }

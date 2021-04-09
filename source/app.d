@@ -1,15 +1,11 @@
 import std.stdio;
 import std.experimental.logger;
 
-import til.escopo;
+import til.commands;
 import til.exceptions;
 import til.grammar;
 import til.nodes;
 import til.til;
-
-// Modules:
-import til.std;
-import til.libs.posix.shell;
 
 
 void main()
@@ -34,7 +30,9 @@ void main()
     auto tree = Til(code);
     trace(tree);
 
-    ExecList program;
+    // TODO: check if the parsing was successful.
+
+    SubProgram program;
     try {
         program = analyse(tree);
     }
@@ -44,13 +42,18 @@ void main()
     }
     trace("======OK=======");
 
-    auto escopo = new DefaultEscopo();
+    program.registerGlobalCommands(commands);
 
     // "Third-party" modules:
-    escopo.availableModules["posix.shell"] = new Shell();
-    escopo.availableModules["std"] = new Std();
+    import til.std.io;
+    program.addModule("std.io", til.std.io.commands);
+    import til.std.math;
+    program.addModule("std.math", til.std.math.commands);
+    import til.std.stack;
+    program.addModule("std.stack", til.std.stack.commands);
 
-    auto returnedValue = escopo.run(program);
+    auto process = new Process(null, program);
+    auto returnedValue = process.run();
     trace("returnedValue: ", returnedValue);
-    trace(escopo);
+    trace(process);
 }

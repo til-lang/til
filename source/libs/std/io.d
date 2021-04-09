@@ -4,38 +4,46 @@ import std.algorithm;
 import std.conv;
 import std.stdio;
 
-import til.escopo;
 import til.nodes;
 
+CommandHandler[string] commands;
 
-class IO : Escopo
+// Commands:
+static this()
 {
-    string name = "io";
-
-    Result cmd_out(NamePath path, Args arguments)
+    commands["out"] = (Process escopo, string path, CommandResult result)
     {
+        ListItem[] arguments;
+        for(int i=0; i < result.argumentCount; i++)
+        {
+            arguments ~= escopo.pop();
+        }
+
         string s = to!string(arguments
-            .save()
             .map!(x => x.asString)
             .joiner(" "));
+
         stdout.writeln(s);
-        return new SimpleList(arguments);
-    }
 
-    Result cmd_err(NamePath path, Args arguments)
+        result.exitCode = ExitCode.CommandSuccess;
+        return result;
+    };
+
+    commands["err"] = (Process escopo, string path, CommandResult result)
     {
+        ListItem[] arguments;
+        for(int i=0; i < result.argumentCount; i++)
+        {
+            arguments ~= escopo.pop();
+        }
+
         string s = to!string(arguments
-            .save()
             .map!(x => x.asString)
             .joiner(" "));
+
         stderr.writeln(s);
-        return new SimpleList(arguments);
-    }
 
-
-    override void loadCommands()
-    {
-        this.commands["out"] = &cmd_out;
-        this.commands["err"] = &cmd_err;
-    }
+        result.exitCode = ExitCode.CommandSuccess;
+        return result;
+    };
 }
