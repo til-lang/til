@@ -126,6 +126,13 @@ class Process
         trace("PUSH:", item);
         this.stack ~= item;
     }
+    template push(T)
+    {
+        void push(T x)
+        {
+            this.stack ~= new Atom(x);
+        }
+    }
 
     // Debugging information about itself:
     override string toString()
