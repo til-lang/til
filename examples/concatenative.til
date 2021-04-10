@@ -23,12 +23,20 @@ foreach (word) ("arara" "ovo" "algo") {
 io.out "---"
 
 io.out [s.dup "duplicate!"]
+
+# not working yet:
 io.out [
     s.dup "revert it"
     s.reverse
 ]
+# not working yet:
 io.out [
     s.dup "revert it"
     s.reverse
     s.equals?
 ]
+
+s.push 1 2 3
+io.out [s.pop]
+io.out [s.pop]
+io.out [s.pop]

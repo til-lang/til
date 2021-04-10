@@ -26,11 +26,33 @@ static this()
         context.exitCode = ExitCode.CommandSuccess;
         return context;
     };
-    /*
     commands["push"] = (string path, CommandContext context)
     {
+        /*
+        push 1 2 3 4
+        The stack already has [4 3 2 1] as content.
+        All we need to do is say that
+        WE pushed N items.
+        */
+
+        // context.size = context.size;
+
+        /*
+        Clarification: it's the same as:
+        CALL push 1 2 3 4
+          STACK: [4 3 2 1]
+        push: context.items
+          STACK: []
+        push: push all its arguments in a form that
+        other procedure can use it (push
+        in writer order)
+          STACK: [4 3 2 1]
+        push: context.size = 4 and return.
+        */
+
+        context.exitCode = ExitCode.CommandSuccess;
+        return context;
     };
-    */
     commands["dup"] = (string path, CommandContext context)
     {
         auto head = context.pop();
