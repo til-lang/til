@@ -239,8 +239,7 @@ class SimpleList : BaseList
         context.size = 0;
         foreach(item; this.items.retro)
         {
-            auto rContext = item.evaluate(context.next);
-            context.assimilate(rContext);
+            context.run(&(item.evaluate));
         }
 
         /*
@@ -250,7 +249,7 @@ class SimpleList : BaseList
         items already evaluated. We are only
         using the stack as temporary space.
         */
-        auto newList = new SimpleList(context.pop(cast(uint)context.size));
+        auto newList = new SimpleList(context.items);
         context.push(newList);
         return context;
     }

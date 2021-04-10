@@ -16,16 +16,28 @@ struct CommandContext
     @disable this();
     this(Process escopo)
     {
+        this(escopo, 0);
+    }
+    this(Process escopo, int argumentCount)
+    {
         this.escopo = escopo;
-        this.size = 0;
+        this.size = argumentCount;
     }
     CommandContext next()
     {
-        return this.next(escopo);
+        return this.next(0);
+    }
+    CommandContext next(int argumentCount)
+    {
+        return this.next(escopo, argumentCount);
     }
     CommandContext next(Process escopo)
     {
-        auto newContext = CommandContext(this.escopo);
+        return this.next(escopo, 0);
+    }
+    CommandContext next(Process escopo, int argumentCount)
+    {
+        auto newContext = CommandContext(this.escopo, argumentCount);
         // Pass along stream and any other data
         // shared between commands int the
         // pipeline:
@@ -88,6 +100,20 @@ struct CommandContext
     {
         this.size += other.size;
         // XXX : should we care about other.stream???
+    }
+    void run(CommandContext function(CommandContext) f)
+    {
+        return this.run(f, 0);
+    }
+    void run(CommandContext function(CommandContext) f, int argumentCount)
+    {
+        auto rContext = f(this.next(argumentCount));
+        this.assimilate(rContext);
+    }
+    void run(CommandContext delegate(CommandContext) f)
+    {
+        auto rContext = f(this.next);
+        this.assimilate(rContext);
     }
 
     ulong stackSize()

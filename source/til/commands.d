@@ -99,19 +99,11 @@ static this()
 
         // Run the condition:
         auto c = cast(SimpleList)conditions;
-        auto conditionsContext = c.evaluate(context.next, true);
-        conditionsContext = boolean(conditionsContext);
-        trace(" --- conditionsContext: ", conditionsContext);
+        context.run(&c.forceEvaluate);
+        context.run(&boolean, 1);
         trace(context.escopo);
-        auto isConditionTrue = conditionsContext.pop().asBoolean;
-        trace(" --- isConditionTrue: ", conditionsContext);
+        auto isConditionTrue = context.pop().asBoolean;
 
-        // TODO: extract 1 Atom(bool);
-
-        // TODO : what is it's not a SubList?
-        // Like:
-        // if ($x} $y
-        // ?
         if (isConditionTrue)
         {
             context = context.escopo.run((cast(SubList)thenBody).subprogram);

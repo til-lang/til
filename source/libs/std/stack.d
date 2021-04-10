@@ -23,6 +23,7 @@ static this()
         // just need to inform our caller how
         // many they are.
         context.size = itemsCounter;
+        context.exitCode = ExitCode.CommandSuccess;
         return context;
     };
     /*
