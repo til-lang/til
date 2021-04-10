@@ -9,100 +9,64 @@ import til.nodes;
 import til.ranges;
 
 
-bool boolean(Process escopo, Items items)
+CommandContext boolean(CommandContext context)
 {
-    trace(" BOOLEAN ANALYSIS: ", items);
+    trace(" BOOLEAN ANALYSIS: ", context.escopo);
     // Resolve any math beforehand:
-    auto resolvedItems = int_run(escopo, items);
-    return pureBoolean(escopo, resolvedItems);
+    auto resolvedContext = int_run(context);
+    return pureBoolean(resolvedContext);
 }
 
-bool pureBoolean(Process escopo, Items items)
+CommandContext pureBoolean(CommandContext context)
 {
-    /***************************************************
-    Now this is a somewhat "clever" implementation
-    for a HORRIBLE thing that is dealing with infix
-    notation without the help of the language parser.
-    Now you see there's a good reason why Lisp
-    dialects prefer to "keep it simple" and only
-    implement operators as usual functions, or
-    stack-based languages that simply make things...
-    well... stack-based.
+    // There should be a SimpleList at the top of the stack.
+    auto list = cast(SimpleList)context.pop();
+    Items items = list.items;
 
-    C:         1 < 2 && 1 > 2 || 1 < 2
-    "Human":  (1 < 2) && ((1 > 2) || (1 < 2))
-    Lisp:     (and (lt 1 2) (or (gt 1 2) (lt 1 2)))
-    Stack      1 2 lt 1 2 gt 1 2 lt or and
-    Tcl       {1 < 2 && 1 > 2 || 1 < 2} (just like C)
-
-    (Interesting to note: it seems stack-based languages
-    must evaluate ALL the conditions, always...)
-    ****************************************************/
+    ulong initialStackSize = context.stackSize();
 
     trace(" PURE BOOLEAN: ", items);
 
-    ListItem lastItem;
     bool currentResult = false;
-    void delegate(string, ListItem) currentHandler;
-    bool delegate(ListItem, ListItem)[string] operators;
-
-
-    final void defaultHandler(string s, ListItem x)
-    {
-        trace("  defaultHandler ", s);
-        trace( "saving item");
-        lastItem = x;
-        return;
-    }
-    currentHandler = &defaultHandler;
-
-    /*
-    The most usual way of implementing an operation handler
-    is by returnin a CLOSURE whose "first argument" is
-    the first value of an infix notation. For
-    instance, `1 + 2` would first save `1`,
-    then make a "sum-with-one" closure
-    the currentHandler and then apply
-    sum-with-one to `2`, resulting
-    a `3`.
-    */
 
     // -----------------------------------------------
-    void operatorHandler(string operatorName, ListItem opItem)
+    void operate()
     {
-        ListItem t1 = lastItem;
-        void operate(string strT2, ListItem t2)
+        if (context.size < 3)
         {
-            auto newResult = {
-                switch(operatorName)
-                {
-                    // -----------------------------------------------
-                    // Operators implementations:
-                    // TODO: use asInteger, asFloat and asString
-                    // TODO: this could be entirely made at compile
-                    // time, I assume...
-                    case "<":
-                        return to!int(t1.asString) < to!int(t2.asString);
-                    case ">":
-                        return to!int(t1.asString) > to!int(t2.asString);
-                    case ">=":
-                        return to!int(t1.asString) >= to!int(t2.asString);
-                    case "<=":
-                        return to!int(t1.asString) <= to!int(t2.asString);
-                    default:
-                        throw new Exception(
-                            "Unknown operator: "
-                            ~ operatorName
-                        );
-                }
-            }();
-            trace(" newResult: ", to!string(newResult));
-
-            lastItem = null;
-            currentResult = currentResult || newResult;
-            currentHandler = &defaultHandler;
+            return;
         }
-        currentHandler = &operate;
+
+        // It was pushed in reading order...
+        auto t2 = context.pop();
+        auto operatorName = context.pop().asString;
+        auto t1 = context.pop();
+
+        bool newResult = {
+            switch(operatorName)
+            {
+                // -----------------------------------------------
+                // Operators implementations:
+                // TODO: use asInteger, asFloat and asString
+                // TODO: this could be entirely made at compile
+                // time, I assume...
+                case "<":
+                    return (to!int(t1.asString) < to!int(t2.asString));
+                case ">":
+                    return (to!int(t1.asString) > to!int(t2.asString));
+                case ">=":
+                    return (to!int(t1.asString) >= to!int(t2.asString));
+                case "<=":
+                    return (to!int(t1.asString) <= to!int(t2.asString));
+                default:
+                    throw new Exception(
+                        "Unknown operator: "
+                        ~ operatorName
+                    );
+            }
+        }();
+        trace(t1, operatorName, t2, " bool.result:", newResult);
+        currentResult = currentResult || newResult;
     }
 
     // -----------------------------------------------
@@ -116,11 +80,13 @@ bool pureBoolean(Process escopo, Items items)
     */
     void and(ulong index)
     {
-        // (index+1 = consume the `&&`)
-        auto newResult = escopo.boolean(items[index+1..$]);
+        auto nextList = new SimpleList(items[index..$]);
+        context.push(nextList);
+
+        auto context = boolean(context);
+        auto newResult = context.pop();
         trace(" and.newResult: ", to!string(newResult));
-        currentResult = currentResult && newResult;
-        trace(" and.currentResult: ", to!string(currentResult));
+        currentResult = currentResult && newResult.asBoolean;
     }
 
     // -----------------------------------------------
@@ -134,8 +100,9 @@ bool pureBoolean(Process escopo, Items items)
         {
             if (s == "&&")
             {
-                and(index);
-                trace(" returning from AND: ", to!string(currentResult));
+                and(index+1);
+                trace(" returning from AND: ", currentResult);
+                trace("  context:", context);
                 break;
             }
             else if (s == "||")
@@ -147,25 +114,32 @@ bool pureBoolean(Process escopo, Items items)
         }
         else if (item.type == ObjectTypes.List)
         {
-            auto newResult = escopo.boolean(
-                (cast(SimpleList)item.evaluate(escopo, true)).items
-            );
-            currentResult = currentResult || newResult;
+            SimpleList l = cast(SimpleList)item;
+            auto listContext = l.evaluate(context, true);
+            listContext = boolean(listContext);
+            // There should be an Atom(bool) at the top of the stack.
+            auto newResult = listContext.pop();
+            currentResult = currentResult || newResult.asBoolean;
             continue;
         }
 
         if (item.type == ObjectTypes.Operator)
         {
-            operatorHandler(s, item);
+            context.push(item);
             continue;
         }
         else if (item.type == ObjectTypes.Boolean)
         {
             currentResult = currentResult || item.asBoolean;
+            continue;
         }
         // Not an operator? Must be a value...
-        currentHandler(s, item);
+        context.push(item);
+        operate();
     }
-    trace("  returning ", to!string(currentResult));
-    return currentResult;
+    ulong totalItems = context.stackSize - initialStackSize;
+    trace("  boolean.totalItems:", totalItems);
+    context.push(currentResult);
+    trace("  boolean.returning. result:", currentResult, "; context: ", context);
+    return context;
 }

@@ -8,5 +8,5 @@ proc s (x) {
     return ">$x<"
 }
 
-set result [f 123 |> s]
+set result [f 123 > s]
 io.out $result

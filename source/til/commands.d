@@ -8,7 +8,7 @@ import std.string : strip;
 import til.exceptions;
 import til.logic;
 import til.nodes;
-// import til.procedures;
+import til.procedures;
 
 
 CommandHandler[string] commands;
@@ -16,42 +16,39 @@ CommandHandler[string] commands;
 // Commands:
 static this()
 {
-    commands["set"] = (Process escopo, string path, CommandResult result)
+    commands["set"] = (string path, CommandContext context)
     {
-        // TODO: navigate through arguments[0].namePath...
-        auto name = escopo.pop().asString;
-        auto value = escopo.pop();
-        escopo[name] = value;
-        result.exitCode = ExitCode.CommandSuccess;
-        return result;
+        auto name = context.pop().asString;
+        // set x "1"
+        // set y 11 22 33
+        context.escopo[name] = context.items;
+        context.exitCode = ExitCode.CommandSuccess;
+        return context;
     };
 
-    commands["import"] = (Process escopo, string path, CommandResult result)
+    commands["import"] = (string path, CommandContext context)
     {
         // import std.io as x
-        auto modulePath = escopo.pop().asString;
+        auto modulePath = context.pop().asString;
         string newName = modulePath;
 
         // import std.io as x
-        //          1    2  3
-        if (result.argumentCount == 3)
+        if (context.size == 2)
         {
-            // 2
-            auto as = escopo.pop().asString;
+            auto as = context.pop().asString;
             if (as != "as")
             {
                 throw new InvalidException(
                     "Invalid syntax for import"
                 );
             }
-            // 3
-            newName = escopo.pop().asString;
+            newName = context.pop().asString;
         }
         trace("IMPORT ", modulePath, " AS ", newName);
 
         // Check if the submodule actually exists:
         CommandHandler[string] target;
-        target = escopo.program.availableModules.get(modulePath, null);
+        target = context.escopo.program.availableModules.get(modulePath, null);
         if (target is null)
         {
             throw new InvalidException(
@@ -66,34 +63,33 @@ static this()
         foreach(name, command; target)
         {
             string cmdPath = newName ~ "." ~ name;
-            escopo.program.commands[cmdPath] = command;
+            context.escopo.program.commands[cmdPath] = command;
         }
 
-        result.exitCode = ExitCode.CommandSuccess;
-        return result;
+        context.exitCode = ExitCode.CommandSuccess;
+        return context;
     };
 
-    commands["if"] = (Process escopo, string path, CommandResult result)
+    commands["if"] = (string path, CommandContext context)
     {
         trace("Running command if");
-        trace(" inside process ", escopo);
-        BaseList conditions = cast(BaseList)escopo.pop();
-        ListItem thenBody = escopo.pop();
+        trace(" inside process ", context.escopo);
+        BaseList conditions = cast(BaseList)context.pop();
+        ListItem thenBody = context.pop();
         trace("if ", conditions, " then ", thenBody);
 
         ListItem elseBody;
         // if (condition) {then} else {else}
-        //     1           2     3     4
-        if (result.argumentCount == 4)
+        if (context.size == 2)
         {
-            auto elseWord = escopo.pop().asString;
+            auto elseWord = context.pop().asString;
             if (elseWord != "else")
             {
                 throw new InvalidException(
                     "Invalid format for if/then/else clause"
                 );
             }
-            elseBody = escopo.pop();
+            elseBody = context.pop();
             trace("   else ", elseBody);
         }
         else
@@ -102,10 +98,15 @@ static this()
         }
 
         // Run the condition:
-        auto evaluatedConditions =  cast(SimpleList)conditions.evaluate(escopo, true);
-        trace("evaluatedConditions:", evaluatedConditions);
-        bool isConditionTrue = escopo.boolean(evaluatedConditions.items);
-        trace(" --- isConditionTrue: ", isConditionTrue);
+        auto c = cast(SimpleList)conditions;
+        auto conditionsContext = c.evaluate(context, true);
+        conditionsContext = boolean(conditionsContext);
+        trace(" --- conditionsContext: ", conditionsContext);
+        trace(context.escopo);
+        auto isConditionTrue = conditionsContext.pop().asBoolean;
+        trace(" --- isConditionTrue: ", conditionsContext);
+
+        // TODO: extract 1 Atom(bool);
 
         // TODO : what is it's not a SubList?
         // Like:
@@ -113,17 +114,17 @@ static this()
         // ?
         if (isConditionTrue)
         {
-            result = escopo.run((cast(SubList)thenBody).subprogram);
+            context = context.escopo.run((cast(SubList)thenBody).subprogram);
         }
         else if (elseBody !is null)
         {
-            result = escopo.run((cast(SubList)elseBody).subprogram);
+            context = context.escopo.run((cast(SubList)elseBody).subprogram);
         }
-        result.exitCode = ExitCode.CommandSuccess;
-        return result;
+        context.exitCode = ExitCode.CommandSuccess;
+        return context;
     };
 
-    commands["foreach"] = (Process escopo, string path, CommandResult result)
+    commands["foreach"] = (string path, CommandContext context)
     {
         /*
         DISCLAIMER: this code is very (VERY) inefficient.
@@ -132,14 +133,14 @@ static this()
         1: foreach (x) (a b c d e) {...}  (3 arguments)
         2: range > foreach (x) {...}      (2 arguments)
         */
-        trace("foreach.escopo: ", escopo);
-        auto argNames = cast(SimpleList)escopo.pop();
+        trace("foreach.context: ", context);
+        auto argNames = cast(SimpleList)context.pop();
         SimpleList argRange = null;
-        if (result.argumentCount == 3)
+        if (context.size == 2)
         {
-            argRange = cast(SimpleList)escopo.pop();
+            argRange = cast(SimpleList)context.pop();
         }
-        auto argBody = cast(SubList)escopo.pop();
+        auto argBody = cast(SubList)context.pop();
 
         trace(" FOREACH ", argNames, " in ", argRange, " : ", argBody);
 
@@ -150,9 +151,9 @@ static this()
         }
         trace(" names: ", names);
 
-        auto loopScope = new Process(escopo);
+        auto loopScope = new Process(context.escopo);
 
-        CommandResult iterate(ListItem item)
+        CommandContext iterate(ListItem item, CommandContext context)
         {
             trace(" item: ", item, " ", item.type);
             if (item.type == ObjectTypes.List)
@@ -164,7 +165,7 @@ static this()
                     trace("   subItems: ", subItems);
                     loopScope[name] = subItems[index];
 
-                    // TODO: analyse each result.scopeExit!
+                    // TODO: analyse each context.scopeExit!
                     // TODO (later): optionally **inline** loops.
                     //  That should be achieved simply putting all
                     // lists run with its own loopScope into a single
@@ -185,20 +186,20 @@ static this()
             }
 
             trace("loopScope: ", loopScope);
-            auto iterResult = loopScope.run(argBody.subprogram);
-            return iterResult;
+            auto iterContext = loopScope.run(argBody.subprogram);
+            return iterContext;
         }
 
         if (argRange !is null)
         {
             foreach(item; argRange.items)
             {
-                auto iterResult = iterate(item);
-                if (iterResult.exitCode == ExitCode.Break)
+                context = iterate(item, context);
+                if (context.exitCode == ExitCode.Break)
                 {
                     break;
                 }
-                else if (iterResult.exitCode == ExitCode.Continue)
+                else if (context.exitCode == ExitCode.Continue)
                 {
                     continue;
                 }
@@ -206,7 +207,9 @@ static this()
         }
         else
         {
-            foreach(item; result.stream)
+            throw new Exception("streams not implemented yet");
+            /*
+            foreach(item; context.stream)
             {
                 auto iterResult = iterate(item);
                 if (iterResult.exitCode == ExitCode.Break)
@@ -218,66 +221,52 @@ static this()
                     continue;
                 }
             }
+            */
         }
-        result.exitCode = ExitCode.CommandSuccess;
-        return result;
+        context.exitCode = ExitCode.CommandSuccess;
+        return context;
     };
-    commands["break"] = (Process escopo, string path, CommandResult result)
+    commands["break"] = (string path, CommandContext context)
     {
-        result.exitCode = ExitCode.Break;
-        return result;
+        context.exitCode = ExitCode.Break;
+        return context;
     };
-    commands["continue"] = (Process escopo, string path, CommandResult result)
+    commands["continue"] = (string path, CommandContext context)
     {
-        result.exitCode = ExitCode.Continue;
-        return result;
+        context.exitCode = ExitCode.Continue;
+        return context;
     };
 
-    static if(false)
+    commands["proc"] = (string path, CommandContext context)
     {
-    CommandResult cmd_proc(Process escopo, string cmd)
-    {
-        // proc name {parameters} {body}
-        ListItem arg0 = arguments.consume();
-        string name = arg0.asString;
-        ListItem parameters = arguments.consume();
-        ListItem body = arguments.consume();
+        // proc name (parameters) {body}
 
-        escopo.procedures[name] = new Procedure(
+        string name = context.pop().asString;
+        ListItem parameters = context.pop();
+        ListItem body = context.pop();
+
+        auto proc = new Procedure(
             name,
             parameters,
             // TODO: check if it is really a SubList type:
             body
         );
 
-        // Make the procedure available:
-        escopo.commands[name] = &escopo.runProc;
-
-        return arg0;
-    }
-
-    CommandResult runProc(Process escopo, string path)
-    {
-        // TODO: navigate through path items properly:
-        string cmdName = to!string(path.joiner("."));
-
-        auto proc = escopo.procedures.get(cmdName, null);
-        if (proc is null) {
-            throw new Exception(
-                "Trying to call " ~ cmdName ~ "but procedure is gone"
-            );
+        CommandContext closure(string path, CommandContext context)
+        {
+            return proc.run(path, context);
         }
-        return proc.run(escopo, cmdName, arguments);
-    }
 
-    CommandResult cmd_return(Process escopo, string cmdName)
+        // Make the procedure available:
+        context.escopo.program.commands[name] = &closure;
+
+        context.exitCode = ExitCode.CommandSuccess;
+        return context;
+    };
+
+    commands["return"] = (string path, CommandContext context)
     {
-        trace(" --- RETURN: ", arguments);
-        auto returnValue = new SimpleList(arguments.exhaust());
-        returnValue.scopeExit = ExitCode.ReturnSuccess;
-        return returnValue;
-    }
-
-    // --------------------------------------------
-    } // end static if
+        context.exitCode = ExitCode.ReturnSuccess;
+        return context;
+    };
 }

@@ -8,17 +8,7 @@ import til.nodes;
 import til.ranges;
 
 
-ListItem int_resolve(Process escopo, Items items)
-{
-    Items r = int_run(escopo, items);
-
-    // Resolve:
-    // (We will assume r2 already has only one ListItem/Atom
-    // that represents the result.)
-    return r.front;
-}
-
-Items int_run(Process escopo, Items items)
+CommandContext int_run(CommandContext context)
 {
     /*
     (1 + 2 * 3)
@@ -26,69 +16,26 @@ Items int_run(Process escopo, Items items)
     run precedence_2 → (7)
     resolve → 7
     */
-    Items r1 = int_run(escopo, items, &int_precedence_1);
-    Items r2 = int_run(escopo, r1, &int_precedence_2);
-    return r2;
+    auto r1Context = int_run(context, &int_precedence_1);
+    auto r2Context = int_run(r1Context, &int_precedence_2);
+    return r2Context;
 }
 
-Items int_run(Process escopo, Items items, ListItem function(ListItem, ListItem, ListItem) resolver)
+CommandContext int_run(CommandContext context, CommandContext function(CommandContext) resolver)
 {
     /*
     set x [math.run 1 + 1]
     */
-    trace(" MATH.int_run: ", items);
+    trace(" MATH.int_run.context.escopo ", context.escopo);
 
-    ListItem lastItem;
-    ListItem[] newItems;
-    void delegate(ListItem) currentHandler;
-    int function(ListItem, ListItem)[string] operators;
+    // There should be a SimpleList at the top of the stack.
+    auto list = cast(SimpleList)context.pop();
+    Items items = list.items;
 
-    final void defaultHandler(ListItem x)
-    {
-        trace("  lastItem: ", x);
-        lastItem = x;
-        return;
-    }
-    currentHandler = &defaultHandler;
+    ulong initialStackSize = context.stackSize;
 
-    /*
-    The most usual way of implementing an operation handler
-    is by returnin a CLOSURE whose "first argument" is
-    the first value of an infix notation. For
-    instance, `1 + 2` would first save `1`,
-    then make a "sum-with-one" closure
-    the currentHandler and then apply
-    sum-with-one to `2`, resulting
-    a `3`.
-    */
-
-    // -----------------------------------------------
-    void operatorHandler(ListItem operator)
-    {
-        ListItem t1 = lastItem;
-        void operate(ListItem t2)
-        {
-            auto newResult = resolver(operator, t1, t2);
-            trace(" newResult for ", t1, operator, t2, ": ", newResult);
-
-            if (newResult is null)
-            {
-                trace("  pushing: ", t1, operator, t2);
-                // It's not the right time, yet...
-                newItems ~= t1;
-                newItems ~= operator;
-                lastItem = t2;
-                trace("  newItems: ", newItems);
-            }
-            else
-            {
-                lastItem = newResult;
-                // newItems ~= newResult;
-            }
-            currentHandler = &defaultHandler;
-        }
-        currentHandler = &operate;
-    }
+    void delegate() currentHandler;
+    void function()[string] operators;
 
     // -----------------------------------------------
     // The loop:
@@ -96,57 +43,72 @@ Items int_run(Process escopo, Items items, ListItem function(ListItem, ListItem,
     {
         if (item.type == ObjectTypes.List)
         {
-            // The next item is the result from the list:
-            // item = int_resolve(escopo, item.run(escopo, true).items);
-            auto x = item.evaluate(escopo, true);
-            Items rList = escopo.int_run((cast(BaseList)x).items);
-            /*
-            rList can be both a proper result like
-            StaticItems([:12])
-            or an semi-unresolved list like
-            StaticItems([:12 < :13])
-            */
-            if (rList.length == 1)
-            {
-                // XXX ?
-                item = rList[0];
-                trace(" rList[0]: ", item);
-            }
-            else
-            {
-                item = new SimpleList(rList);
-                // newItems ~= item;
-                trace(" rList incorporated. newItems: ", newItems);
-            }
-        }
+            SimpleList l = cast(SimpleList)item;
+            // "evaluate" will push all evaluated sub-items
+            context = l.evaluate(context, true);
+            // Now we have an evaluated SimpleList in the stack,
+            // just like our own initial condition.
+            context = int_run(context);
 
-        /*
-        It should not be an "else if", because after resolving
-        a list we should simply proceed using the result
-        as the current item, but it's a fact that
-        a list resolution should never yield
-        an Operator, so it makes no sense
-        to evaluate another if right
-        after a list resolution.
-        */
+            /*
+            The result (now in the stack) can be both a proper one like
+            [:12]
+            or an semi-unresolved list like
+            [:12 :< :13]
+            */
+
+            /*
+            Whatever the result was (a single item or a new List),
+            it is in the top of the stack, now, as we wanted.
+            */
+        }
         else if (item.type == ObjectTypes.Operator)
         {
-            operatorHandler(item);
-            continue;
+            context.push(item);
         }
-        // Not an operator? Must be a value...
-        currentHandler(item);
+        else
+        {
+            // Not an operator? Must be a value...
+            context.push(item);
+            context = resolver(context);
+        }
     }
-    if (lastItem !is null)
+    ulong termsCount = context.escopo.stack.length - initialStackSize;
+    auto terms = context.pop(termsCount);
+    // un-reverse the list...
+    Items resultItems;
+    foreach(term; terms.retro)
     {
-        newItems ~= lastItem;
+        resultItems ~= term;
     }
-    trace("  (", items, ") returning ", newItems);
-    return newItems;
+    auto resultList = new SimpleList(resultItems);
+    context.push(resultList);
+    trace("math.int_run: ", items, " → ", context);
+    return context;
 }
 
-ListItem int_precedence_1(ListItem operator, ListItem t1, ListItem t2)
+// CommandContext int_precedence_1(ListItem operator, ListItem t1, ListItem t2)
+CommandContext int_precedence_1(CommandContext context)
 {
+    if (context.size < 3)
+    {
+        return context;
+    }
+
+    // It was pushed in reading order...
+    auto t2 = context.pop();
+    auto operator = context.pop();
+    auto t1 = context.pop();
+    if ((t1.type == ObjectTypes.List || t1.type == ObjectTypes.Operator) ||
+        (operator.type != ObjectTypes.Operator) ||
+        (t2.type == ObjectTypes.List || t2.type == ObjectTypes.Operator))
+    {
+        context.push(t1);
+        context.push(operator);
+        context.push(t2);
+        return context;
+    }
+
     switch(operator.asString)
     {
         // -----------------------------------------------
@@ -155,15 +117,41 @@ ListItem int_precedence_1(ListItem operator, ListItem t1, ListItem t2)
         // TODO: this could be entirely made at compile
         // time, I assume...
         case "*":
-            return new Atom(to!int(t1.asString) * to!int(t2.asString));
+            context.push(new Atom(to!int(t1.asString) * to!int(t2.asString)));
+            break;
         case "/":
-            return new Atom(to!int(t1.asString) / to!int(t2.asString));
+            context.push(new Atom(to!int(t1.asString) / to!int(t2.asString)));
+            break;
         default:
-            return null;
+            context.push(t1);
+            context.push(operator);
+            context.push(t2);
+            break;
     }
+    return context;
 }
-ListItem int_precedence_2(ListItem operator, ListItem t1, ListItem t2)
+
+CommandContext int_precedence_2(CommandContext context)
 {
+    if (context.size < 3)
+    {
+        return context;
+    }
+
+    // It was pushed in reading order...
+    auto t2 = context.pop();
+    auto operator = context.pop();
+    auto t1 = context.pop();
+    if ((t1.type == ObjectTypes.List || t1.type == ObjectTypes.Operator) ||
+        (operator.type != ObjectTypes.Operator) ||
+        (t2.type == ObjectTypes.List || t2.type == ObjectTypes.Operator))
+    {
+        context.push(t1);
+        context.push(operator);
+        context.push(t2);
+        return context;
+    }
+
     switch(operator.asString)
     {
         // -----------------------------------------------
@@ -172,11 +160,17 @@ ListItem int_precedence_2(ListItem operator, ListItem t1, ListItem t2)
         // TODO: this could be entirely made at compile
         // time, I assume...
         case "+":
-            return new Atom(to!int(t1.asString) + to!int(t2.asString));
+            context.push(new Atom(to!int(t1.asString) + to!int(t2.asString)));
+            break;
         case "-":
-            return new Atom(to!int(t1.asString) - to!int(t2.asString));
+            context.push(new Atom(to!int(t1.asString) - to!int(t2.asString)));
+            break;
         default:
-            return null;
+            context.push(t1);
+            context.push(operator);
+            context.push(t2);
+            break;
     }
+    return context;
 }
 

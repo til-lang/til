@@ -11,39 +11,27 @@ CommandHandler[string] commands;
 // Commands:
 static this()
 {
-    commands["out"] = (Process escopo, string path, CommandResult result)
+    commands["out"] = (string path, CommandContext context)
     {
-        ListItem[] arguments;
-        for(int i=0; i < result.argumentCount; i++)
-        {
-            arguments ~= escopo.pop();
-        }
-
-        string s = to!string(arguments
+        string s = to!string(context.items
             .map!(x => x.asString)
             .joiner(" "));
 
         stdout.writeln(s);
 
-        result.exitCode = ExitCode.CommandSuccess;
-        return result;
+        context.exitCode = ExitCode.CommandSuccess;
+        return context;
     };
 
-    commands["err"] = (Process escopo, string path, CommandResult result)
+    commands["err"] = (string path, CommandContext context)
     {
-        ListItem[] arguments;
-        for(int i=0; i < result.argumentCount; i++)
-        {
-            arguments ~= escopo.pop();
-        }
-
-        string s = to!string(arguments
+        string s = to!string(context.items
             .map!(x => x.asString)
             .joiner(" "));
 
         stderr.writeln(s);
 
-        result.exitCode = ExitCode.CommandSuccess;
-        return result;
+        context.exitCode = ExitCode.CommandSuccess;
+        return context;
     };
 }

@@ -11,17 +11,17 @@ CommandHandler[string] commands;
 // Commands:
 static this()
 {
-    commands["dup"] = (Process escopo, string path, CommandResult result)
+    commands["dup"] = (string path, CommandContext context)
     {
-        auto head = escopo.pop();
-        escopo.push(head);
-        escopo.push(head);
-        result.exitCode = ExitCode.CommandSuccess;
-        return result;
+        auto head = context.pop();
+        context.push(head);
+        context.push(head);
+        context.exitCode = ExitCode.CommandSuccess;
+        return context;
     };
-    commands["reverse"] = (Process escopo, string path, CommandResult result)
+    commands["reverse"] = (string path, CommandContext context)
     {
-        auto head = escopo.pop();
+        auto head = context.pop();
         if (head.type != ObjectTypes.String)
         {
             throw new Exception(
@@ -33,19 +33,17 @@ static this()
         string copy = "";
         copy ~= head.asString;
         char[] r = reverse!(char[])(cast(char[])copy);
-        escopo.push(new SimpleString(cast(string)r));
+        context.push(new SimpleString(cast(string)r));
 
-        result.exitCode = ExitCode.CommandSuccess;
-        return result;
+        context.exitCode = ExitCode.CommandSuccess;
+        return context;
     };
-    commands["equals?"] = (Process escopo, string path, CommandResult result)
+    commands["equals?"] = (string path, CommandContext context)
     {
-        trace("equals? escopo:", escopo);
-        auto t1 = escopo.pop();
-        auto t2 = escopo.pop();
-        trace("equals? ", t1, t2);
-        escopo.push(new Atom(t1.asString == t2.asString));
-        result.exitCode = ExitCode.CommandSuccess;
-        return result;
+        auto t1 = context.pop();
+        auto t2 = context.pop();
+        context.push(new Atom(t1.asString == t2.asString));
+        context.exitCode = ExitCode.CommandSuccess;
+        return context;
     };
 }
