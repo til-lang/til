@@ -11,6 +11,25 @@ CommandHandler[string] commands;
 // Commands:
 static this()
 {
+    commands["pop"] = (string path, CommandContext context)
+    {
+        int itemsCounter = 1;
+        if (context.size > 0)
+        {
+            auto argument = context.pop();
+            itemsCounter = argument.asInteger;
+        }
+        // The items are already at the stack, we
+        // just need to inform our caller how
+        // many they are.
+        context.size = itemsCounter;
+        return context;
+    };
+    /*
+    commands["push"] = (string path, CommandContext context)
+    {
+    };
+    */
     commands["dup"] = (string path, CommandContext context)
     {
         auto head = context.pop();

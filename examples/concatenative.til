@@ -1,12 +1,19 @@
 import std.io as io
 import std.stack as s
 
+s.dup "algo"
+s.reverse
+s.equals?
+io.out [s.pop]
+
+io.out "---"
 
 foreach (word) ("arara" "ovo" "algo") {
     io.out $word
     s.dup $word
     s.reverse
-    if ([s.equals?]) {
+    s.equals?
+    if ([s.pop]) {
         io.out "$word is a palindrome"
     } else {
         io.out "$word is NOT a palindrome"

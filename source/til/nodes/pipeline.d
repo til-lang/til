@@ -31,6 +31,7 @@ class Pipeline
         foreach(command; commands)
         {
             trace("running command:", command);
+            trace(" in context:", context);
             context = command.run(context);
             trace("  context: ", context);
 

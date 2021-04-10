@@ -44,7 +44,8 @@ class Atom : ListItem
     // Utilities and operators:
     override string toString()
     {
-        return ":" ~ this.repr ~ "(" ~ to!string(this.type) ~ ")";
+        // return ":" ~ this.repr ~ "_" ~ to!string(this.type);
+        return ":" ~ this.repr;
     }
     string debugRepr()
     {

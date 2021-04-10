@@ -195,14 +195,13 @@ class SimpleList : BaseList
     // Utilities and operators:
     override string toString()
     {
-        return "(" ~ to!string(this.items) ~ ")";
+        return "(" ~ this.asString ~ ")";
     }
     override string asString()
     {
-        string s = to!string(this.items
+        return to!string(this.items
             .map!(x => x.asString)
             .joiner(" "));
-        return "(" ~ s ~ ")";
     }
 
     override CommandContext evaluate(CommandContext context, bool force)
@@ -237,13 +236,11 @@ class SimpleList : BaseList
     }
     CommandContext forceEvaluate(CommandContext context)
     {
-        /*
-        We can expect that `context` is properly "reset"
-        (that is: it has .size = 0).
-        */
+        context.size = 0;
         foreach(item; this.items.retro)
         {
-            context = item.evaluate(context);
+            auto rContext = item.evaluate(context.next);
+            context.assimilate(rContext);
         }
 
         /*

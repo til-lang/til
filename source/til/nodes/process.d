@@ -177,8 +177,7 @@ class Process
     {
         foreach(pipeline; subprogram.pipelines)
         {
-            trace("running next pipeline");
-            trace("running pipeline:", pipeline);
+            trace("\nrunning pipeline:", pipeline);
             context = pipeline.run(context);
             trace("  pipeline.context:", context);
 

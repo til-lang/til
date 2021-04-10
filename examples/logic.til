@@ -27,6 +27,7 @@ if ($a > $b || $a < $b && 1 > 2) {
     io.out "OR+AND is okay"
 }
 
+#       t         f          t
 if (($a < $b && 1 > 2) || $a < $b) {
     io.out "Parentesis is okay"
 } else {

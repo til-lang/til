@@ -16,6 +16,7 @@ CommandContext int_run(CommandContext context)
     run precedence_2 → (7)
     resolve → 7
     */
+    assert(context.size == 1);
     auto r1Context = int_run(context, &int_precedence_1);
     auto r2Context = int_run(r1Context, &int_precedence_2);
     return r2Context;
@@ -26,29 +27,31 @@ CommandContext int_run(CommandContext context, CommandContext function(CommandCo
     /*
     set x [math.run 1 + 1]
     */
-    trace(" MATH.int_run.context.escopo ", context.escopo);
 
+    trace(">>> MATH.int_run starting! <<<");
     // There should be a SimpleList at the top of the stack.
     auto list = cast(SimpleList)context.pop();
     Items items = list.items;
-
-    ulong initialStackSize = context.stackSize;
-
-    void delegate() currentHandler;
-    void function()[string] operators;
+    trace(" MATH.int_run.items:", items);
 
     // -----------------------------------------------
     // The loop:
     foreach(item; items)
     {
+        trace(" int_run.item:", item, " ", item.type);
         if (item.type == ObjectTypes.List)
         {
             SimpleList l = cast(SimpleList)item;
             // "evaluate" will push all evaluated sub-items
-            context = l.evaluate(context, true);
+            auto lContext = l.evaluate(context, true);
+            assert(lContext.size == 1);
             // Now we have an evaluated SimpleList in the stack,
             // just like our own initial condition.
-            context = int_run(context);
+            auto rContext = int_run(lContext);
+            assert(rContext.size == 1);
+            // Assimilate the result into our own context:
+            context.size += rContext.size;
+            // TODO: make it a method, like context.assimilate(rContext);
 
             /*
             The result (now in the stack) can be both a proper one like
@@ -59,7 +62,7 @@ CommandContext int_run(CommandContext context, CommandContext function(CommandCo
 
             /*
             Whatever the result was (a single item or a new List),
-            it is in the top of the stack, now, as we wanted.
+            it is in the top of the stack, now, as we want.
             */
         }
         else if (item.type == ObjectTypes.Operator)
@@ -73,8 +76,8 @@ CommandContext int_run(CommandContext context, CommandContext function(CommandCo
             context = resolver(context);
         }
     }
-    ulong termsCount = context.escopo.stack.length - initialStackSize;
-    auto terms = context.pop(termsCount);
+    // WRONG!
+    auto terms = context.items;
     // un-reverse the list...
     Items resultItems;
     foreach(term; terms.retro)

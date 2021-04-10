@@ -1,5 +1,7 @@
 module til.nodes.command;
 
+// import std.algorithm : max;
+
 import til.nodes;
 
 class Command
@@ -31,20 +33,21 @@ class Command
             return context;
         }
 
-        ulong realArgumentsCounter = 0;
-
         // Evaluate and push each argument, starting from
         // the last one:
-        ulong initialStackSize = context.stackSize;
+        long initialStackSize = context.stackSize;
+        ulong realArgumentsCounter = 0;
         foreach(argument; this.arguments.retro)
         {
             /*
             Each item already pushes its evaluation
             result into the stack
             */
-            context = argument.evaluate(context);
+            context = argument.evaluate(context.next);
+            trace(" > ", argument, " context.size:", context.size);
+            realArgumentsCounter += context.size;
         }
-        realArgumentsCounter = context.stackSize - initialStackSize;
+        // realArgumentsCounter = max(cast(long)context.stackSize - initialStackSize, 0);
         trace(this.name, " >>> realArgumentsCounter:", realArgumentsCounter);
 
         // Run the command:
@@ -53,7 +56,7 @@ class Command
         // the basics, at least.
         context.exitCode = ExitCode.Undefined;
         // TESTE: Limit the context size to the number of arguments:
-        context.size = cast(uint)realArgumentsCounter;
+        context.size = cast(int)realArgumentsCounter;
         trace(" calling handler(", this.name, "). context: ", context);
         trace("  realArgumentsCounter:", realArgumentsCounter);
         auto newContext = handler(this.name, context);

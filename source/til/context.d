@@ -7,7 +7,10 @@ struct CommandContext
 {
     Process escopo;
     ExitCode exitCode = ExitCode.Proceed;
-    uint size = 0;
+
+    // Commands CAN pop beyond local zero...
+    int size = 0;
+
     // Range stream = null;
 
     @disable this();
@@ -79,6 +82,12 @@ struct CommandContext
         {
             return [];
         }
+    }
+
+    void assimilate(CommandContext other)
+    {
+        this.size += other.size;
+        // XXX : should we care about other.stream???
     }
 
     ulong stackSize()

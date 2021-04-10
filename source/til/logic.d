@@ -81,6 +81,7 @@ CommandContext pureBoolean(CommandContext context)
     void and(ulong index)
     {
         auto nextList = new SimpleList(items[index..$]);
+        trace(" and.nextList:", nextList);
         context.push(nextList);
 
         auto context = boolean(context);

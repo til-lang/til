@@ -99,7 +99,7 @@ static this()
 
         // Run the condition:
         auto c = cast(SimpleList)conditions;
-        auto conditionsContext = c.evaluate(context, true);
+        auto conditionsContext = c.evaluate(context.next, true);
         conditionsContext = boolean(conditionsContext);
         trace(" --- conditionsContext: ", conditionsContext);
         trace(context.escopo);
