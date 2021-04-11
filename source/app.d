@@ -53,6 +53,8 @@ void main()
     program.addModule("std.stack", til.std.stack.commands);
     import til.std.ranges;
     program.addModule("std.ranges", til.std.ranges.commands);
+    import til.std.sharedlibs;
+    program.addModule("std.sharedlibs", til.std.sharedlibs.commands);
 
     auto process = new Process(null, program);
     auto returnedValue = process.run();

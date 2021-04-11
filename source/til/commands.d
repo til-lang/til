@@ -3,7 +3,7 @@ module til.commands;
 import std.algorithm.iteration : map, joiner;
 import std.conv : to;
 import std.experimental.logger : trace, error;
-import std.string : strip;
+import std.string : strip, toStringz;
 
 import til.exceptions;
 import til.logic;

@@ -1,4 +1,7 @@
 test.til
+*.d
+*.so
+*.o
 
 .dub
 docs.json
