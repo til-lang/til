@@ -1,18 +1,35 @@
 import std.io as io
 import std.ranges as range
 
-range.zero_to 500 |> io.out
-io.out "---"
-"===" |> io.out
-
-range 10 20 2 |> io.out
-io.out "---"
-range 20 30 |> io.out
-io.out "---"
-range 10 |> io.out
-
-io.out "---"
-
-foreach x ([range.zero_to 30]) {
+range.zero_to 5 > foreach (x) {
     io.out $x
 }
+io.out "---"
+
+range.range 10 23 3 > foreach (x) {
+    io.out $x
+}
+io.out "---"
+
+range 100 123 3 > foreach (x) {
+    io.out $x
+}
+io.out "---"
+
+range 3 > foreach (x) {
+    io.out "range 3: $x"
+}
+io.out "---"
+
+range 3 5 > foreach (x) {
+    io.out "range 3 5: $x"
+}
+io.out "---"
+
+range 5 15 4 > foreach (x) {
+    io.out "range 5 15 4: $x"
+}
+io.out "---"
+
+# This should throw and Exception:
+# range 5

@@ -135,11 +135,9 @@ Command analyseCommand(ParseTree p)
     {
         switch(child.name)
         {
-            case "Til.List":
-                // XXX : right now we are accepting N > 1
-                // lists as arguments. It makes no sense,
-                // but we can live with that for now, ok?
-                arguments ~= analyseListItems(child);
+            case "Til.Argument":
+                trace("COMMAND ", name, " ARGUMENT ", child.name, " (", child.matches[0], ")");
+                arguments ~= analyseListItem(child);
                 trace("COMMAND ", name, " ARGUMENTS ~= ", arguments);
                 break;
             default:
@@ -192,6 +190,7 @@ ListItem analyseListItem(ParseTree p)
             case "Til.String":
                 return analyseString(child);
             case "Til.Atom":
+            case "Til.SafeAtom":
                 return analyseAtom(child);
             default:
                 throw new InvalidException(

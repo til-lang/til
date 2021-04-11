@@ -62,7 +62,15 @@ static this()
         // "io.out" = command
         foreach(name, command; target)
         {
-            string cmdPath = newName ~ "." ~ name;
+            string cmdPath;
+            if (name is null)
+            {
+                cmdPath = newName;
+            }
+            else
+            {
+                cmdPath = newName ~ "." ~ name;
+            }
             context.escopo.program.commands[cmdPath] = command;
         }
 
@@ -145,7 +153,7 @@ static this()
 
         auto loopScope = new Process(context.escopo);
 
-        CommandContext iterate(ListItem item, CommandContext context)
+        CommandContext iteration(ListItem item, CommandContext context)
         {
             trace(" item: ", item, " ", item.type);
             if (item.type == ObjectTypes.List)
@@ -182,11 +190,12 @@ static this()
             return iterContext;
         }
 
+        // TODO : XXX : fix this mess in some elegant way...
         if (argRange !is null)
         {
             foreach(item; argRange.items)
             {
-                context = iterate(item, context);
+                context = iteration(item, context);
                 if (context.exitCode == ExitCode.Break)
                 {
                     break;
@@ -199,11 +208,9 @@ static this()
         }
         else
         {
-            throw new Exception("streams not implemented yet");
-            /*
             foreach(item; context.stream)
             {
-                auto iterResult = iterate(item);
+                auto iterResult = iteration(item, context);
                 if (iterResult.exitCode == ExitCode.Break)
                 {
                     break;
@@ -213,9 +220,11 @@ static this()
                     continue;
                 }
             }
-            */
         }
+
         context.exitCode = ExitCode.CommandSuccess;
+        // foreach is a sink:
+        context.stream = null;
         return context;
     };
     commands["break"] = (string path, CommandContext context)

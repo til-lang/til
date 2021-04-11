@@ -51,6 +51,8 @@ void main()
     program.addModule("std.math", til.std.math.commands);
     import til.std.stack;
     program.addModule("std.stack", til.std.stack.commands);
+    import til.std.ranges;
+    program.addModule("std.ranges", til.std.ranges.commands);
 
     auto process = new Process(null, program);
     auto returnedValue = process.run();

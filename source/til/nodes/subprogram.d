@@ -9,7 +9,6 @@ class SubProgram
 
     CommandHandler[string] commands;
     static CommandHandler[string] globalCommands;
-
     static CommandHandler[string][string] availableModules;
 
     this(Pipeline[] pipelines)

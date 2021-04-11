@@ -75,30 +75,41 @@ static this()
         context.exitCode = ExitCode.CommandSuccess;
         return context;
     };
-    /*
     commands["range"] = (string path, CommandContext context)
     {
-        auto start = arguments.consume().asInteger;
-        tracef(" range.start:%s", start);
-        auto limit = arguments.consume(0).asInteger;
-        tracef(" range.limit:%s", limit);
-
-        if (limit == 0)
+        /*
+           range 10       # [zero, 10]
+           range 10 20    # [10, 20]
+           range 10 14 2  # 10 12 14
+        */
+        auto start = context.pop().asInteger;
+        int limit = 0;
+        if (context.size)
+        {
+            limit = context.pop().asInteger;
+        }
+        else
         {
             // zero_to...
             limit = start;
             start = 0;
         }
-        else if (limit <= start)
+        if (limit <= start)
         {
             throw new Exception("Invalid range");
         }
 
-        int step = arguments.consume(1).asInteger;
+        int step = 1;
+        if (context.size)
+        {
+            step = context.pop().asInteger;
+        }
         tracef(" range.step:%s", step);
 
         auto range = new Range(start, limit, step);
-        return new SubList(range);
-    }
-    */
+        context.stream = range;
+        context.exitCode = ExitCode.CommandSuccess;
+        return context;
+    };
+    commands[null] = commands["range"];
 }

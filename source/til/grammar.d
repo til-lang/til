@@ -10,8 +10,11 @@ mixin(grammar(`
         SubProgram        <- blank* Line (eol blank* Line)* blank*
         Line              <- Comment / Pipeline
         Comment           <~ "#" (!eol .)*
+
         Pipeline          <- Command (" > " Command)*
-        Command           <- Name (" "+ List)?
+        Command           <- Name (" "+ Argument)*
+        Argument          <- ExecList / SubList / SimpleList / String / SafeAtom
+        SafeAtom          <- Float / Integer / Boolean / Name
 
         List              <- ListItem (" "+ ListItem)*
         ListItem          <- ExecList / SubList / SimpleList / String / Atom
