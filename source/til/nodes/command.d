@@ -22,20 +22,10 @@ class Command
         return "cmd(" ~ this.name ~ ")";
     }
 
-    CommandContext run(CommandContext context)
+    CommandContext evaluateArguments(CommandContext context)
     {
-        trace(" Command.run:", this.name, " ", this.arguments);
-        auto handler = context.escopo.getCommand(this.name);
-        if (handler is null)
-        {
-            error("Command not found: " ~ this.name);
-            context.exitCode = ExitCode.Failure;
-            return context;
-        }
-
         // Evaluate and push each argument, starting from
         // the last one:
-        long initialStackSize = context.stackSize;
         ulong realArgumentsCounter = 0;
         foreach(argument; this.arguments.retro)
         {
@@ -47,18 +37,35 @@ class Command
             trace(" > ", argument, " context.size:", context.size);
             realArgumentsCounter += context.size;
         }
-        // realArgumentsCounter = max(cast(long)context.stackSize - initialStackSize, 0);
         trace(this.name, " >>> realArgumentsCounter:", realArgumentsCounter);
+        context.size = cast(int)realArgumentsCounter;
+        return context;
+    }
 
+    CommandContext run(CommandContext context)
+    {
+        trace(" Command.run:", this.name, " ", this.arguments);
+        auto handler = context.escopo.getCommand(this.name);
+        if (handler is null)
+        {
+            error("Command not found: " ~ this.name);
+            context.exitCode = ExitCode.Failure;
+            return context;
+        }
+
+        // evaluate arguments and set proper context.size:
+        context = this.evaluateArguments(context);
+
+        return this.runHandler(context, handler);
+    }
+    CommandContext runHandler(CommandContext context, CommandHandler handler)
+    {
         // Run the command:
-        // We set the exitCode to Undefined as a fla
-        // to check if the hander is really doing
+        // We set the exitCode to Undefined as a flag
+        // to check if the handler is really doing
         // the basics, at least.
         context.exitCode = ExitCode.Undefined;
-        // TESTE: Limit the context size to the number of arguments:
-        context.size = cast(int)realArgumentsCounter;
         trace(" calling handler(", this.name, "). context: ", context);
-        trace("  realArgumentsCounter:", realArgumentsCounter);
         auto newContext = handler(this.name, context);
 
         // XXX : this is a kind of "sefaty check".

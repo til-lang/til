@@ -1,6 +1,7 @@
 module til.context;
 
 import til.nodes;
+import til.ranges;
 
 
 struct CommandContext
@@ -11,7 +12,7 @@ struct CommandContext
     // Commands CAN pop beyond local zero...
     int size = 0;
 
-    // Range stream = null;
+    Range stream = null;
 
     @disable this();
     this(Process escopo)
@@ -41,7 +42,7 @@ struct CommandContext
         // Pass along stream and any other data
         // shared between commands int the
         // pipeline:
-        // TODO: re-enable this: newContext.stream = this.stream;
+        newContext.stream = this.stream;
         newContext.escopo = escopo;
         return newContext;
     }
@@ -100,6 +101,7 @@ struct CommandContext
     {
         this.size += other.size;
         // XXX : should we care about other.stream???
+        // I don't think so, but not sure...
     }
     void run(CommandContext function(CommandContext) f)
     {

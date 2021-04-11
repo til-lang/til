@@ -24,12 +24,10 @@ io.out "---"
 
 io.out [s.dup "duplicate!"]
 
-# not working yet:
 io.out [
     s.dup "revert it"
     s.reverse
 ]
-# not working yet:
 io.out [
     s.dup "revert it"
     s.reverse

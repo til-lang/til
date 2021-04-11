@@ -60,36 +60,45 @@ class Range : InfiniteRange
     }
 }
 
+
 // The module:
-CommandResult cmd_zeroTo(string path, Items arguments)
+CommandHandler[string] commands;
+
+// Commands:
+static this()
 {
-    auto limit = arguments.consume().asInteger;
-    tracef(" range.limit:%s", limit);
-
-    auto range = new Range(limit);
-    return new SubList(range);
-}
-CommandResult cmd_range(string path, Items arguments)
-{
-    auto start = arguments.consume().asInteger;
-    tracef(" range.start:%s", start);
-    auto limit = arguments.consume(0).asInteger;
-    tracef(" range.limit:%s", limit);
-
-    if (limit == 0)
+    commands["zero_to"] = (string path, CommandContext context)
     {
-        // zero_to...
-        limit = start;
-        start = 0;
-    }
-    else if (limit <= start)
+        auto limit = context.pop().asInteger;
+        auto range = new Range(limit);
+        context.stream = range;
+        context.exitCode = ExitCode.CommandSuccess;
+        return context;
+    };
+    /*
+    commands["range"] = (string path, CommandContext context)
     {
-        throw new Exception("Invalid range");
+        auto start = arguments.consume().asInteger;
+        tracef(" range.start:%s", start);
+        auto limit = arguments.consume(0).asInteger;
+        tracef(" range.limit:%s", limit);
+
+        if (limit == 0)
+        {
+            // zero_to...
+            limit = start;
+            start = 0;
+        }
+        else if (limit <= start)
+        {
+            throw new Exception("Invalid range");
+        }
+
+        int step = arguments.consume(1).asInteger;
+        tracef(" range.step:%s", step);
+
+        auto range = new Range(start, limit, step);
+        return new SubList(range);
     }
-
-    int step = arguments.consume(1).asInteger;
-    tracef(" range.step:%s", step);
-
-    auto range = new Range(start, limit, step);
-    return new SubList(range);
+    */
 }

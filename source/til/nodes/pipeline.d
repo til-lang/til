@@ -28,21 +28,41 @@ class Pipeline
 
     CommandContext run(CommandContext context)
     {
-        foreach(command; commands)
+        /*
+        What really IS a pipeline?
+        It is a sequence of commands that handle
+        a stream. So every "previous command"
+        NECESSARILY MUST generate a
+        stream or else we found
+        an logic bug and it's
+        a good idea to
+        alert the
+        user.
+        */
+        foreach(index, command; commands)
         {
             trace("running command:", command);
+
+            if (index > 0 && context.stream is null)
+            {
+                throw new Exception(
+                    "You cannot have a sink in the middle of a Pipeline!"
+                    ~ " command:" ~ command.name
+                );
+            }
+
             trace(" in context:", context);
-            context = command.run(context);
+            auto rContext = command.run(context);
             trace("  context: ", context);
 
-            final switch(context.exitCode)
+            final switch(rContext.exitCode)
             {
                 case ExitCode.Undefined:
                     throw new Exception(to!string(command) ~ " returned Undefined");
 
                 case ExitCode.Proceed:
                     throw new InvalidException(
-                        "Commands should not return `Proceed`: " ~ to!string(context));
+                        "Commands should not return `Proceed`: " ~ to!string(rContext));
 
                 // -----------------
                 // Proc execution:
@@ -51,16 +71,16 @@ class Pipeline
                     // we are still INSIDE A PROC.
                     // We return the context, but out caller
                     // doesn't necessarily have to break:
-                    return context;
+                    return rContext;
 
                 case ExitCode.Failure:
-                    throw new Exception("Failure: " ~ to!string(context));
+                    throw new Exception("Failure: " ~ to!string(rContext));
 
                 // -----------------
                 // Loops:
                 case ExitCode.Break:
                 case ExitCode.Continue:
-                    return context;
+                    return rContext;
 
                 // -----------------
                 // List execution:
@@ -68,7 +88,18 @@ class Pipeline
                     // pass
                     break;
             }
+            context.size += rContext.size;
+            // Pass along the new stream:
+            context.stream = rContext.stream;
         }
+
+        if (context.stream !is null)
+        {
+            throw new Exception(
+                "You must have a sink at the end of the Pipeline!"
+            );
+        }
+
         // The expected context of a pipeline is "Proceed".
         context.exitCode = ExitCode.Proceed;
         return context;

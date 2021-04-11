@@ -261,4 +261,67 @@ static this()
         context.exitCode = ExitCode.ReturnSuccess;
         return context;
     };
+
+    // SCOPE MANIPULATION
+    commands["uplevel"] = (string path, CommandContext context)
+    {
+        /*
+        */
+        auto parentScope = context.escopo.parent;
+        if (parentScope is null)
+        {
+            throw new Exception("No upper level to access.");
+        }
+
+        /*
+        It is very important to do this `pop` **before**
+        copying the context.size into
+        newContext.size!
+        You see,
+        uplevel set x 1 2 3  ← this command has 5 arguments
+           -    set x 1 2 3  ← and this one has 4
+        */
+        auto cmdName = context.pop().asString;
+
+        /*
+        Also important to remember: `uplevel` is a command itself.
+        As such, all its arguments were already evaluated
+        when it was called, so we can safely assume
+        there's no further  substitutions to be
+        made and this is going to apply to
+        the command we are calling
+        */
+        auto cmdArguments = context.items;
+
+        // 1- create a new Command
+        auto command = new Command(cmdName, cmdArguments);
+
+        // 2- create a new context, with the parent
+        //    scope as the context.escopo
+        auto newContext = context.next;
+        newContext.escopo = parentScope;
+        newContext.size = context.size;
+
+        // 3- run the command
+        /*
+        IMPORTANT: always remember the previous (parent) scope
+        has an outdated stack that is NOT synchronized
+        with the current one. So we need to let
+        Command.run "evaluate" all arguments
+        again (remember: we passed them
+        as a simple Items list), so
+        that they end up in the
+        old stack as it
+        is expected.
+        */
+
+        auto returnedContext = command.run(newContext);
+
+        if (returnedContext.exitCode == ExitCode.Failure)
+        {
+            throw new Exception("upleval/command " ~ cmdName ~ ": Failure");
+        }
+        context.exitCode = ExitCode.ReturnSuccess;
+        return context;
+    };
 }
