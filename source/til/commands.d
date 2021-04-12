@@ -1,5 +1,6 @@
 module til.commands;
 
+import core.sys.posix.dlfcn;
 import std.algorithm.iteration : map, joiner;
 import std.conv : to;
 import std.experimental.logger : trace, error;
@@ -12,6 +13,36 @@ import til.procedures;
 
 
 CommandHandler[string] commands;
+
+
+// Import commands from a .so:
+CommandHandler[string] importFromSharedLibrary(string libraryPath, string moduleAlias, CommandContext context)
+{
+    // We don't want users informing the library preffix and suffix:
+    libraryPath = "lib" ~ libraryPath ~ ".so";
+    auto libraryPathZ = libraryPath.toStringz;
+
+    // lh = "library handler"
+    void* lh = dlopen(libraryPathZ, RTLD_LAZY);
+    if (!lh)
+    {
+        const char* error = dlerror();
+        throw new Exception("dlopen error: " ~ to!string(error));
+    }
+    trace(libraryPath ~ " succesfully loaded.");
+
+    // Get the commands from inside the shared object:
+    auto getCommands = cast(CommandHandler[string] function())dlsym(lh, "getCommands");
+    const char* error = dlerror();
+    if (error)
+    {
+        throw new Exception("dlsym error: " ~ to!string(error));
+    }
+    auto libraryCommands = getCommands();
+
+    return libraryCommands;
+};
+
 
 // Commands:
 static this()
@@ -46,16 +77,13 @@ static this()
         }
         trace("IMPORT ", modulePath, " AS ", newName);
 
-        // Check if the submodule actually exists:
+        // Check if the submodule is already available (as a "builtin"):
         CommandHandler[string] target;
         target = context.escopo.program.availableModules.get(modulePath, null);
+
         if (target is null)
         {
-            throw new InvalidException(
-                "Module "
-                ~ to!string(modulePath)
-                ~ " not found"
-            );
+            target = importFromSharedLibrary(modulePath, newName, context);
         }
 
         // import std.io as io
@@ -73,7 +101,6 @@ static this()
             }
             context.escopo.program.commands[cmdPath] = command;
         }
-
         context.exitCode = ExitCode.CommandSuccess;
         return context;
     };

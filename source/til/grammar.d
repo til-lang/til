@@ -1,4 +1,4 @@
-module til.til;
+module til.grammar;
 
 import pegged.grammar;
 

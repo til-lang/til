@@ -5,7 +5,7 @@ import til.commands;
 import til.exceptions;
 import til.grammar;
 import til.nodes;
-import til.til;
+import til.semantics;
 
 
 void main()
@@ -45,16 +45,16 @@ void main()
     program.registerGlobalCommands(commands);
 
     // "Third-party" modules:
-    import til.std.io;
-    program.addModule("std.io", til.std.io.commands);
-    import til.std.math;
-    program.addModule("std.math", til.std.math.commands);
-    import til.std.stack;
-    program.addModule("std.stack", til.std.stack.commands);
-    import til.std.ranges;
-    program.addModule("std.ranges", til.std.ranges.commands);
-    import til.std.sharedlibs;
-    program.addModule("std.sharedlibs", til.std.sharedlibs.commands);
+    import libs.std.io;
+    program.addModule("std.io", libs.std.io.commands);
+    import libs.std.math;
+    program.addModule("std.math", libs.std.math.commands);
+    import libs.std.stack;
+    program.addModule("std.stack", libs.std.stack.commands);
+    import libs.std.ranges;
+    program.addModule("std.ranges", libs.std.ranges.commands);
+    import libs.std.sharedlibs;
+    program.addModule("std.sharedlibs", libs.std.sharedlibs.commands);
 
     auto process = new Process(null, program);
     auto returnedValue = process.run();

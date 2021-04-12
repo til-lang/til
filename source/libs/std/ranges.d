@@ -1,4 +1,4 @@
-module til.std.ranges;
+module libs.std.ranges;
 
 import std.conv;
 import std.experimental.logger;

@@ -1,4 +1,4 @@
-module til.std.math;
+module libs.std.math;
 
 import std.conv : to;
 

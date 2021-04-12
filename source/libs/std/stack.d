@@ -1,4 +1,4 @@
-module til.std.stack;
+module libs.std.stack;
 
 import std.algorithm.mutation : reverse;
 import std.conv;

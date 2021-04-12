@@ -2,12 +2,14 @@ test.til
 *.d
 *.so
 *.o
+*.a
 
 .dub
 docs.json
 __dummy.html
 docs/
 /til
+til_run
 til.so
 til.dylib
 til.dll

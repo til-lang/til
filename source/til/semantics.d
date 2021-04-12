@@ -1,4 +1,4 @@
-module til.grammar;
+module til.semantics;
 
 import std.array : join;
 import std.conv : to;
@@ -8,7 +8,7 @@ import pegged.grammar;
 
 import til.exceptions;
 import til.nodes;
-import til.til;
+import til.grammar;
 
 
 SubProgram analyse(ParseTree p)
