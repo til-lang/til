@@ -1,6 +1,8 @@
 module til.nodes.process;
 
+import std.array : join, split;
 import til.nodes;
+import til.modules;
 
 
 class Process
@@ -157,8 +159,29 @@ class Process
             if (handler !is null) return handler;
         }
 
-        error("Command not found: " ~ name);
-        return null;
+        // name: std.math.run
+        // Prefix: std.math
+        // Let's try to autoimport!
+        try
+        {
+            string modulePath = to!string(name.split(".")[0..$-1].join("."));
+            trace("auto-importing ", modulePath);
+            program.importModule(modulePath);
+        }
+        catch(Exception)
+        {
+            error("Command not found: " ~ name);
+            return null;
+        }
+        // We imported the module, but we're not sure if this
+        // name actually exists inside it:
+        // (Important: do NOT call this method recursively!)
+        handler = this.program.commands.get(name, null);
+        if (handler is null)
+        {
+            error("Command not found: " ~ name);
+        }
+        return handler;
     }
 
     // Execution

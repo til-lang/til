@@ -1,0 +1,2 @@
+std.io.out "Auto-import is working!"
+std.io.out [std.math.run (1 + 2 * 3)]

@@ -1,8 +1,8 @@
 release:
-	dub build -b release :run
+	ionice -n 7 dub build -b release :run
 
 debug:
-	dub build -b debug :run
+	ionice -n 7 dub build -b debug :run
 
 hello.o:
 	dmd -c hello.d -fPIC

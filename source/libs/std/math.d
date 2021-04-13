@@ -20,8 +20,8 @@ static this()
                 ~ to!string(context.escopo)
             );
         }
-        // assimilate the result (that is already in the stack):
-        context.size++;
+        // int_run already consumes one item and push another,
+        // so we shouldn't mess with the context or the stack, here.
         context.exitCode = ExitCode.CommandSuccess;
         return context;
     };
