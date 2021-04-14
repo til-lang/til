@@ -102,105 +102,35 @@ static this()
 
     commands["foreach"] = (string path, CommandContext context)
     {
-        /*
-        DISCLAIMER: this code is very (VERY) inefficient.
-
-        foreach has 2 flavors:
-        1: foreach (x) (a b c d e) {...}  (3 arguments)
-        2: range > foreach (x) {...}      (2 arguments)
-        */
         trace("foreach.context: ", context);
-        auto argNames = cast(SimpleList)context.pop();
-        SimpleList argRange = null;
-        if (context.size == 2)
-        {
-            argRange = cast(SimpleList)context.pop();
-        }
+        auto argName = context.pop().asString;
         auto argBody = cast(SubList)context.pop();
 
-        trace(" FOREACH ", argNames, " in ", argRange, " : ", argBody);
-
-        string[] names;
-        foreach(n; argNames.items)
-        {
-            names ~= n.asString;
-        }
-        trace(" names: ", names);
+        trace(" FOREACH ", argName, " : ", argBody);
 
         auto loopScope = new Process(context.escopo);
 
-        CommandContext iteration(ListItem item, CommandContext context)
+        foreach(item; context.stream)
         {
             trace(" item: ", item, " ", item.type);
-            if (item.type == ObjectTypes.List)
-            {
-                auto subItems = (cast(BaseList)item).items;
-                foreach(index, name; names)
-                {
-                    trace("   name: ", name);
-                    trace("   subItems: ", subItems);
-                    loopScope[name] = subItems[index];
-
-                    // TODO: analyse each context.scopeExit!
-                    // TODO (later): optionally **inline** loops.
-                    //  That should be achieved simply putting all
-                    // lists run with its own loopScope into a single
-                    // ExecList and running this one.
-                    // XXX: and THAT is a very nice reason why we
-                    // should be using D Ranges system: a List content
-                    // could be provided dynamically, so we would turn
-                    // this loop range into an... actual range.
-                }
-            }
-            else
-            {
-                foreach(name; names)
-                {
-                    trace(name, "←", item);
-                    loopScope[name] = item;
-                }
-            }
+            loopScope[argName] = item;
 
             trace("loopScope: ", loopScope);
-            auto iterContext = loopScope.run(argBody.subprogram);
-            return iterContext;
-        }
+            auto iterResult = loopScope.run(argBody.subprogram);
 
-        // TODO : XXX : fix this mess in some elegant way...
-        if (argRange !is null)
-        {
-            foreach(item; argRange.items)
+            if (iterResult.exitCode == ExitCode.Break)
             {
-                context = iteration(item, context);
-                if (context.exitCode == ExitCode.Break)
-                {
-                    break;
-                }
-                else if (context.exitCode == ExitCode.Continue)
-                {
-                    continue;
-                }
+                break;
             }
-        }
-        else
-        {
-            foreach(item; context.stream)
+            else if (iterResult.exitCode == ExitCode.Continue)
             {
-                auto iterResult = iteration(item, context);
-                if (iterResult.exitCode == ExitCode.Break)
-                {
-                    break;
-                }
-                else if (iterResult.exitCode == ExitCode.Continue)
-                {
-                    continue;
-                }
+                continue;
             }
         }
 
-        context.exitCode = ExitCode.CommandSuccess;
-        // foreach is a sink:
+        // Remember: foreach is a sink!
         context.stream = null;
+        context.exitCode = ExitCode.CommandSuccess;
         return context;
     };
     commands["break"] = (string path, CommandContext context)

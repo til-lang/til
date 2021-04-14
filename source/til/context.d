@@ -55,6 +55,10 @@ struct CommandContext
     }
 
     // Stack-related things:
+    ListItem peek()
+    {
+        return escopo.peek();
+    }
     ListItem pop()
     {
         size--;

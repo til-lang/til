@@ -7,7 +7,7 @@ libs "phobos2"
 version "0.0.1"
 dependency "pegged" version="~>0.4.4"
 targetPath "dist/core"
-targetType "staticLibrary"
+targetType "library"
 
 subPackage {
     name "libs"

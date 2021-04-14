@@ -67,6 +67,14 @@ class Process
        doing otherwise wouldn't be noticed
        by anyone.
     */
+    ListItem peek()
+    {
+        /*
+        Just look at the first item, do
+        not pop it off.
+        */
+        return this.stack.back;
+    }
     ListItem pop()
     {
         auto item = this.stack.back;

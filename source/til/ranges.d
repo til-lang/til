@@ -61,7 +61,6 @@ class Range
             return x;
         }
     }
-    abstract Range exhaust();
 }
 
 class InfiniteRange : Range
@@ -73,15 +72,6 @@ class InfiniteRange : Range
     override bool empty()
     {
         return false;
-    }
-    override Range exhaust()
-    {
-        /*
-        We COULD "exhaust" an InfiniteRange by forcing
-        the remaining range to be empty.
-        But not now...
-        */
-        throw new Exception("Trying to exhaust an InfiniteRange");
     }
 
     /*
@@ -147,12 +137,6 @@ class StaticItems : Range
     override void popFront()
     {
         currentIndex++;
-    }
-    override Range exhaust()
-    {
-        auto copy = this.save();
-        this.currentIndex = this._length;
-        return copy;
     }
 }
 
@@ -259,12 +243,6 @@ class ChainedItems : Range
         auto result = new ChainedItems(copies);
         result.currentRangeIndex = index;
         return result;
-    }
-    override Range exhaust()
-    {
-        auto copy = this.save();
-        this.currentRangeIndex = this._ranges.length;
-        return copy;
     }
 
     override ulong length()

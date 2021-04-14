@@ -7,7 +7,7 @@ import til.nodes;
 import til.ranges;
 
 
-class Range : InfiniteRange
+class IntegerRange : InfiniteRange
 {
     int start = 0;
     int limit = 0;
@@ -54,12 +54,56 @@ class Range : InfiniteRange
     }
     override Range save()
     {
-        auto x = new Range(limit);
+        auto x = new IntegerRange(limit);
         x.current = current;
         return x;
     }
 }
 
+
+class ItemsRange : Range
+{
+    Items list;
+    int currentIndex = 0;
+    ulong _length;
+
+    this(Items list)
+    {
+        this.list = list;
+        this._length = list.length;
+    }
+
+    override bool empty()
+    {
+        return (this.currentIndex >= this._length);
+    }
+    override ListItem front()
+    {
+        return this.list[this.currentIndex];
+    }
+    override void popFront()
+    {
+        this.currentIndex++;
+    }
+    override ulong length()
+    {
+        return this._length;
+    }
+    override Range save()
+    {
+        auto copy = new ItemsRange(this.list);
+        copy.currentIndex = this.currentIndex;
+        return copy;
+    }
+    override string toString()
+    {
+        return "ItemsRange<" ~ to!string(this.list) ~ ">";
+    }
+    override string asString()
+    {
+        return to!string(this.list);
+    }
+}
 
 // The module:
 CommandHandler[string] commands;
@@ -67,15 +111,7 @@ CommandHandler[string] commands;
 // Commands:
 static this()
 {
-    commands["zero_to"] = (string path, CommandContext context)
-    {
-        auto limit = context.pop().asInteger;
-        auto range = new Range(limit);
-        context.stream = range;
-        context.exitCode = ExitCode.CommandSuccess;
-        return context;
-    };
-    commands["range"] = (string path, CommandContext context)
+    CommandContext rangeFromIntegers(string path, CommandContext context)
     {
         /*
            range 10       # [zero, 10]
@@ -106,8 +142,40 @@ static this()
         }
         tracef(" range.step:%s", step);
 
-        auto range = new Range(start, limit, step);
+        auto range = new IntegerRange(start, limit, step);
         context.stream = range;
+        return context;
+    }
+
+    CommandContext rangeFromList(string path, CommandContext context)
+    {
+        /*
+        range (1 2 3 4 5)
+        */
+        SimpleList list = cast(SimpleList)context.pop();
+        context.stream = new ItemsRange(list.items);
+        return context;
+    }
+
+    commands["zero_to"] = (string path, CommandContext context)
+    {
+        auto limit = context.pop().asInteger;
+        auto range = new IntegerRange(limit);
+        context.stream = range;
+        context.exitCode = ExitCode.CommandSuccess;
+        return context;
+    };
+    commands["range"] = (string path, CommandContext context)
+    {
+        auto firstArgument = context.peek();
+        if (firstArgument.type == ObjectTypes.List)
+        {
+            context = rangeFromList(path, context);
+        }
+        else
+        {
+            context = rangeFromIntegers(path, context);
+        }
         context.exitCode = ExitCode.CommandSuccess;
         return context;
     };
