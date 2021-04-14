@@ -1,25 +1,6 @@
-import std.io as io
-
-proc pass (a b) {
-    return $a $b
-}
-
-proc list () {
-    return (11 22)
-}
-proc open_list () {
-    return op en
-}
-
-proc receive3 (a b c) {
-    return "a:$a b:$b c:$c"
-}
-proc receive4 (a b c d) {
-    return "a:$a b:$b c:$c d:$d"
-}
-
-receive3 [list] 33 44 |> io.out
-receive4 [open_list] cc dd |> io.out
-receive4 [pass aa bb] 33 44 |> io.out
-io.out "Expected: wrong number of parameters:"
-receive4 [list] 33 44 |> io.out
+math [
+    set a 1
+    set b 2
+    set c 3
+    lists.eval ($a + $b * $c)
+]

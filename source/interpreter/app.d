@@ -47,12 +47,14 @@ void main()
     // "Third-party" modules:
     import libs.std.io;
     program.addModule("std.io", libs.std.io.commands);
+    import libs.std.lists;
+    program.addModule("std.lists", libs.std.lists.commands);
     import libs.std.math;
     program.addModule("std.math", libs.std.math.commands);
-    import libs.std.stack;
-    program.addModule("std.stack", libs.std.stack.commands);
     import libs.std.ranges;
     program.addModule("std.ranges", libs.std.ranges.commands);
+    import libs.std.stack;
+    program.addModule("std.stack", libs.std.stack.commands);
     import libs.std.sharedlibs;
     program.addModule("std.sharedlibs", libs.std.sharedlibs.commands);
 
