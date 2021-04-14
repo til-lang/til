@@ -159,27 +159,42 @@ class Process
             if (handler !is null) return handler;
         }
 
-        // name: std.math.run
-        // Prefix: std.math
-        // Let's try to autoimport!
-        try
-        {
+        /*
+        name: std.math.run
+        Prefix: std.math
+        Let's try to autoimport!
+        */
+        bool success = {
             string modulePath = to!string(name.split(".")[0..$-1].join("."));
-            trace("auto-importing ", modulePath);
-            program.importModule(modulePath);
-        }
-        catch(Exception)
-        {
-            error("Command not found: " ~ name);
-            return null;
-        }
-        // We imported the module, but we're not sure if this
-        // name actually exists inside it:
-        // (Important: do NOT call this method recursively!)
-        handler = this.program.commands.get(name, null);
-        if (handler is null)
-        {
-            error("Command not found: " ~ name);
+
+            // std.io.out
+            // = std.io
+            if (program.importModule(modulePath)) return true;
+
+            // io.out
+            // = std.io as io
+            if (program.importModule("std." ~ modulePath, modulePath)) return true;
+
+            // std.math
+            // = std.math
+            if (program.importModule(name, name)) return true;
+
+            // math
+            // = std.math as math
+            if (program.importModule("std." ~ name, name)) return true;
+
+            return false;
+        }();
+
+        if (success) {
+            // We imported the module, but we're not sure if this
+            // name actually exists inside it:
+            // (Important: do NOT call this method recursively!)
+            handler = this.program.commands.get(name, null);
+            if (handler is null)
+            {
+                throw new Exception("Command not found: " ~ name);
+            }
         }
         return handler;
     }

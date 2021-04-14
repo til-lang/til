@@ -57,7 +57,12 @@ void main()
     program.addModule("std.sharedlibs", libs.std.sharedlibs.commands);
 
     auto process = new Process(null, program);
-    auto returnedValue = process.run();
-    trace("returnedValue: ", returnedValue);
+    auto context = process.run();
     trace(process);
+
+    // Print everything remaining in the stack:
+    foreach(item; context.items)
+    {
+        writeln(item.asString);
+    }
 }

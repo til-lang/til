@@ -25,4 +25,5 @@ static this()
         context.exitCode = ExitCode.CommandSuccess;
         return context;
     };
+    commands[null] = commands["run"];
 }
