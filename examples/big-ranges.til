@@ -1,9 +1,9 @@
-range 50000 | io.out
+range 5000 | io.out
 io.out "---"
 
 io.out "==="
 
-range 70000 | foreach x {
+range 7000 | foreach x {
     io.out $x
 }
 io.out "---"

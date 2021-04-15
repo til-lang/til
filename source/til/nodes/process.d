@@ -13,7 +13,8 @@ class Process
     SubProgram program;
     Process parent;
 
-    ListItem[] stack;
+    ListItem[64] stack;
+    ulong stackPointer = 0;
     Items[string] variables;
 
     this(Process parent)
@@ -22,17 +23,14 @@ class Process
         this.parent = parent;
         if (parent !is null)
         {
-            // Remember: adding or removing items from
-            // the stack CHANGES ITS ADDRESS, so
-            // parent and child will not keep
-            // stacks "synchronized".
             this.stack = parent.stack;
+            trace(" >>> STACK COPY ALERT <<<");
             this.program = parent.program;
         }
         else
         {
             // Pre-allocate some space in the stack:
-            stack.reserve = 50;
+            // stack.reserve = 50;
         }
     }
     this(Process parent, SubProgram program)
@@ -79,14 +77,11 @@ class Process
         Just look at the first item, do
         not pop it off.
         */
-        return this.stack.back;
+        return stack[stackPointer-1];
     }
     ListItem pop()
     {
-        auto item = this.stack.back;
-        this.stack.popBack();
-        trace("POPPED:", item);
-        return item;
+        return stack[--stackPointer];
     }
     ListItem[] pop(int count)
     {
@@ -104,14 +99,14 @@ class Process
     }
     void push(ListItem item)
     {
-        trace("PUSH:", item);
-        this.stack ~= item;
+        trace("PUSHED ", item, " at ", stackPointer);
+        stack[stackPointer++] = item;
     }
     template push(T)
     {
         void push(T x)
         {
-            this.stack ~= new Atom(x);
+            this.push(new Atom(x));
         }
     }
 
@@ -121,7 +116,7 @@ class Process
         string s = "Process[" ~ to!string(this.index) ~ "]";
         s ~= "(" ~ program.name ~ "):\n";
 
-        s ~= "STACK:" ~ to!string(stack) ~ "\n";
+        s ~= "STACK:" ~ to!string(stack[0..stackPointer]) ~ "\n";
         foreach(name, value; variables)
         {
             s ~= " " ~ name ~ "=<" ~ to!string(value) ~">\n";

@@ -1,8 +1,13 @@
 release:
 	ionice -n 7 dub build -b release :run
+	mv til_run til.release
 
 debug:
 	ionice -n 7 dub build -b debug :run
+	mv til_run til.debug
+
+profile:
+	dub build -b profile --force :profile
 
 hello.o:
 	dmd -c hello.d -fPIC

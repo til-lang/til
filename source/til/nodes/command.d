@@ -8,6 +8,7 @@ class Command
 {
     string name;
     Items arguments;
+    CommandHandler handler = null;
 
     this(string name, Items arguments)
     {
@@ -45,18 +46,21 @@ class Command
     CommandContext run(CommandContext context)
     {
         trace(" Command.run:", this.name, " ", this.arguments);
-        auto handler = context.escopo.getCommand(this.name);
-        if (handler is null)
+        if (this.handler is null)
         {
-            error("Command not found: " ~ this.name);
-            context.exitCode = ExitCode.Failure;
-            return context;
+            this.handler = context.escopo.getCommand(this.name);
+            if (this.handler is null)
+            {
+                error("Command not found: " ~ this.name);
+                context.exitCode = ExitCode.Failure;
+                return context;
+            }
         }
 
         // evaluate arguments and set proper context.size:
         context = this.evaluateArguments(context);
 
-        return this.runHandler(context, handler);
+        return this.runHandler(context, this.handler);
     }
     CommandContext runHandler(CommandContext context, CommandHandler handler)
     {

@@ -31,4 +31,12 @@ subPackage {
     targetType "dynamicLibrary"
     libs "phobos2"
     dependency "til:libs" version="0.0.1"
+    }
+
+subPackage {
+    name "profile"
+    sourcePaths "source/interpreter"
+    targetType "executable"
+    buildType "profile"
+    dependency "til:libs" version="0.0.1"
 }

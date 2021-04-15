@@ -9,7 +9,11 @@ struct CommandContext
     Process escopo;
     ExitCode exitCode = ExitCode.Proceed;
 
-    // Commands CAN pop beyond local zero...
+    /*
+    Commands CAN pop beyond local zero, so
+    resist the temptation to make it
+    an uint.
+    */
     int size = 0;
 
     Range stream = null;
@@ -49,7 +53,7 @@ struct CommandContext
 
     string toString()
     {
-        string s = "STACK:" ~ to!string(escopo.stack);
+        string s = "STACK:" ~ to!string(escopo.stack[0..escopo.stackPointer]);
         s ~= " (" ~ to!string(size) ~ ")";
         return s;
     }
