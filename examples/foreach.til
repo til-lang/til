@@ -1,8 +1,7 @@
 set range (10 20 (30 40) 50 60 (70 80))
 
-# How to create ranges from SimpleLists???
-ranges $range > foreach y {
-    ranges (1 2 3 4 5) > foreach x {
+range $range | foreach y {
+    range (1 2 3 4 5) | foreach x {
         io.out "($x,$y)"
     }
 }

@@ -1,32 +1,29 @@
-import std.io as io
-import std.ranges as range
-
-range.zero_to 5 > foreach (x) {
+range 5 | foreach (x) {
     io.out $x
 }
 io.out "---"
 
-range.range 10 23 3 > foreach (x) {
+range 10 23 3 | foreach (x) {
     io.out $x
 }
 io.out "---"
 
-range 100 123 3 > foreach (x) {
+range 100 123 3 | foreach (x) {
     io.out $x
 }
 io.out "---"
 
-range 3 > foreach (x) {
+range 3 | foreach (x) {
     io.out "range 3: $x"
 }
 io.out "---"
 
-range 3 5 > foreach (x) {
+range 3 5 | foreach (x) {
     io.out "range 3 5: $x"
 }
 io.out "---"
 
-range 5 15 4 > foreach (x) {
+range 5 15 4 | foreach (x) {
     io.out "range 5 15 4: $x"
 }
 io.out "---"

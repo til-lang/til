@@ -1,4 +1,4 @@
-module libs.std.ranges;
+module libs.std.range;
 
 import std.conv;
 import std.experimental.logger;
@@ -126,7 +126,7 @@ static this()
         }
         else
         {
-            // zero_to...
+            // zero to...
             limit = start;
             start = 0;
         }
@@ -157,14 +157,6 @@ static this()
         return context;
     }
 
-    commands["zero_to"] = (string path, CommandContext context)
-    {
-        auto limit = context.pop().asInteger;
-        auto range = new IntegerRange(limit);
-        context.stream = range;
-        context.exitCode = ExitCode.CommandSuccess;
-        return context;
-    };
     commands["range"] = (string path, CommandContext context)
     {
         auto firstArgument = context.peek();

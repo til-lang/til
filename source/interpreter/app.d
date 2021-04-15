@@ -51,12 +51,12 @@ void main()
     program.addModule("std.lists", libs.std.lists.commands);
     import libs.std.math;
     program.addModule("std.math", libs.std.math.commands);
-    import libs.std.ranges;
-    program.addModule("std.ranges", libs.std.ranges.commands);
+    import libs.std.range;
+    program.addModule("std.range", libs.std.range.commands);
     import libs.std.stack;
     program.addModule("std.stack", libs.std.stack.commands);
-    import libs.std.sharedlibs;
-    program.addModule("std.sharedlibs", libs.std.sharedlibs.commands);
+    import libs.std.sharedlib;
+    program.addModule("std.sharedlib", libs.std.sharedlib.commands);
 
     auto process = new Process(null, program);
     auto context = process.run();

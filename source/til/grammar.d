@@ -11,7 +11,7 @@ mixin(grammar(`
         Line              <- Comment / Pipeline
         Comment           <~ "#" (!eol .)*
 
-        Pipeline          <- Command (" > " Command)*
+        Pipeline          <- Command (" | " Command)*
         Command           <- Name (" "+ Argument)*
         Argument          <- ExecList / SubList / SimpleList / String / SafeAtom
         SafeAtom          <- Float / Integer / Boolean / Name

@@ -108,7 +108,11 @@ static this()
 
         trace(" FOREACH ", argName, " : ", argBody);
 
-        auto loopScope = new Process(context.escopo);
+        /*
+        Do NOT create a new scope for the
+        body of foreach.
+        */
+        auto loopScope = context.escopo;
 
         foreach(item; context.stream)
         {
@@ -116,20 +120,24 @@ static this()
             loopScope[argName] = item;
 
             trace("loopScope: ", loopScope);
-            auto iterResult = loopScope.run(argBody.subprogram);
+            context = loopScope.run(argBody.subprogram);
 
-            if (iterResult.exitCode == ExitCode.Break)
+            if (context.exitCode == ExitCode.Break)
             {
                 break;
             }
-            else if (iterResult.exitCode == ExitCode.Continue)
+            else if (context.exitCode == ExitCode.Continue)
             {
                 continue;
             }
         }
 
-        // Remember: foreach is a sink!
-        context.stream = null;
+        /*
+        `foreach` is NOT a "sink", because you can simply
+        break the loop "in the middle" of a stream and
+        the rest can be passed to other command to
+        process.
+        */
         context.exitCode = ExitCode.CommandSuccess;
         return context;
     };

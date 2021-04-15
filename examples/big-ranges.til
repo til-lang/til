@@ -1,12 +1,9 @@
-import std.io as io
-import std.ranges as range
-
-range.zero_to 50000 |> io.out
+range 50000 | io.out
 io.out "---"
 
 io.out "==="
 
-foreach x ([range 70000]) {
+range 70000 | foreach x {
     io.out $x
 }
 io.out "---"

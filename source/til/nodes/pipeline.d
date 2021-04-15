@@ -93,13 +93,6 @@ class Pipeline
             context.stream = rContext.stream;
         }
 
-        if (context.stream !is null)
-        {
-            throw new Exception(
-                "You must have a sink at the end of the Pipeline!"
-            );
-        }
-
         // The expected context of a pipeline is "Proceed".
         context.exitCode = ExitCode.Proceed;
         return context;

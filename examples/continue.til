@@ -1,9 +1,6 @@
-import std.io as io
-import std.ranges as range
-
 set result [
     set r 0
-    foreach x ([range 1000]) {
+    range 1000 | foreach x {
         if ($x >= 5) {
             continue
         }

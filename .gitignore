@@ -1,5 +1,4 @@
 test.til
-*.d
 *.so
 *.o
 *.a
@@ -10,6 +9,7 @@ __dummy.html
 docs/
 /til
 til_run
+til.release
 til.so
 til.dylib
 til.dll
