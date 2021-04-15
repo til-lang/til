@@ -1,6 +1,7 @@
 module til.nodes.process;
 
 import std.array : join, split;
+import std.container : DList;
 import til.nodes;
 import til.modules;
 
@@ -27,6 +28,11 @@ class Process
             // stacks "synchronized".
             this.stack = parent.stack;
             this.program = parent.program;
+        }
+        else
+        {
+            // Pre-allocate some space in the stack:
+            stack.reserve = 50;
         }
     }
     this(Process parent, SubProgram program)

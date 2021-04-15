@@ -23,8 +23,6 @@ CommandContext pureBoolean(CommandContext context)
     auto list = cast(SimpleList)context.pop();
     Items items = list.items;
 
-    ulong initialStackSize = context.stackSize();
-
     trace(" PURE BOOLEAN: ", items);
 
     bool currentResult = false;
@@ -138,8 +136,6 @@ CommandContext pureBoolean(CommandContext context)
         context.push(item);
         operate();
     }
-    ulong totalItems = context.stackSize - initialStackSize;
-    trace("  boolean.totalItems:", totalItems);
     context.push(currentResult);
     trace("  boolean.returning. result:", currentResult, "; context: ", context);
     return context;

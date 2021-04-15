@@ -10,6 +10,7 @@ docs/
 /til
 til_run
 til.release
+til.debug
 til.so
 til.dylib
 til.dll

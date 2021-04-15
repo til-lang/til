@@ -121,9 +121,4 @@ struct CommandContext
         auto rContext = f(this.next);
         this.assimilate(rContext);
     }
-
-    ulong stackSize()
-    {
-        return this.escopo.stack.length;
-    }
 }
