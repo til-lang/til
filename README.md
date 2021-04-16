@@ -46,8 +46,8 @@ task.
 1. Make the basics usable: (flow control, loops, ranges, stack
    manipulation, introspection, etc)
 1. Improve the implementation (better use of Pegged features, specially)
-1. Allow **dynamic loading** of libraries (compiled as shared object
-   files)
+1. ~Allow **dynamic loading** of libraries (compiled as shared object
+   files)~
 1. Implement **Actor Model**
-1. Integrate properly with **Tk**
-1. Make code execution faster (preferably without byte-compiling)
+1. Integrate properly with **Tk** or other good cross-platform GUI library
+1. Make code execution faster (without byte-compiling)

@@ -19,7 +19,7 @@ mixin(grammar(`
         Pipeline          <- Command (" | " Command)*
         Command           <- Name (" " Argument)*
         Argument          <- ExecList / SubList / SimpleList / String / SafeAtom
-        SafeAtom          <- Float / Integer / Boolean / Name
+        SafeAtom          <- Float / UnitInteger / Integer / Boolean / Name
 
         List              <- ListItem (" " ListItem)*
         ListItem          <- ExecList / SubList / SimpleList / String / Atom
@@ -33,10 +33,12 @@ mixin(grammar(`
         Substitution      <~ "$" Name
         NotSubstitution   <~ (!doublequote !"$" .)*
 
-        Atom              <- Float / Integer / Boolean / Operator / Name
+        Atom              <- Float / UnitInteger / Integer / Boolean / Operator / Name
         Name              <~ "$"? [A-Za-z] [A-Za-z0-9_.]* "?"?
 
         Float             <~ [0-9]+ "." [0-9]+
+        UnitInteger       <- Integer Unit
+        Unit              <- "K" / "M" / "G" / "Ki" / "Mi" / "Gi"
         Integer           <~ [0-9]+
         Boolean           <- BooleanTrue / BooleanFalse
         BooleanTrue       <~ "true" / "yes"

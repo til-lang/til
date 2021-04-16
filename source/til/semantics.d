@@ -11,6 +11,19 @@ import til.nodes;
 import til.grammar;
 
 
+int[string]unitsMap;
+
+static this()
+{
+    unitsMap["K"] = 1000;
+    unitsMap["M"] = 1000000;
+    unitsMap["G"] = 1000000000;
+    unitsMap["Ki"] = 1024;
+    unitsMap["Mi"] = 1024 * 1024;
+    unitsMap["Gi"] = 1024 * 1024 + 1024;
+}
+
+
 SubProgram analyse(ParseTree p)
 {
     switch(p.name)
@@ -287,6 +300,13 @@ Atom analyseAtom(ParseTree p)
                 break;
             case "Til.Integer":
                 atom.integer = to!int(str);
+                atom.type = ObjectTypes.Integer;
+                break;
+            case "Til.UnitInteger":
+                str = p.matches[0];
+                string unit = p.matches[1];
+                atom.integer = to!int(str) * unitsMap[unit];
+                atom.repr = to!string(atom.integer);
                 atom.type = ObjectTypes.Integer;
                 break;
             case "Til.Boolean":

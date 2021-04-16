@@ -1,0 +1,5 @@
+set x 1G
+set y 200M
+set z 200K
+
+io.out [math ($x + $y + $z)]
