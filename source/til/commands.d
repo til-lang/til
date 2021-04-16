@@ -9,6 +9,7 @@ import til.logic;
 import til.modules;
 import til.nodes;
 import til.procedures;
+import til.ranges;
 
 
 CommandHandler[string] commands;
@@ -152,6 +153,80 @@ static this()
         return context;
     };
 
+    // ---------------------------------------------
+    // "switch/case"
+    commands["transform"] = (string path, CommandContext context)
+    {
+        class TransformRange : InfiniteRange
+        {
+            Range origin;
+            SubList body;
+            Process escopo;
+            string varName;
+            this(Range origin, string varName, SubList body, Process escopo)
+            {
+                this.origin = origin;
+                this.varName = varName;
+                this.body = body;
+                this.escopo = escopo;
+            }
+
+            override bool empty()
+            {
+                return origin.empty;
+            }
+            override ListItem front()
+            {
+                auto originalFront = origin.front;
+                escopo[varName] = originalFront;
+                context = escopo.run(body.subprogram);
+                if (context.size > 1)
+                {
+                    return new SimpleList(context.items);
+                }
+                else
+                {
+                    return context.pop();
+                }
+            }
+            override void popFront()
+            {
+                origin.popFront();
+            }
+            override ulong length()
+            {
+                return origin.length;
+            }
+            override Range save()
+            {
+                return new TransformRange(origin.save(), varName, body, escopo);
+            }
+            override string toString()
+            {
+                return "TransformRange";
+            }
+            override string asString()
+            {
+                return "TransformRange";
+            }
+        }
+
+        auto varName = context.pop().asString;
+        auto body = context.pop();  // SubList
+
+        auto newStream = new TransformRange(context.stream, varName, cast(SubList)body, context.escopo);
+        context.exitCode = ExitCode.CommandSuccess;
+        context.stream = newStream;
+        return context;
+    };
+    /*
+    commands["case"] = (string path, CommandContext context)
+    {
+    };
+    */
+
+    // ---------------------------------------------
+    // PROCEDURES-related
     commands["proc"] = (string path, CommandContext context)
     {
         // proc name (parameters) {body}

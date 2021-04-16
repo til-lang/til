@@ -34,7 +34,8 @@ mixin(grammar(`
         NotSubstitution   <~ (!doublequote !"$" .)*
 
         Atom              <- Float / UnitInteger / Integer / Boolean / Operator / Name
-        Name              <~ "$"? [A-Za-z] [A-Za-z0-9_.]* "?"?
+        Name              <~ [$>]? Identifier "?"?
+        Identifier        <- [a-z] [a-z0-9_.]*
 
         Float             <~ [0-9]+ "." [0-9]+
         UnitInteger       <- Integer Unit

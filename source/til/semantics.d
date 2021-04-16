@@ -292,7 +292,14 @@ Atom analyseAtom(ParseTree p)
         final switch(child.name)
         {
             case "Til.Name":
-                atom.type = ObjectTypes.Name;
+                if (str[0] == '>')
+                {
+                    atom.type = ObjectTypes.InputName;
+                }
+                else
+                {
+                    atom.type = ObjectTypes.Name;
+                }
                 break;
             case "Til.Float":
                 atom.floatingPoint = to!float(str);

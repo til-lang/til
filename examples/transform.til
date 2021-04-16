@@ -1,0 +1,5 @@
+range 0 10 | transform x {
+        return [math ($x + 100)]
+    } | foreach y {
+        io.out $y
+    }

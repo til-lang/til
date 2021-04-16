@@ -39,6 +39,7 @@ enum ObjectTypes
     List,
     String,
     Name,
+    InputName,
     Atom,
     Operator,
     Float,
