@@ -30,7 +30,11 @@ void main()
     auto tree = Til(code);
     trace(tree);
 
-    // TODO: check if the parsing was successful.
+    if (!tree.successful)
+    {
+        // TODO: print a better explanation of what happened.
+        throw new Exception("Program seems invalid.");
+    }
 
     SubProgram program;
     try {

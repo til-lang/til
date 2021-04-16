@@ -3,11 +3,16 @@ module til.grammar;
 import pegged.grammar;
 
 
+ParseTree promote(ParseTree p)
+{
+    return p.children[0];
+}
+
 mixin(grammar(`
     Til:
         Program           <- SubProgram endOfInput
 
-        SubProgram        <- blank* Line (eol blank* Line)* blank*
+        SubProgram        <- blank* Line {promote} (eol blank* Line {promote})* blank*
         Line              <- Comment / Pipeline
         Comment           <~ "#" (!eol .)*
 

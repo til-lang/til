@@ -64,43 +64,21 @@ SubProgram analyseSubProgram(ParseTree p)
     {
         switch(child.name)
         {
-            case "Til.Line":
-                auto l = analyseLine(child);
-                if (l !is null)
-                {
-                    // TODO: use Pegged Actions to eliminate Comments
-                    // directly on ParseTree generation;
-                    pipelines ~= l;
-                }
+            case "Til.Pipeline":
+                pipelines ~= analysePipeline(child);
+                break;
+            case "Til.Comment":
+                // NO OP
                 break;
             default:
                 throw new InvalidException(
-                    "Program seems invalid. Expected a Line."
+                    "Program seems invalid. Expected a Pipeline."
                     ~ " Received a " ~ child.name
                     ~ " (" ~ child.matches[0] ~ ")"
                 );
         }
     }
     return new SubProgram(pipelines);
-}
-
-Pipeline analyseLine(ParseTree p)
-{
-    foreach(child; p.children)
-    {
-        switch(child.name)
-        {
-            case "Til.Comment":
-                return null;
-            case "Til.Pipeline":
-                return analysePipeline(child);
-            default:
-                throw new InvalidException(
-                    "Program seems invalid. Expected a Pipeline."
-                );
-        }
-    }
-    assert(0);
 }
 
 Pipeline analysePipeline(ParseTree p)
