@@ -42,7 +42,7 @@ void main()
     }
     catch (Exception e) {
         trace(e);
-        trace("==== ERROR ====");
+        throw new Exception("==== ERROR ====");
     }
     trace("======OK=======");
 

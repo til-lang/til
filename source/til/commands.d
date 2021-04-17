@@ -338,7 +338,7 @@ static this()
     };
 
     // ---------------------------------------------
-    // PROCEDURES-related
+    // PROCEDURES-RELATED
     commands["proc"] = (string path, CommandContext context)
     {
         // proc name (parameters) {body}
@@ -372,6 +372,7 @@ static this()
         return context;
     };
 
+    // ---------------------------------------------
     // SCOPE MANIPULATION
     commands["uplevel"] = (string path, CommandContext context)
     {

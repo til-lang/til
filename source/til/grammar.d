@@ -17,13 +17,12 @@ mixin(grammar(`
         Comment           <~ "#" (!eol .)*
 
         Pipeline          <- Command (" | " Command)*
-        Command           <- Name (" " Argument)*
-        Argument          <- ExecList / SubList / SimpleList / String / SafeAtom
-        SafeAtom          <- Float / UnitInteger / Integer / Boolean / Name
+        Command           <- Name (" " ListItem)*
 
         List              <- ListItem (" " ListItem)*
-        ListItem          <- ExecList / SubList / SimpleList / String / Atom
+        ListItem          <- ExecList / SubList / Extraction / SimpleList / String / Atom
         SimpleList        <- "(" List? ")"
+        Extraction        <- "<" List? ">"
         ExecList          <- "[" SubProgram "]"
         SubList           <- "{" SubProgram "}"
 

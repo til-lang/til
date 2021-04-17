@@ -126,7 +126,7 @@ Command analyseCommand(ParseTree p)
     {
         switch(child.name)
         {
-            case "Til.Argument":
+            case "Til.ListItem":
                 trace("COMMAND ", name, " ARGUMENT ", child.name, " (", child.matches[0], ")");
                 arguments ~= analyseListItem(child);
                 trace("COMMAND ", name, " ARGUMENTS ~= ", arguments);
@@ -176,12 +176,13 @@ ListItem analyseListItem(ParseTree p)
                 return analyseExecList(child);
             case "Til.SubList":
                 return analyseSubList(child);
+            case "Til.Extraction":
+                return analyseExtraction(child);
             case "Til.SimpleList":
                 return analyseSimpleList(child);
             case "Til.String":
                 return analyseString(child);
             case "Til.Atom":
-            case "Til.SafeAtom":
                 return analyseAtom(child);
             default:
                 throw new InvalidException(
@@ -204,6 +205,25 @@ SubList analyseSubList(ParseTree p)
     return new SubList(analyseSubProgram(p.children[0]));
 }
 
+Extraction analyseExtraction(ParseTree p)
+{
+    foreach(child; p.children)
+    {
+        switch(child.name)
+        {
+            case "Til.List":
+                auto li = analyseListItems(child);
+                trace("CREATING Extraction FOR ", to!string(p.matches), " WITH ITEMS ", li);
+                return new Extraction(li);
+            default:
+                throw new InvalidException(
+                    "Invalid Item inside SimpleList"
+                );
+        }
+    }
+    trace("CREATING EMPTY SimpleList FOR ", to!string(p.matches));
+    return new Extraction([]);
+}
 SimpleList analyseSimpleList(ParseTree p)
 {
     foreach(child; p.children)

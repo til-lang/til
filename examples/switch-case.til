@@ -23,4 +23,6 @@ range (x y z) | case (x) {
         io.out "ipsolon"
     } | case (z) {
         io.out "zee"
+    } | case (>x) {
+        io.out " that is, $x"
     }

@@ -1,0 +1,8 @@
+set str "abcdefghijk"
+set x 2048
+set list (1 2 3 4 5)
+set multi_items 11 22 33
+
+io.out <$list 0>
+io.out <$list head> <$list tail>
+io.out <$multi_items 1>

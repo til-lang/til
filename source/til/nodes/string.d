@@ -60,6 +60,29 @@ class SimpleString : String
         }
         return new SimpleString(newRepr);
     }
+
+    // -----------------------------
+    override ListItem extract(Items arguments)
+    {
+        if (arguments.length == 0) return this;
+        auto firstArgument = arguments[0];
+
+        if (firstArgument.type == ObjectTypes.Integer)
+        {
+            if (arguments.length == 2 && arguments[1].type == ObjectTypes.Integer)
+            {
+                auto idx1 = firstArgument.asInteger;
+                auto idx2 = arguments[1].asInteger;
+                return new SimpleString(this.repr[idx1..idx2]);
+            }
+            else if (arguments.length == 1)
+            {
+                auto idx = firstArgument.asInteger;
+                return new SimpleString(this.repr[idx..idx+1]);
+            }
+        }
+        throw new Exception("not implemented");
+    }
 }
 
 class SubstString : SimpleString

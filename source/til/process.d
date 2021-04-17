@@ -1,4 +1,4 @@
-module til.nodes.process;
+module til.process;
 
 import std.array : join, split;
 import std.container : DList;

@@ -1,9 +1,9 @@
 release:
-	ionice -n 7 dub build -b release :run
+	nice -17 dub build -b release :run
 	mv til_run til.release
 
 debug:
-	ionice -n 7 nice -+18 dub build -b debug :run
+	nice -17 dub build -b debug :run
 	mv til_run til.debug
 
 profile:

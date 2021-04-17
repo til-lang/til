@@ -1,0 +1,10 @@
+msgbox.set size 8
+
+spawn actor_model_2 as process2
+
+process2.send init
+
+msgbox.receive | foreach msg {
+    io.out "process1 received message: $msg"
+    process2.send (response $msg)
+}
