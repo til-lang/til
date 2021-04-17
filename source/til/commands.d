@@ -249,7 +249,15 @@ static this()
                 auto originalFront = origin.front;
                 trace("originalFront:", originalFront);
 
-                auto list = cast(SimpleList)originalFront;
+                SimpleList list;
+                if (originalFront.type == ObjectTypes.List)
+                {
+                    list = cast(SimpleList)originalFront;
+                }
+                else
+                {
+                    list = new SimpleList([originalFront]);
+                }
 
                 int matched = 0;
                 foreach(index, item; list.items)

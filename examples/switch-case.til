@@ -12,3 +12,15 @@ range 0 10 | transform x {
         io.out "$x + 10 is $y"
         io.out "BUT THIS MESSAGE SHOULD NOT BE DISPLAYED!"
     }
+
+range 100 105 | case (>x) {
+        io.out "$x"
+    }
+
+range (x y z) | case (x) {
+        io.out "xis"
+    } | case (y) {
+        io.out "ipsolon"
+    } | case (z) {
+        io.out "zee"
+    }
