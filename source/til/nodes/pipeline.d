@@ -93,6 +93,18 @@ class Pipeline
             context.stream = rContext.stream;
         }
 
+        /*
+        If there is not sink in the end of the pipeline,
+        consume each item so that the data may flow.
+        */
+        if (context.stream !is null && !context.stream.empty)
+        {
+            foreach(item; context.stream)
+            {
+                if (item is null) break;
+            }
+        }
+
         // The expected context of a pipeline is "Proceed".
         context.exitCode = ExitCode.Proceed;
         return context;

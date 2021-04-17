@@ -25,8 +25,12 @@ static this()
             );
         }
 
-        // int_run already consumes one item and push another,
-        // so we shouldn't mess with the context or the stack, here.
+        // int_run pushes a new list, but we don't want that.
+        auto resultList = cast(SimpleList)context.pop();
+        foreach(item; resultList.items)
+        {
+            context.push(item);
+        }
         context.exitCode = ExitCode.CommandSuccess;
         return context;
     };

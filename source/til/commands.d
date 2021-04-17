@@ -219,11 +219,115 @@ static this()
         context.stream = newStream;
         return context;
     };
-    /*
     commands["case"] = (string path, CommandContext context)
     {
+        /*
+        | case (>name "txt") { io.out "$name is a plain text file" }
+        */
+        class CaseRange : InfiniteRange
+        {
+            Range origin;
+            SubList body;
+            Process escopo;
+            Items variables;
+            ListItem currentFront;
+
+            this(Range origin, Items variables, SubList body, Process escopo)
+            {
+                this.origin = origin;
+                this.variables = variables;
+                this.body = body;
+                this.escopo = escopo;
+            }
+
+            override bool empty()
+            {
+                return origin.empty;
+            }
+            override ListItem front()
+            {
+                auto originalFront = origin.front;
+                trace("originalFront:", originalFront);
+
+                auto list = cast(SimpleList)originalFront;
+
+                int matched = 0;
+                foreach(index, item; list.items)
+                {
+                    // case (>name, "txt")
+                    auto variable = variables[index];
+                    trace(variable, " versus ", item, " ", item.type);
+                    if (variable.type == ObjectTypes.InputName)
+                    {
+                        // Assignment
+                        escopo[variable.asString] = item;
+                        matched++;
+                    }
+                    else
+                    {
+                        // Comparison
+                        string value = variable.asString;
+                        if (value == item.asString)
+                        {
+                            matched++;
+                        }
+                        else
+                        {
+                            break;
+                        }
+                    }
+                }
+
+                if (matched == variables.length)
+                {
+                    trace(" itMatches: ", list.items, " = ", variables, " | ", escopo);
+                    context = escopo.run(body.subprogram);
+                    if (context.exitCode == ExitCode.Break)
+                    {
+                        // An empty SimpleList won't match with anything:
+                        return new SimpleList([]);
+                    }
+                }
+                else
+                {
+                    trace(" not a match: ", list.items, " and ", variables);
+                }
+                return originalFront;
+            }
+
+
+            override void popFront()
+            {
+                origin.popFront();
+            }
+            override ulong length()
+            {
+                return origin.length;
+            }
+            override Range save()
+            {
+                return new CaseRange(origin.save(), variables, body, escopo);
+            }
+            override string toString()
+            {
+                return "CaseRange";
+            }
+            override string asString()
+            {
+                return "CaseRange";
+            }
+        }
+
+        auto argNames = cast(SimpleList)context.pop();
+        auto variables = argNames.items;
+        auto body = cast(SubList)context.pop();
+
+        auto newStream = new CaseRange(context.stream, variables, body, context.escopo);
+        context.stream = newStream;
+
+        context.exitCode = ExitCode.CommandSuccess;
+        return context;
     };
-    */
 
     // ---------------------------------------------
     // PROCEDURES-related

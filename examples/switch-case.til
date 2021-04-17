@@ -1,12 +1,14 @@
-sh.ls | transform filename {
-        set parts [string.split $filename "."]
-        set name [string.join "." [list.slice 0 -1 $parts]]
-        set suffix list.index -1 $parts
-        return $name $suffix
-    } | case (>name "txt") {
-        io.out "$name is a plain text file"
-    } | case (>name "md") {
-        io.out "$name is a MarkDown file"
-    } | case (>name >suffix) {
-        io.out "$name has $suffix suffix"
+set offset 10
+range 0 10 | transform x {
+        return $x [math ($x + $offset)]
+    } | case (>x 10) {
+        io.out "$x + $offset is ten"
+    } | case (>x 11) {
+        io.out "$x + $offset is eleven"
+    } | case (>x >y) {
+        io.out "$x + $offset is $y"
+        break
+    } | case (>x >y) {
+        io.out "$x + 10 is $y"
+        io.out "BUT THIS MESSAGE SHOULD NOT BE DISPLAYED!"
     }

@@ -295,6 +295,7 @@ Atom analyseAtom(ParseTree p)
                 if (str[0] == '>')
                 {
                     atom.type = ObjectTypes.InputName;
+                    atom.repr = str[1..$];
                 }
                 else
                 {
