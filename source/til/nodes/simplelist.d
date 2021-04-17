@@ -91,25 +91,42 @@ class SimpleList : BaseList
         auto firstArgument = arguments[0];
         // by indexes:
         // <(1 2 3 4 5) (0 2 4)> → (1 3 5)
-        if (firstArgument.type == ObjectTypes.List)
+        switch(firstArgument.type)
         {
-        }
-        if (firstArgument.type == ObjectTypes.Integer)
-        {
-            // by range:
-            // <(1 2 3 4 5) 0 2> → (1 2)
-            if (arguments.length == 2 && arguments[1].type == ObjectTypes.Integer)
-            {
-            }
-            // by index:
-            // <(1 2 3) 0> → 1  (not inside any list)
-            else if (arguments.length == 1)
-            {
-                return items[firstArgument.asInteger];
-            }
+            case ObjectTypes.Integer:
+                // by range:
+                // <(1 2 3 4 5) 0 2> → (1 2)
+                if (arguments.length == 2 && arguments[1].type == ObjectTypes.Integer)
+                {
+                }
+                // by index:
+                // <(1 2 3) 0> → 1  (not inside any list)
+                else if (arguments.length == 1)
+                {
+                    return items[firstArgument.asInteger];
+                }
+                break;
+            case ObjectTypes.Name:
+                auto str = firstArgument.asString;
+                switch(str)
+                {
+                    case "head":
+                        return items[0];
+                    case "tail":
+                        return new SimpleList(items[1..$]);
+                    default:
+                        break;
+                }
+                break;
+            default:
+                break;
         }
 
         // else...
-        throw new Exception("not implemented");
+        throw new Exception(
+            "Extraction not implemented in SimpleList for ("
+            ~ to!string(arguments.map!(x => x.toString).join(" "))
+            ~ ")"
+        );
     }
 }
