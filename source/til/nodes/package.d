@@ -20,6 +20,8 @@ public import til.nodes.simplelist;
 public import til.nodes.execlist;
 public import til.nodes.sublist;
 
+public import til.nodes.dict;
+
 public import til.nodes.subprogram;
 public import til.nodes.pipeline;
 public import til.nodes.command;

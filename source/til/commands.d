@@ -19,6 +19,8 @@ CommandHandler[string] commands;
 // Commands:
 static this()
 {
+    // ---------------------------------------------
+    // Variables
     commands["set"] = (string path, CommandContext context)
     {
         string[] names;
@@ -86,6 +88,8 @@ static this()
         return context;
     };
 
+    // ---------------------------------------------
+    // Modules
     commands["import"] = (string path, CommandContext context)
     {
         // import std.io as x
@@ -113,6 +117,8 @@ static this()
         return context;
     };
 
+    // ---------------------------------------------
+    // Flow control
     commands["if"] = (string path, CommandContext context)
     {
         trace("Running command if");
@@ -396,7 +402,28 @@ static this()
     };
 
     // ---------------------------------------------
-    // PROCEDURES-RELATED
+    // Dictionaries
+    commands["dict"] = (string path, CommandContext context)
+    {
+        auto arguments = context.items;
+        auto dict = new Dict();
+
+        foreach(argument; arguments)
+        {
+            SimpleList l = cast(SimpleList)argument;
+            ListItem value = l.items.back;
+            l.items.popBack();
+            string key = to!string(l.items.map!(x => x.asString).join("."));
+            dict[key] = value;
+        }
+        context.push(dict);
+
+        context.exitCode = ExitCode.CommandSuccess;
+        return context;
+    };
+
+    // ---------------------------------------------
+    // Procedures-related
     commands["proc"] = (string path, CommandContext context)
     {
         // proc name (parameters) {body}
@@ -431,7 +458,7 @@ static this()
     };
 
     // ---------------------------------------------
-    // SCOPE MANIPULATION
+    // Scope manipulation
     commands["uplevel"] = (string path, CommandContext context)
     {
         /*
