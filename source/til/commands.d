@@ -1,6 +1,7 @@
 module til.commands;
 
 import std.algorithm.iteration : map, joiner;
+import std.array;
 import std.conv : to;
 import std.experimental.logger : trace, error;
 
@@ -20,10 +21,67 @@ static this()
 {
     commands["set"] = (string path, CommandContext context)
     {
-        auto name = context.pop().asString;
-        // set x "1"
-        // set y 11 22 33
-        context.escopo[name] = context.items;
+        string[] names;
+
+        if (context.size < 2)
+        {
+            throw new Exception("`set` must receive at least two arguments.");
+        }
+
+        auto firstArgument = context.pop();
+        auto secondArgument = context.pop();
+
+        if (firstArgument.type == ObjectTypes.List)
+        {
+            if (secondArgument.type != ObjectTypes.List)
+            {
+                throw new Exception(
+                    "You can only use destructuring `set` with two SimpleLists"
+                );
+            }
+
+            auto l1 = cast(SimpleList)firstArgument;
+            names = l1.items.map!(x => x.asString).array;
+
+            trace(" names:", names);
+
+            Items values;
+
+            auto l2 = cast(SimpleList)secondArgument;
+            context = l2.forceEvaluate(context);
+            auto l3 = cast(SimpleList)context.pop();
+            values = l3.items;
+
+            trace(" values:", values);
+
+            if (values.length < names.length)
+            {
+                throw new Exception(
+                    "Insuficient number of items in the second list"
+                );
+            }
+
+            string lastName;
+            foreach(name; names)
+            {
+                auto nextValue = values.front;
+                if (!values.empty) values.popFront();
+
+                context.escopo[name] = nextValue;
+                lastName = name;
+            }
+            while(!values.empty)
+            {
+                // Everything else goes to the last name:
+                context.escopo[lastName] = context.escopo[lastName] ~ values.front;
+                values.popFront();
+            }
+        }
+        else
+        {
+            context.escopo[firstArgument.asString] = secondArgument;
+        }
+
         context.exitCode = ExitCode.CommandSuccess;
         return context;
     };

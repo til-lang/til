@@ -1,0 +1,7 @@
+set (x y z) (1 2 3)
+io.out "x:$x y:$y z:$z"
+
+set lista (11 22 33)
+io.out "lista: $lista"
+set (a b c) $lista
+io.out "a:$a, b:$b, c:$c"
