@@ -1,16 +1,25 @@
+# Creation
 set d [dict (x 11) (y 22) (z 33)]
 io.out <$d x> <$d y> <$d z>
-# d.set a 1
-# d.set b 2
-# d.set c 3
-# io.out <$d a> <$d b> <$d c>
 
-# dict map (a a 1) (a b 2) (a c 3)
-# .        (b a 4) (b b 5) (b c 6)
-# .        (c a 7) (c b 8) (c c 9)
+# Set new keys
+dict.set $d (a 1) (b 2)
+dict.set $d (b 2)
+dict.set $d (c 3)
+io.out "a b c: " <$d a> <$d b> <$d c>
 
-# range (a b c) | foreach x {
-#     range (a b c) | foreach y {
-#         io.out <$map $x $y>
-#     }
-# }
+# Multi-dimensional dicts:
+dict.set $d (a b c 123)
+io.out "a.b.c: " <$d a b c>
+
+set map [
+    dict (a a 1) (a b 2) (a c 3)
+       . (b a 4) (b b 5) (b c 6)
+       . (c a 7) (c b 8) (c c 9)
+]
+
+range (a b c) | foreach x {
+    range (a b c) | foreach y {
+        io.out <$map $x $y>
+    }
+}

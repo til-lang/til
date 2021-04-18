@@ -17,7 +17,7 @@ mixin(grammar(`
         Comment           <~ "#" (!eol .)*
 
         Pipeline          <- Command (" | " Command)*
-        Command           <- Name (" " ListItem)*
+        Command           <- Name ((" " / eol blank* "." blank+) ListItem)*
 
         List              <- ListItem (" " ListItem)*
         ListItem          <- ExecList / SubList / Extraction / SimpleList / String / Atom
@@ -43,5 +43,5 @@ mixin(grammar(`
         Boolean           <- BooleanTrue / BooleanFalse
         BooleanTrue       <~ "true" / "yes"
         BooleanFalse      <~ "false" / "no"
-        Operator          <~ "||" / "&&" / "<=" / ">=" / [&|+\-*/<>]
+        Operator          <~ "||" / "&&" / "<=" / ">=" / [+\-*/<>]
     `));

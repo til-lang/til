@@ -49,6 +49,8 @@ void main()
     program.registerGlobalCommands(commands);
 
     // "Third-party" modules:
+    import libs.std.dict;
+    program.addModule("std.dict", libs.std.dict.commands);
     import libs.std.io;
     program.addModule("std.io", libs.std.io.commands);
     import libs.std.lists;
