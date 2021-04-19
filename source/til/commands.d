@@ -89,7 +89,37 @@ static this()
     };
 
     // ---------------------------------------------
-    // Modules
+    // Modules / includes
+    commands["include"] = (string path, CommandContext context)
+    {
+        import til.grammar;
+        import til.semantics;
+
+        import std.stdio;
+        import std.file;
+
+        string filePath = context.pop().asString;
+        auto f = File(filePath, "r");
+        string code = "";
+        foreach(line; f.byLine)
+        {
+            code ~= line ~ "\n";
+        }
+        trace("INCLUDED CODE:\n", code);
+
+        auto tree = Til(code);
+        trace("TREE:\n", tree);
+        auto program = analyse(tree);
+        trace("INCLUDE.program:", program);
+
+        context = context.escopo.run(program, context);
+        if (context.exitCode != ExitCode.Failure)
+        {
+            context.exitCode = ExitCode.CommandSuccess;
+        }
+        return context;
+    };
+
     commands["import"] = (string path, CommandContext context)
     {
         // import std.io as x

@@ -1,0 +1,3 @@
+proc hello () {
+    io.out "Hello, World!"
+}

@@ -16,9 +16,12 @@ bool importModule(SubProgram program, string modulePath, string prefix)
     // Check if the submodule is already available (as a "builtin"):
     CommandHandler[string] source;
     trace("importModule: ", program, " ", modulePath, " as ", prefix);
-    trace(" availableModules:", program.availableModules);
+    trace(" availableModules:", program.availableModules.keys);
+
+    // 1- internal modules:
     source = program.availableModules.get(modulePath, null);
 
+    // 2- from shared libraries:
     if (source is null)
     {
         try {

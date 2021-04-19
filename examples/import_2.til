@@ -1,0 +1,6 @@
+proc hello () {
+    io.out "Hello, World!"
+    io.out "(from imported file)"
+}
+
+io.out "Import implies execution!"

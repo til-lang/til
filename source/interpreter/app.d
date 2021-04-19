@@ -1,3 +1,4 @@
+import std.file;
 import std.stdio;
 import std.experimental.logger;
 
@@ -48,21 +49,21 @@ void main()
 
     program.registerGlobalCommands(commands);
 
+    string importModule(string path)
+    {
+        string result = "import libs." ~ path ~ ";";
+        result ~= "program.addModule(\"" ~ path ~ "\", libs." ~ path ~ ".commands);";
+        return result;
+    }
+
     // "Third-party" modules:
-    import libs.std.dict;
-    program.addModule("std.dict", libs.std.dict.commands);
-    import libs.std.io;
-    program.addModule("std.io", libs.std.io.commands);
-    import libs.std.lists;
-    program.addModule("std.lists", libs.std.lists.commands);
-    import libs.std.math;
-    program.addModule("std.math", libs.std.math.commands);
-    import libs.std.range;
-    program.addModule("std.range", libs.std.range.commands);
-    import libs.std.stack;
-    program.addModule("std.stack", libs.std.stack.commands);
-    import libs.std.sharedlib;
-    program.addModule("std.sharedlib", libs.std.sharedlib.commands);
+    mixin(importModule("std.dict"));
+    mixin(importModule("std.io"));
+    mixin(importModule("std.lists"));
+    mixin(importModule("std.math"));
+    mixin(importModule("std.range"));
+    mixin(importModule("std.stack"));
+    mixin(importModule("std.sharedlib"));
 
     auto process = new Process(null, program);
     auto context = process.run();

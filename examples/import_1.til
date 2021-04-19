@@ -1,0 +1,3 @@
+import "examples/import_2" as other
+
+other.hello
