@@ -7,6 +7,9 @@ import std.string : strip, toStringz;
 import til.nodes;
 
 
+CommandHandler[string][string] sourcesCache;
+
+
 bool importModule(SubProgram program, string modulePath)
 {
     return importModule(program, modulePath, modulePath);
@@ -17,6 +20,14 @@ bool importModule(SubProgram program, string modulePath, string prefix)
     CommandHandler[string] source;
     trace("importModule: ", program, " ", modulePath, " as ", prefix);
     trace(" availableModules:", program.availableModules.keys);
+
+    // 0- cache:
+    auto cachedSource = (modulePath in sourcesCache);
+    if (cachedSource !is null)
+    {
+        program.importNamesFrom(*cachedSource, prefix);
+        return true;
+    }
 
     // 1- internal modules:
     source = program.availableModules.get(modulePath, null);
@@ -33,7 +44,9 @@ bool importModule(SubProgram program, string modulePath, string prefix)
         }
     }
 
+    // Save on cache:
     program.importNamesFrom(source, prefix);
+    sourcesCache[modulePath] = source;
     return true;
 }
 
@@ -66,7 +79,7 @@ CommandHandler[string] importFromSharedLibrary(string libraryPath, string module
 };
 
 
-void importNamesFrom(SubProgram program, CommandHandler[string]source, string prefix)
+void importNamesFrom(SubProgram program, CommandHandler[string] source, string prefix)
 {
     foreach(name, command; source)
     {
