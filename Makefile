@@ -7,6 +7,7 @@ debug:
 	mv til_run til.debug
 
 profile:
+	rm trace.*
 	dmd -profile -release \
 		source/*/*.d \
 		source/*/*/*.d \
