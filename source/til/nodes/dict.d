@@ -18,7 +18,6 @@ class Dict : ListItem
     override ListItem extract(Items arguments)
     {
         string key = to!string(arguments.map!(x => x.asString).join("."));
-        trace("dict.extract:", key);
         return this[key];
     }
 

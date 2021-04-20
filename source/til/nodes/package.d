@@ -4,7 +4,6 @@ public import std.algorithm.iteration : map, joiner;
 public import std.range : back, popBack, retro;
 public import std.array : join;
 public import std.conv : to;
-public import std.experimental.logger : error, trace;
 
 public import til.exceptions;
 // import til.ranges;

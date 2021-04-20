@@ -4,7 +4,6 @@ import core.sys.posix.dlfcn;
 import std.algorithm.iteration : map, joiner;
 import std.array : split;
 import std.conv : to;
-import std.experimental.logger : trace, error;
 import std.string : strip, toStringz;
 
 import til.exceptions;
@@ -148,7 +147,6 @@ static this()
 
         fnCall(lh, functionNameZ);
 
-        trace("unloading " ~ path);
         dlclose(lh);
 
         context.exitCode = ExitCode.CommandSuccess;

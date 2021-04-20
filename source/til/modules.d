@@ -1,7 +1,6 @@
 module til.modules;
 
 import core.sys.posix.dlfcn;
-import std.experimental.logger : trace;
 import std.string : strip, toStringz;
 
 import til.nodes;
@@ -18,8 +17,6 @@ bool importModule(SubProgram program, string modulePath, string prefix)
 {
     // Check if the submodule is already available (as a "builtin"):
     CommandHandler[string] source;
-    trace("importModule: ", program, " ", modulePath, " as ", prefix);
-    trace(" availableModules:", program.availableModules.keys);
 
     // 0- cache:
     auto cachedSource = (modulePath in sourcesCache);
@@ -64,7 +61,6 @@ CommandHandler[string] importFromSharedLibrary(string libraryPath, string module
         const char* error = dlerror();
         throw new Exception("dlopen error: " ~ to!string(error));
     }
-    trace(libraryPath ~ " succesfully loaded.");
 
     // Get the commands from inside the shared object:
     auto getCommands = cast(CommandHandler[string] function())dlsym(lh, "getCommands");

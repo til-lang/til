@@ -92,7 +92,6 @@ struct CommandContext
     }
     ListItem[] items()
     {
-        trace("context.items: ", this);
         if (size > 0)
         {
             auto x = size;

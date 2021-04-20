@@ -1,7 +1,6 @@
 module til.math;
 
 import std.conv : to;
-import std.experimental.logger : trace;
 import std.range;
 
 import til.nodes;
@@ -28,17 +27,14 @@ CommandContext int_run(CommandContext context, CommandContext function(CommandCo
     set x [math.run 1 + 1]
     */
 
-    trace(">>> MATH.int_run starting! <<<");
     // There should be a SimpleList at the top of the stack.
     auto list = cast(SimpleList)context.pop();
     Items items = list.items;
-    trace(" MATH.int_run.items:", items);
 
     // -----------------------------------------------
     // The loop:
     foreach(item; items)
     {
-        trace(" int_run.item:", item, " ", item.type);
         if (item.type == ObjectTypes.List)
         {
             SimpleList l = cast(SimpleList)item;
@@ -86,7 +82,6 @@ CommandContext int_run(CommandContext context, CommandContext function(CommandCo
     }
     auto resultList = new SimpleList(resultItems);
     context.push(resultList);
-    trace("math.int_run: ", items, " → ", context);
     return context;
 }
 

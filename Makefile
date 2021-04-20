@@ -7,10 +7,12 @@ debug:
 	mv til_run til.debug
 
 profile:
-	dmd -profile source/**/*.d \
+	dmd -profile -release \
+		source/*/*.d \
+		source/*/*/*.d \
 		~/.dub/packages/pegged-0.4.4/pegged/pegged/dynamic/*.d \
 		~/.dub/packages/pegged-0.4.4/pegged/pegged/*.d \
-		-o til.profile
+		-of=til.profile
 
 hello.o:
 	dmd -c hello.d -fPIC

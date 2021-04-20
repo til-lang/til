@@ -2,7 +2,6 @@ module libs.std.stack;
 
 import std.algorithm.mutation : reverse;
 import std.conv;
-import std.experimental.logger : trace;
 
 import til.nodes;
 

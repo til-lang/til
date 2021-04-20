@@ -2,7 +2,6 @@ module til.semantics;
 
 import std.array : join;
 import std.conv : to;
-import std.experimental.logger;
 
 import pegged.grammar;
 
@@ -31,7 +30,6 @@ SubProgram analyse(ParseTree p)
         case "Til":
             return analyseTil(p);
         default:
-            trace("analyse: Not recognized: " ~ p.name);
     }
     assert(0);
 }
@@ -46,7 +44,7 @@ SubProgram analyseTil(ParseTree p)
                 auto program = analyseProgram(child);
                 return program;
             default:
-                trace("analyseTil: Not recognized: " ~ child.name);
+                break;
         }
     }
     throw new InvalidException("Program seems invalid");
@@ -127,9 +125,7 @@ Command analyseCommand(ParseTree p)
         switch(child.name)
         {
             case "Til.ListItem":
-                trace("COMMAND ", name, " ARGUMENT ", child.name, " (", child.matches[0], ")");
                 arguments ~= analyseListItem(child);
-                trace("COMMAND ", name, " ARGUMENTS ~= ", arguments);
                 break;
             default:
                 throw new InvalidException(
@@ -213,7 +209,6 @@ Extraction analyseExtraction(ParseTree p)
         {
             case "Til.List":
                 auto li = analyseListItems(child);
-                trace("CREATING Extraction FOR ", to!string(p.matches), " WITH ITEMS ", li);
                 return new Extraction(li);
             default:
                 throw new InvalidException(
@@ -221,7 +216,6 @@ Extraction analyseExtraction(ParseTree p)
                 );
         }
     }
-    trace("CREATING EMPTY SimpleList FOR ", to!string(p.matches));
     return new Extraction([]);
 }
 SimpleList analyseSimpleList(ParseTree p)
@@ -232,7 +226,6 @@ SimpleList analyseSimpleList(ParseTree p)
         {
             case "Til.List":
                 auto li = analyseListItems(child);
-                trace("CREATING SimpleList FOR ", to!string(p.matches), " WITH ITEMS ", li);
                 return new SimpleList(li);
             default:
                 throw new InvalidException(
@@ -240,7 +233,6 @@ SimpleList analyseSimpleList(ParseTree p)
                 );
         }
     }
-    trace("CREATING EMPTY SimpleList FOR ", to!string(p.matches));
     return new SimpleList([]);
 }
 

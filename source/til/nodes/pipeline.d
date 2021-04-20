@@ -41,8 +41,6 @@ class Pipeline
         */
         foreach(index, command; commands)
         {
-            trace("running command:", command);
-
             if (index > 0 && context.stream is null)
             {
                 throw new Exception(
@@ -51,9 +49,7 @@ class Pipeline
                 );
             }
 
-            trace(" in context:", context);
             auto rContext = command.run(context);
-            trace("  context: ", context);
 
             final switch(rContext.exitCode)
             {

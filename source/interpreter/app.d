@@ -1,6 +1,5 @@
 import std.file;
 import std.stdio;
-import std.experimental.logger;
 
 import til.commands;
 import til.exceptions;
@@ -11,16 +10,6 @@ import til.semantics;
 
 void main()
 {
-    // Enable language debugging:
-    debug
-    {
-        globalLogLevel = LogLevel.trace;
-    }
-    else
-    {
-        globalLogLevel = LogLevel.warning;
-    }
-
     // There must be a better way of doing this:
     string code = "";
     foreach(line; stdin.byLine)
@@ -29,7 +18,6 @@ void main()
     }
 
     auto tree = Til(code);
-    trace(tree);
 
     if (!tree.successful)
     {
@@ -42,10 +30,8 @@ void main()
         program = analyse(tree);
     }
     catch (Exception e) {
-        trace(e);
         throw new Exception("==== ERROR ====");
     }
-    trace("======OK=======");
 
     program.registerGlobalCommands(commands);
 
@@ -67,7 +53,6 @@ void main()
 
     auto process = new Process(null, program);
     auto context = process.run();
-    trace(process);
 
     // Print everything remaining in the stack:
     foreach(item; context.items)

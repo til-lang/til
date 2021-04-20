@@ -1,7 +1,6 @@
 module til.ranges;
 
 import std.conv : to;
-import std.experimental.logger : trace;
 // import std.range;
 
 import til.nodes;
@@ -223,7 +222,6 @@ class ChainedItems : Range
         auto x = currentRangeIndex - 1;
         if (x == _ranges.length)
         {
-            trace("ChainedItems changed for its tail!");
             return _ranges[x].save();
         }
 

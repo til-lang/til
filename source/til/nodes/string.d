@@ -135,7 +135,6 @@ class SubstString : SimpleString
             }
         }
 
-        trace(" - string " ~ to!string(this) ~ " → " ~ result);
         context.push(new SimpleString(result));
         context.exitCode = ExitCode.Proceed;
         return context;

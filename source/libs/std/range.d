@@ -1,7 +1,6 @@
 module libs.std.range;
 
 import std.conv;
-import std.experimental.logger;
 
 import til.nodes;
 import til.ranges;
@@ -140,7 +139,6 @@ static this()
         {
             step = context.pop().asInteger;
         }
-        tracef(" range.step:%s", step);
 
         auto range = new IntegerRange(start, limit, step);
         context.stream = range;

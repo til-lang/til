@@ -1,7 +1,6 @@
 module til.logic;
 
 import std.conv : to;
-import std.experimental.logger : trace;
 import std.range : popFront;
 
 import til.math;
@@ -11,7 +10,6 @@ import til.ranges;
 
 CommandContext boolean(CommandContext context)
 {
-    trace(" BOOLEAN ANALYSIS: ", context.escopo);
     // Resolve any math beforehand:
     auto resolvedContext = int_run(context);
     return pureBoolean(resolvedContext);
@@ -22,8 +20,6 @@ CommandContext pureBoolean(CommandContext context)
     // There should be a SimpleList at the top of the stack.
     auto list = cast(SimpleList)context.pop();
     Items items = list.items;
-
-    trace(" PURE BOOLEAN: ", items);
 
     bool currentResult = false;
 
@@ -63,7 +59,6 @@ CommandContext pureBoolean(CommandContext context)
                     );
             }
         }();
-        trace(t1, operatorName, t2, " bool.result:", newResult);
         currentResult = currentResult || newResult;
     }
 
@@ -79,12 +74,10 @@ CommandContext pureBoolean(CommandContext context)
     void and(ulong index)
     {
         auto nextList = new SimpleList(items[index..$]);
-        trace(" and.nextList:", nextList);
         context.push(nextList);
 
         auto context = boolean(context);
         auto newResult = context.pop();
-        trace(" and.newResult: ", to!string(newResult));
         currentResult = currentResult && newResult.asBoolean;
     }
 
@@ -93,15 +86,12 @@ CommandContext pureBoolean(CommandContext context)
     foreach(index, item; items)
     {
         string s = item.asString;
-        trace("s: ", s, " ", to!string(item.type));
 
         if (item.type == ObjectTypes.Operator)
         {
             if (s == "&&")
             {
                 and(index+1);
-                trace(" returning from AND: ", currentResult);
-                trace("  context:", context);
                 break;
             }
             else if (s == "||")
@@ -137,6 +127,5 @@ CommandContext pureBoolean(CommandContext context)
         operate();
     }
     context.push(currentResult);
-    trace("  boolean.returning. result:", currentResult, "; context: ", context);
     return context;
 }

@@ -24,7 +24,6 @@ class Process
         if (parent !is null)
         {
             this.stack = parent.stack;
-            trace(" >>> STACK COPY ALERT <<<");
             this.program = parent.program;
         }
         else
@@ -77,11 +76,11 @@ class Process
         Just look at the first item, do
         not pop it off.
         */
-        return stack[stackPointer-1];
+        return stack[stackPointer];
     }
     ListItem pop()
     {
-        return stack[--stackPointer];
+        return stack[stackPointer--];
     }
     ListItem[] pop(int count)
     {
@@ -89,18 +88,13 @@ class Process
     }
     ListItem[] pop(ulong count)
     {
-        ListItem[] items;
-        for(ulong i = 0; i < count; i++)
-        {
-            // TODO: check if we reached stack bottom.
-            items ~= this.pop();
-        }
-        return items;
+        ulong previous = stackPointer;
+        stackPointer -= count;
+        return stack[stackPointer+1..previous+1];
     }
     void push(ListItem item)
     {
-        trace("PUSHED ", item, " at ", stackPointer);
-        stack[stackPointer++] = item;
+        stack[++stackPointer] = item;
     }
     template push(T)
     {
@@ -145,27 +139,24 @@ class Process
         more sense.
         */
 
+        CommandHandler* handler;
+
         // Local command:
-        CommandHandler handler = this.program.commands.get(name, null);
-        if (handler !is null) return handler;
+        handler = (name in this.program.commands);
+        if (handler !is null) return *handler;
 
         // Global command:
         if (tryGlobal)
         {
-            handler = this.program.globalCommands.get(name, null);
-            if (handler !is null) return handler;
+            handler = (name in this.program.globalCommands);
+            if (handler !is null) return *handler;
         }
 
         // Parent:
         if (this.parent !is null)
         {
-            trace(
-                ">>> SEARCHING FOR COMMAND ",
-                name,
-                " IN PARENT SCOPE <<<"
-            );
-            handler = parent.getCommand(name, false);
-            if (handler !is null) return handler;
+            auto h = parent.getCommand(name, false);
+            if (h !is null) return h;
         }
 
         /*
@@ -199,13 +190,13 @@ class Process
             // We imported the module, but we're not sure if this
             // name actually exists inside it:
             // (Important: do NOT call this method recursively!)
-            handler = this.program.commands.get(name, null);
+            handler = (name in this.program.commands);
             if (handler is null)
             {
                 throw new Exception("Command not found: " ~ name);
             }
         }
-        return handler;
+        return *handler;
     }
 
     // Execution
@@ -224,9 +215,7 @@ class Process
     {
         foreach(pipeline; subprogram.pipelines)
         {
-            trace("\nrunning pipeline:", pipeline);
             context = pipeline.run(context);
-            trace("  pipeline.context:", context);
 
             final switch(context.exitCode)
             {
@@ -268,8 +257,6 @@ class Process
         }
 
         // Returns the context of the last expression:
-        trace("SubProgram.RETURNING ", context);
-        trace(" escopo:", this);
         return context;
     }
 }

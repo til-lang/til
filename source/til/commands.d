@@ -3,7 +3,6 @@ module til.commands;
 import std.algorithm.iteration : map, joiner;
 import std.array;
 import std.conv : to;
-import std.experimental.logger : trace, error;
 
 import til.exceptions;
 import til.logic;
@@ -45,16 +44,12 @@ static this()
             auto l1 = cast(SimpleList)firstArgument;
             names = l1.items.map!(x => x.asString).array;
 
-            trace(" names:", names);
-
             Items values;
 
             auto l2 = cast(SimpleList)secondArgument;
             context = l2.forceEvaluate(context);
             auto l3 = cast(SimpleList)context.pop();
             values = l3.items;
-
-            trace(" values:", values);
 
             if (values.length < names.length)
             {
@@ -105,12 +100,9 @@ static this()
         {
             code ~= line ~ "\n";
         }
-        trace("INCLUDED CODE:\n", code);
 
         auto tree = Til(code);
-        trace("TREE:\n", tree);
         auto program = analyse(tree);
-        trace("INCLUDE.program:", program);
 
         context = context.escopo.run(program, context);
         if (context.exitCode != ExitCode.Failure)
@@ -138,7 +130,6 @@ static this()
             }
             newName = context.pop().asString;
         }
-        trace("IMPORT ", modulePath, " AS ", newName);
         context.escopo.program.importModule(modulePath, newName);
 
         // import std.io as io
@@ -151,11 +142,8 @@ static this()
     // Flow control
     commands["if"] = (string path, CommandContext context)
     {
-        trace("Running command if");
-        trace(" inside process ", context.escopo);
         BaseList conditions = cast(BaseList)context.pop();
         ListItem thenBody = context.pop();
-        trace("if ", conditions, " then ", thenBody);
 
         ListItem elseBody;
         // if (condition) {then} else {else}
@@ -169,7 +157,6 @@ static this()
                 );
             }
             elseBody = context.pop();
-            trace("   else ", elseBody);
         }
         else
         {
@@ -180,7 +167,6 @@ static this()
         auto c = cast(SimpleList)conditions;
         context.run(&c.forceEvaluate);
         context.run(&boolean, 1);
-        trace(context.escopo);
         auto isConditionTrue = context.pop().asBoolean;
 
         if (isConditionTrue)
@@ -197,11 +183,8 @@ static this()
 
     commands["foreach"] = (string path, CommandContext context)
     {
-        trace("foreach.context: ", context);
         auto argName = context.pop().asString;
         auto argBody = cast(SubList)context.pop();
-
-        trace(" FOREACH ", argName, " : ", argBody);
 
         /*
         Do NOT create a new scope for the
@@ -211,10 +194,8 @@ static this()
 
         foreach(item; context.stream)
         {
-            trace(" item: ", item, " ", item.type);
             loopScope[argName] = item;
 
-            trace("loopScope: ", loopScope);
             context = loopScope.run(argBody.subprogram);
 
             if (context.exitCode == ExitCode.Break)
@@ -341,7 +322,6 @@ static this()
             override ListItem front()
             {
                 auto originalFront = origin.front;
-                trace("originalFront:", originalFront);
 
                 SimpleList list;
                 if (originalFront.type == ObjectTypes.List)
@@ -358,7 +338,6 @@ static this()
                 {
                     // case (>name, "txt")
                     auto variable = variables[index];
-                    trace(variable, " versus ", item, " ", item.type);
                     if (variable.type == ObjectTypes.InputName)
                     {
                         // Assignment
@@ -382,17 +361,12 @@ static this()
 
                 if (matched == variables.length)
                 {
-                    trace(" itMatches: ", list.items, " = ", variables, " | ", escopo);
                     context = escopo.run(body.subprogram);
                     if (context.exitCode == ExitCode.Break)
                     {
                         // An empty SimpleList won't match with anything:
                         return new SimpleList([]);
                     }
-                }
-                else
-                {
-                    trace(" not a match: ", list.items, " and ", variables);
                 }
                 return originalFront;
             }

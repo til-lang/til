@@ -1,8 +1,7 @@
 module til.nodes.command;
 
-// import std.algorithm : max;
-
 import til.nodes;
+
 
 class Command
 {
@@ -14,7 +13,6 @@ class Command
     {
         this.name = name;
         this.arguments = arguments;
-        trace("new Command:", name, " ", arguments);
     }
 
     override string toString()
@@ -35,23 +33,20 @@ class Command
             result into the stack
             */
             context = argument.evaluate(context.next);
-            trace(" > ", argument, " context.size:", context.size);
             realArgumentsCounter += context.size;
         }
-        trace(this.name, " >>> realArgumentsCounter:", realArgumentsCounter);
         context.size = cast(int)realArgumentsCounter;
         return context;
     }
 
     CommandContext run(CommandContext context)
     {
-        trace(" Command.run:", this.name, " ", this.arguments);
         if (this.handler is null)
         {
             this.handler = context.escopo.getCommand(this.name);
             if (this.handler is null)
             {
-                error("Command not found: " ~ this.name);
+                // error("Command not found: " ~ this.name);
                 context.exitCode = ExitCode.Failure;
                 return context;
             }
@@ -69,7 +64,6 @@ class Command
         // to check if the handler is really doing
         // the basics, at least.
         context.exitCode = ExitCode.Undefined;
-        trace(" calling handler(", this.name, "). context: ", context);
         auto newContext = handler(this.name, context);
 
         // XXX : this is a kind of "sefaty check".
