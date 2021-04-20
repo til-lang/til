@@ -7,7 +7,10 @@ debug:
 	mv til_run til.debug
 
 profile:
-	dub build -b profile --force :profile
+	dmd -profile source/**/*.d \
+		~/.dub/packages/pegged-0.4.4/pegged/pegged/dynamic/*.d \
+		~/.dub/packages/pegged-0.4.4/pegged/pegged/*.d \
+		-o til.profile
 
 hello.o:
 	dmd -c hello.d -fPIC
