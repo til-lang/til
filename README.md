@@ -27,7 +27,7 @@ if ($x > 6) {
 # like stdin/stdout in shell script.
 import std.posix as shell
 
-shell.ls > foreach (filename) {
+shell.ls | foreach (filename) {
     std.out $filename
 }
 ```

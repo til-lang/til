@@ -1,9 +1,0 @@
-range 5000 | io.out
-io.out "---"
-
-io.out "==="
-
-range 7000 | foreach x {
-    io.out $x
-}
-io.out "---"

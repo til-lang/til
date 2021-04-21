@@ -31,4 +31,4 @@ subPackage {
     targetType "dynamicLibrary"
     libs "phobos2"
     dependency "til:libs" version="0.0.1"
-    }
+}

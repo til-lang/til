@@ -5,6 +5,7 @@ proc ls () {
     return a b c
 }
 
+# CHANGE IT!
 foreach (fname) ([ls]) {
     io.out $fname
 }
