@@ -63,38 +63,35 @@ class Process
     }
 
     // The Stack:
-    /*
-       You see, for the user it doesn't really matter
-       how we implement this, so we use the back
-       of an Array as the top of the stack, but
-       doing otherwise wouldn't be noticed
-       by anyone.
-    */
     ListItem peek()
     {
         /*
         Just look at the first item, do
         not pop it off.
         */
-        return stack[stackPointer];
+        return stack[stackPointer-1];
     }
     ListItem pop()
     {
-        return stack[stackPointer--];
+        auto item = stack[--stackPointer];
+        return item;
     }
-    ListItem[] pop(int count)
+    Items pop(int count)
     {
         return this.pop(cast(ulong)count);
     }
-    ListItem[] pop(ulong count)
+    Items pop(ulong count)
     {
-        ulong previous = stackPointer;
-        stackPointer -= count;
-        return stack[stackPointer+1..previous+1];
+        Items items;
+        foreach(i; 0..count)
+        {
+            items ~= pop();
+        }
+        return items;
     }
     void push(ListItem item)
     {
-        stack[++stackPointer] = item;
+        stack[stackPointer++] = item;
     }
     template push(T)
     {

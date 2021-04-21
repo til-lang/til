@@ -6,7 +6,6 @@ import std.range;
 import til.nodes;
 import til.ranges;
 
-
 CommandContext int_run(CommandContext context)
 {
     /*
@@ -23,10 +22,6 @@ CommandContext int_run(CommandContext context)
 
 CommandContext int_run(CommandContext context, CommandContext function(CommandContext) resolver)
 {
-    /*
-    set x [math.run 1 + 1]
-    */
-
     // There should be a SimpleList at the top of the stack.
     auto list = cast(SimpleList)context.pop();
     Items items = list.items;

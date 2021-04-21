@@ -2,6 +2,8 @@ import std.datetime.stopwatch;
 import std.file;
 import std.stdio : stderr, stdin, writeln;
 
+import pegged.grammar : ParseTree;
+
 import til.commands;
 import til.exceptions;
 import til.grammar;
@@ -9,13 +11,23 @@ import til.nodes;
 import til.semantics;
 
 
-void main()
+void main(string[] args)
 {
     auto sw = StopWatch(AutoStart.no);
 
     sw.start();
-    // There must be a better way of doing this:
-    auto tree = Til(to!string(stdin.byLine.join("\n")));
+    auto filename = args[1];
+    ParseTree tree;
+
+    if (filename == "-")
+    {
+        tree = Til(to!string(stdin.byLine.join("\n")));
+    }
+    else
+    {
+        tree = Til(to!string(read(filename)));
+    }
+
     if (!tree.successful)
     {
         // TODO: print a better explanation of what happened.
