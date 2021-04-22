@@ -1,3 +1,4 @@
+import std.concurrency : FiberScheduler;
 import std.datetime.stopwatch;
 import std.file;
 import std.stdio : stderr, stdin, writeln;
@@ -67,7 +68,17 @@ void main(string[] args)
 
     sw.start();
     auto process = new Process(null, program);
-    auto context = process.run();
+    // auto context = process.run();
+
+    CommandContext context = null;
+    process.scheduler = new FiberScheduler();
+
+    stderr.writeln("Spawning process");
+    process.scheduler.spawn({
+        context = process.run();
+    });
+    stderr.writeln("Starting scheduler");
+    process.scheduler.start({});
 
     // Print everything remaining in the stack:
     foreach(item; context.items)

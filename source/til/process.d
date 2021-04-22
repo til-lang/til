@@ -1,21 +1,39 @@
 module til.process;
 
 import std.array : join, split;
+import std.concurrency : Scheduler;
 import std.container : DList;
+
 import til.nodes;
 import til.modules;
 
 
+enum ProcessState
+{
+    New,
+    Running,
+    Receiving,
+    Waiting,
+}
+
+
 class Process
 {
-    static uint counter = 0;
-    uint index;
     SubProgram program;
     Process parent;
+
+    auto state = ProcessState.New;
 
     ListItem[64] stack;
     ulong stackPointer = 0;
     Items[string] variables;
+
+    // PIDs:
+    static uint counter = 0;
+    uint index;
+
+    // Scheduling
+    static Scheduler scheduler = null;
 
     this(Process parent)
     {
@@ -200,7 +218,7 @@ class Process
     CommandContext run()
     {
         auto context = CommandContext(this);
-        // TODO: check if this.program !is null
+        if (this.program is null) {throw new Exception("process.program cannot be null");}
         return this.run(this.program, context);
     }
     CommandContext run(SubProgram subprogram)
@@ -251,6 +269,7 @@ class Process
                         ~ " Expected a Proceed exit code."
                     );
             }
+            this.scheduler.yield();
         }
 
         // Returns the context of the last expression:
