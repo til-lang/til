@@ -2,6 +2,10 @@ module til.nodes.command;
 
 import til.nodes;
 
+debug
+{
+    import std.stdio;
+}
 
 class Command
 {
@@ -32,21 +36,25 @@ class Command
             Each item already pushes its evaluation
             result into the stack
             */
+            debug {stderr.writeln("   evaluating argument ", argument);}
             context = argument.evaluate(context.next);
             realArgumentsCounter += context.size;
         }
         context.size = cast(int)realArgumentsCounter;
+        debug {stderr.writeln("    context.size (arguments count): ", context.size);}
         return context;
     }
 
     CommandContext run(CommandContext context)
     {
+        debug {stderr.writeln(" Running Command ", this);}
         if (this.handler is null)
         {
             this.handler = context.escopo.getCommand(this.name);
             if (this.handler is null)
             {
                 // error("Command not found: " ~ this.name);
+                debug {stderr.writeln("  Command not found ", this.name);}
                 context.exitCode = ExitCode.Failure;
                 return context;
             }

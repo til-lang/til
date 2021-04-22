@@ -2,6 +2,10 @@ module til.nodes.pipeline;
 
 import til.nodes;
 
+debug
+{
+    import std.stdio;
+}
 
 class Pipeline
 {
@@ -39,6 +43,9 @@ class Pipeline
         alert the
         user.
         */
+
+        debug {stderr.writeln("Running Pipeline ", this);}
+
         foreach(index, command; commands)
         {
             if (index > 0 && context.stream is null)

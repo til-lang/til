@@ -7,6 +7,10 @@ import std.container : DList;
 import til.nodes;
 import til.modules;
 
+debug
+{
+    import std.stdio;
+}
 
 enum ProcessState
 {
@@ -42,7 +46,9 @@ class Process
         if (parent !is null)
         {
             this.stack = parent.stack;
+            this.stackPointer = parent.stackPointer;
             this.program = parent.program;
+            debug {stderr.writeln("STACK COPY");}
         }
         else
         {
@@ -91,6 +97,11 @@ class Process
     }
     ListItem pop()
     {
+        debug {
+            stderr.writeln("process.pop");
+            stderr.writeln(" stack: ", stack[0..stackPointer]);
+            stderr.writeln(" SP: ", stackPointer);
+        }
         auto item = stack[--stackPointer];
         return item;
     }
@@ -100,6 +111,11 @@ class Process
     }
     Items pop(ulong count)
     {
+        debug {
+            stderr.writeln("process.pop(", count, ")");
+            stderr.writeln(" stack: ", stack[0..stackPointer]);
+            stderr.writeln(" SP: ", stackPointer);
+        }
         Items items;
         foreach(i; 0..count)
         {
@@ -109,7 +125,9 @@ class Process
     }
     void push(ListItem item)
     {
+        debug {stderr.writeln("process.push ", item);}
         stack[stackPointer++] = item;
+        debug {stderr.writeln(" stack: ", stack[0..stackPointer]);}
     }
     template push(T)
     {
