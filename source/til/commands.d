@@ -142,10 +142,10 @@ static this()
     // Flow control
     commands["if"] = (string path, CommandContext context)
     {
-        BaseList conditions = cast(BaseList)context.pop();
-        ListItem thenBody = context.pop();
+        auto conditions = cast(SimpleList)context.pop();
+        auto thenBody = cast(SubList)context.pop();
 
-        ListItem elseBody;
+        SubList elseBody;
         // if (condition) {then} else {else}
         if (context.size == 2)
         {
@@ -156,7 +156,7 @@ static this()
                     "Invalid format for if/then/else clause"
                 );
             }
-            elseBody = context.pop();
+            elseBody = cast(SubList)context.pop();
         }
         else
         {
@@ -164,18 +164,17 @@ static this()
         }
 
         // Run the condition:
-        auto c = cast(SimpleList)conditions;
-        context.run(&c.forceEvaluate);
+        context.run(&conditions.forceEvaluate);
         context.run(&boolean, 1);
         auto isConditionTrue = context.pop().asBoolean;
 
         if (isConditionTrue)
         {
-            context = context.escopo.run((cast(SubList)thenBody).subprogram);
+            context = context.escopo.run(thenBody.subprogram);
         }
         else if (elseBody !is null)
         {
-            context = context.escopo.run((cast(SubList)elseBody).subprogram);
+            context = context.escopo.run(elseBody.subprogram);
         }
         context.exitCode = ExitCode.CommandSuccess;
         return context;
@@ -418,7 +417,6 @@ static this()
         auto proc = new Procedure(
             name,
             parameters,
-            // TODO: check if it is really a SubList type:
             body
         );
 

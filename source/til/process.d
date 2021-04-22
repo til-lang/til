@@ -45,15 +45,9 @@ class Process
         this.parent = parent;
         if (parent !is null)
         {
-            this.stack = parent.stack;
+            this.stack = parent.stack[];
             this.stackPointer = parent.stackPointer;
             this.program = parent.program;
-            debug {stderr.writeln("STACK COPY");}
-        }
-        else
-        {
-            // Pre-allocate some space in the stack:
-            // stack.reserve = 50;
         }
     }
     this(Process parent, SubProgram program)
@@ -66,14 +60,14 @@ class Process
     // auto x = escopo["x"];
     Items opIndex(string name)
     {
-        Items value = this.variables.get(name, null);
+        Items* value = (name in this.variables);
         if (value is null && this.parent !is null)
         {
             return this.parent[name];
         }
         else
         {
-            return value;
+            return *value;
         }
     }
     // escopo["x"] = new Atom(123);
@@ -182,14 +176,23 @@ class Process
         if (tryGlobal)
         {
             handler = (name in this.program.globalCommands);
-            if (handler !is null) return *handler;
+            if (handler !is null)
+            {
+                // Save in "cache":
+                this.program.commands[name] = *handler;
+                return *handler;
+            }
         }
 
         // Parent:
         if (this.parent !is null)
         {
             auto h = parent.getCommand(name, false);
-            if (h !is null) return h;
+            if (h !is null)
+            {
+                this.program.commands[name] = h;
+                return h;
+            }
         }
 
         /*
@@ -246,7 +249,7 @@ class Process
     }
     CommandContext run(SubProgram subprogram, CommandContext context)
     {
-        foreach(pipeline; subprogram.pipelines)
+        foreach(index, pipeline; subprogram.pipelines)
         {
             context = pipeline.run(context);
 
@@ -287,7 +290,8 @@ class Process
                         ~ " Expected a Proceed exit code."
                     );
             }
-            this.scheduler.yield();
+            // Each 8 pipelines we yield fiber/thread control:
+            if ((index & 0x07) == 0x07) this.scheduler.yield();
         }
 
         // Returns the context of the last expression:

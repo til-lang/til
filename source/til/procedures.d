@@ -10,21 +10,18 @@ import til.nodes;
 class Procedure
 {
     string name;
-    ListItem parameters;
-    ListItem body;
+    SimpleList parameters;
+    SubList body;
 
     this(string name, ListItem parameters, ListItem body)
     {
         this.name = name;
-        this.parameters = parameters;
-        this.body = body;
+        this.parameters = cast(SimpleList)parameters;
+        this.body = cast(SubList)body;
     }
 
     CommandContext run(string name, CommandContext context)
     {
-        // TODO: cast it on constructor:
-        SimpleList parameters = cast(SimpleList)this.parameters;
-
         // We open a new scope only because we
         // want a new namespace that do not
         // interfere with the caller one
@@ -45,10 +42,8 @@ class Procedure
             newContext.escopo[parameterName] = argument;
         }
 
-        auto subprogram = (cast(SubList)this.body).subprogram;
-
         // RUN!
-        newContext = newContext.escopo.run(subprogram, newContext);
+        newContext = newContext.escopo.run(body.subprogram, newContext);
 
         if (newContext.exitCode != ExitCode.Failure)
         {

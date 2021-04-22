@@ -1,4 +1,3 @@
-import std.io as io
 import std.stack as s
 
 s.dup "algo"
@@ -8,7 +7,7 @@ io.out [s.pop]
 
 io.out "---"
 
-foreach (word) ("arara" "ovo" "algo") {
+range ("arara" "ovo" "algo") | foreach word {
     io.out $word
     s.dup $word
     s.reverse

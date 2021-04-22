@@ -1,7 +1,6 @@
 module libs.std.io;
 
 import std.algorithm;
-import std.conv;
 import std.stdio;
 
 import til.nodes;
@@ -13,11 +12,8 @@ static this()
 {
     commands["out"] = (string path, CommandContext context)
     {
-        string s = to!string(context.items
-            .map!(x => x.asString)
-            .joiner(" "));
-
-        stdout.writeln(s);
+        while(context.size > 0) stdout.write(context.pop().asString);
+        stdout.writeln();
 
         context.exitCode = ExitCode.CommandSuccess;
         return context;
@@ -25,11 +21,8 @@ static this()
 
     commands["err"] = (string path, CommandContext context)
     {
-        string s = to!string(context.items
-            .map!(x => x.asString)
-            .joiner(" "));
-
-        stderr.writeln(s);
+        while(context.size > 0) stderr.write(context.pop().asString);
+        stderr.writeln();
 
         context.exitCode = ExitCode.CommandSuccess;
         return context;

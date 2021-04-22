@@ -48,7 +48,8 @@ class Pipeline
 
         foreach(index, command; commands)
         {
-            if (index > 0 && context.stream is null)
+
+            if (index != 0 && context.stream is null)
             {
                 throw new Exception(
                     "You cannot have a sink in the middle of a Pipeline!"
@@ -86,7 +87,6 @@ class Pipeline
                     return rContext;
 
                 // -----------------
-                // List execution:
                 case ExitCode.CommandSuccess:
                     // pass
                     break;
@@ -97,14 +97,18 @@ class Pipeline
         }
 
         /*
-        If there is not sink in the end of the pipeline,
+        If there is not a sink in the end of the pipeline,
         consume each item so that the data may flow.
         */
         if (context.stream !is null && !context.stream.empty)
         {
+            uint counter = 0;
             foreach(item; context.stream)
             {
                 if (item is null) break;
+
+                // Each 16 items we yield fiber/thread control:
+                if ((counter++ & 0x0F) == 0x0F) context.escopo.scheduler.yield();
             }
         }
 
