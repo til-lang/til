@@ -27,4 +27,4 @@ hellomodule: hellomodule.o
 	dmd -oflibhellomodule.so hellomodule.o -shared -defaultlib=libphobos2.so
 
 release-ldc:
-	dub build -b release --compiler=ldc2
+	dub build -b release :run --compiler=ldc2

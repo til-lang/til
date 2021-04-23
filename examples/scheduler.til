@@ -1,22 +1,11 @@
-thread t1
-thread t2
+proc p1 (name n) {
+    range $n | foreach x {
+        io.out "$name: $x"
+    }
+}
 
-t1.run "scheduler-2.til" as s2
-t1.run "scheduler-3.til" as s3
-t2.run "scheduler-4.til" as s4
-t2.run "scheduler-5.til" as s5
 
-s2.send "teste 2"
-s3.send "teste 3"
-s4.send "teste 4"
-s5.send "teste 5"
-
-# Run things in current thread:
-# IMPORTANT: maybe we should avoid
-# calling the same running program...
-thread.run "scheduler-1.til" as s1
-s1.send "teste 1"
-
-receive | foreach x {
-    io.out $x
+range 10 20 2 | foreach x {
+    io.out "SPAWN $x"
+    set "p$x" [spawn p1 "p$x" $x]
 }

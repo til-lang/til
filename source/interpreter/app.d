@@ -1,4 +1,3 @@
-import std.concurrency : FiberScheduler;
 import std.datetime.stopwatch;
 import std.file;
 import std.stdio : stderr, stdin, writeln;
@@ -9,6 +8,7 @@ import til.commands;
 import til.exceptions;
 import til.grammar;
 import til.nodes;
+import til.scheduler;
 import til.semantics;
 
 
@@ -70,20 +70,16 @@ void main(string[] args)
     auto process = new Process(null, program);
     // auto context = process.run();
 
-    CommandContext context = null;
-    process.scheduler = new FiberScheduler();
-
-    stderr.writeln("Spawning process");
-    process.scheduler.spawn({
-        context = process.run();
-    });
-    stderr.writeln("Starting scheduler");
-    process.scheduler.start({});
+    auto scheduler = new Scheduler([process]);
+    scheduler.run();
 
     // Print everything remaining in the stack:
-    foreach(item; context.items)
+    foreach(fiber; scheduler.fibers)
     {
-        writeln(item.asString);
+        foreach(item; fiber.context.items)
+        {
+            writeln(item.asString);
+        }
     }
     sw.stop();
     stderr.writeln("Program was run in ", sw.peek.total!"msecs", " miliseconds");

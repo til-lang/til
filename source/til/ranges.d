@@ -211,7 +211,6 @@ class ChainedItems : Range
     {
         if (this.empty)
         {
-            // TESTE:
             return new ChainedItems([]);
         }
 

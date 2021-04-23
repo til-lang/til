@@ -1,11 +1,11 @@
 module til.process;
 
 import std.array : join, split;
-import std.concurrency : Scheduler;
 import std.container : DList;
 
 import til.nodes;
 import til.modules;
+import til.scheduler;
 
 debug
 {

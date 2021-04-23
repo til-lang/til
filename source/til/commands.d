@@ -496,8 +496,29 @@ static this()
 
         if (returnedContext.exitCode == ExitCode.Failure)
         {
-            throw new Exception("upleval/command " ~ cmdName ~ ": Failure");
+            throw new Exception("uplevel/command " ~ cmdName ~ ": Failure");
         }
+        context.exitCode = ExitCode.ReturnSuccess;
+        return context;
+    };
+
+    // ---------------------------------------------
+    // Scheduler-related:
+    commands["spawn"] = (string path, CommandContext context)
+    {
+        // set pid [spawn f $x]
+        auto commandName = context.pop().asString;
+        Items arguments = context.items;
+
+        auto command = new Command(commandName, arguments);
+        auto pipeline = new Pipeline([command]);
+        auto subprogram = new SubProgram([pipeline]);
+
+        context.escopo.scheduler.add(new Process(context.escopo, subprogram));
+
+        // TESTE:
+        context.push(false);
+
         context.exitCode = ExitCode.ReturnSuccess;
         return context;
     };
