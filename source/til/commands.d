@@ -576,4 +576,47 @@ static this()
         context.exitCode = ExitCode.CommandSuccess;
         return context;
     };
+
+    // ---------------------------------------------
+    // Errors
+    commands["error"] = (string path, CommandContext context)
+    {
+        string classe = "";
+        int code = -1;
+        // TODO: improve default message:
+        string message = "An error ocurred";
+
+        // "Full" call:
+        // error message code class
+        // error "Not Found" 404 http
+        // error "segmentation fault" 11 os
+        if (context.size > 0)
+        {
+            message = context.pop().asString;
+        }
+        if (context.size > 0)
+        {
+            code = context.pop().asInteger;
+        }
+        if (context.size > 0)
+        {
+            classe = context.pop().asString;
+        }
+
+        auto e = new Erro(
+            context.escopo,
+            message, code, classe
+        );
+        // Put it in the stack so the
+        // handler can access it:
+        context.push(e);
+
+        // `error` is a sink!
+        context.stream = null;
+
+        // And, for a little change, we
+        // return a Failure:
+        context.exitCode = ExitCode.Failure;
+        return context;
+    };
 }
