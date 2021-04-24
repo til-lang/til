@@ -5,7 +5,7 @@ proc p1 (name n) {
 }
 
 
-range 10 20 2 | foreach x {
+range 20 40 4 | foreach x {
     io.out "SPAWN $x"
     set "p$x" [spawn p1 "p$x" $x]
 }

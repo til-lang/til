@@ -110,6 +110,12 @@ struct CommandContext
         // XXX : should we care about other.stream???
         // I don't think so, but not sure...
     }
+
+    void yield()
+    {
+        escopo.scheduler.yield();
+    }
+
     void run(CommandContext function(CommandContext) f)
     {
         return this.run(f, 0);

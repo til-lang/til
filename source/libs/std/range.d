@@ -1,5 +1,6 @@
 module libs.std.range;
 
+import core.stdc.time;
 import std.conv;
 
 import til.nodes;
@@ -51,12 +52,6 @@ class IntegerRange : InfiniteRange
     {
         return (current > limit);
     }
-    override Range save()
-    {
-        auto x = new IntegerRange(limit);
-        x.current = current;
-        return x;
-    }
 }
 
 
@@ -84,23 +79,18 @@ class ItemsRange : Range
     {
         this.currentIndex++;
     }
-    override ulong length()
+}
+
+class TimeRange : InfiniteRange
+{
+    override ListItem front()
     {
-        return this._length;
+        time_t tx;
+        auto t = time(&tx);
+        return new Atom(tx);
     }
-    override Range save()
+    override void popFront()
     {
-        auto copy = new ItemsRange(this.list);
-        copy.currentIndex = this.currentIndex;
-        return copy;
-    }
-    override string toString()
-    {
-        return "ItemsRange<" ~ to!string(this.list) ~ ">";
-    }
-    override string asString()
-    {
-        return to!string(this.list);
     }
 }
 
@@ -170,4 +160,11 @@ static this()
         return context;
     };
     commands[null] = commands["range"];
+
+    commands["time"] = (string path, CommandContext context)
+    {
+        context.stream = new TimeRange();
+        context.exitCode = ExitCode.CommandSuccess;
+        return context;
+    };
 }

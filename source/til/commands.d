@@ -6,11 +6,16 @@ import std.conv : to;
 
 import til.exceptions;
 import til.logic;
+import til.msgbox;
 import til.modules;
 import til.nodes;
 import til.procedures;
 import til.ranges;
 
+debug
+{
+    import std.stdio;
+}
 
 CommandHandler[string] commands;
 
@@ -191,11 +196,27 @@ static this()
         */
         auto loopScope = context.escopo;
 
+        uint yieldStep;
+        if (argBody.subprogram.pipelines.length >= 8)
+        {
+            yieldStep = 0x01;
+        }
+        else if (argBody.subprogram.pipelines.length >= 4)
+        {
+            yieldStep = 0x03;
+        }
+        else
+        {
+            yieldStep = 0x07;
+        }
+
+        uint index = 0;
         foreach(item; context.stream)
         {
             loopScope[argName] = item;
 
             context = loopScope.run(argBody.subprogram);
+            debug {stderr.writeln("foreach.subprogram.exitCode:", context.exitCode);}
 
             if (context.exitCode == ExitCode.Break)
             {
@@ -205,6 +226,16 @@ static this()
             {
                 continue;
             }
+            else if (context.exitCode == ExitCode.ReturnSuccess)
+            {
+                // Return should always return
+                // until a procedure or
+                // a program is
+                // stopped:
+                return context;
+            }
+
+            if ((index++ & yieldStep) == yieldStep) context.yield();
         }
 
         /*
@@ -266,22 +297,6 @@ static this()
             override void popFront()
             {
                 origin.popFront();
-            }
-            override ulong length()
-            {
-                return origin.length;
-            }
-            override Range save()
-            {
-                return new TransformRange(origin.save(), varName, body, escopo);
-            }
-            override string toString()
-            {
-                return "TransformRange";
-            }
-            override string asString()
-            {
-                return "TransformRange";
             }
         }
 
@@ -375,19 +390,7 @@ static this()
             {
                 origin.popFront();
             }
-            override ulong length()
-            {
-                return origin.length;
-            }
-            override Range save()
-            {
-                return new CaseRange(origin.save(), variables, body, escopo);
-            }
             override string toString()
-            {
-                return "CaseRange";
-            }
-            override string asString()
             {
                 return "CaseRange";
             }
@@ -498,7 +501,7 @@ static this()
         {
             throw new Exception("uplevel/command " ~ cmdName ~ ": Failure");
         }
-        context.exitCode = ExitCode.ReturnSuccess;
+        context.exitCode = ExitCode.CommandSuccess;
         return context;
     };
 
@@ -513,13 +516,64 @@ static this()
         auto command = new Command(commandName, arguments);
         auto pipeline = new Pipeline([command]);
         auto subprogram = new SubProgram([pipeline]);
+        auto process = new Process(context.escopo, subprogram);
+        context.escopo.scheduler.add(process);
 
-        context.escopo.scheduler.add(new Process(context.escopo, subprogram));
+        context.push(new Pid(process));
 
-        // TESTE:
-        context.push(false);
+        context.exitCode = ExitCode.CommandSuccess;
+        return context;
+    };
+    commands["send"] = (string path, CommandContext context)
+    {
+        // send $pid "any ListItem"
+        auto pid = cast(Pid)context.pop();
+        auto message = context.pop();
 
-        context.exitCode = ExitCode.ReturnSuccess;
+        pid.send(message);
+
+        context.exitCode = ExitCode.CommandSuccess;
+        return context;
+    };
+    commands["receive"] = (string path, CommandContext context)
+    {
+        // receive | foreach msg { ... }
+        auto rootProcess = context.escopo.getRoot();
+        debug {
+            stderr.writeln(
+                "process ", context.escopo.index,
+                " has root ", rootProcess.index
+            );
+            stderr.writeln(
+                "receiving in ", rootProcess.index,
+                " : ", rootProcess.msgbox
+            );
+        }
+        context.stream = new MsgboxRange(rootProcess);
+        context.exitCode = ExitCode.CommandSuccess;
+        return context;
+    };
+    commands["receive.wait"] = (string path, CommandContext context)
+    {
+        // receive.wait | foreach msg { ... }
+        auto rootProcess = context.escopo.getRoot();
+        debug {
+            stderr.writeln(
+                "process ", context.escopo.index,
+                " has root ", rootProcess.index
+            );
+            stderr.writeln(
+                "receiving in ", rootProcess.index,
+                " : ", rootProcess.msgbox
+            );
+        }
+        while(rootProcess.msgbox.empty)
+        {
+            // TODO: put rootProcess in Receive state
+            rootProcess.scheduler.yield();
+        }
+        context.stream = new MsgboxRange(rootProcess);
+        context.exitCode = ExitCode.CommandSuccess;
         return context;
     };
 }

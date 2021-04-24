@@ -37,7 +37,9 @@ class Process
     uint index;
 
     // Scheduling
-    static Scheduler scheduler = null;
+    Scheduler scheduler = null;
+    const uint msgboxSize = 4;
+    ListItem[] msgbox;
 
     this(Process parent)
     {
@@ -128,6 +130,23 @@ class Process
         void push(T x)
         {
             this.push(new Atom(x));
+        }
+    }
+
+    // Utilities:
+    Process getRoot()
+    {
+        if (this.scheduler !is null)
+        {
+            return this;
+        }
+        else if (this.parent !is null)
+        {
+            return this.parent.getRoot();
+        }
+        else
+        {
+            return null;
         }
     }
 
@@ -266,11 +285,9 @@ class Process
                 // -----------------
                 // Proc execution:
                 case ExitCode.ReturnSuccess:
-                    // ReturnSuccess is received here when
-                    // we are still INSIDE A PROC.
-                    // We return the context, but out caller
-                    // doesn't necessarily have to break:
-                    context.exitCode = ExitCode.CommandSuccess;
+                    // ReturnSuccess should keep stopping
+                    // processes until properly
+                    // handled.
                     return context;
 
                 case ExitCode.Failure:

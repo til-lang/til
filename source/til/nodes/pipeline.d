@@ -9,9 +9,6 @@ debug
 
 class Pipeline
 {
-    /*
-    >>cmd1 a b > cmd2 > cmd3 x<<
-    */
     Command[] commands;
 
     this(Command[] commands)
@@ -27,7 +24,7 @@ class Pipeline
     {
         return to!string(commands
             .map!(x => to!string(x))
-            .joiner(" > "));
+            .joiner(" | "));
     }
 
     CommandContext run(CommandContext context)
@@ -71,10 +68,9 @@ class Pipeline
                 // -----------------
                 // Proc execution:
                 case ExitCode.ReturnSuccess:
-                    // ReturnSuccess is received here when
-                    // we are still INSIDE A PROC.
-                    // We return the context, but out caller
-                    // doesn't necessarily have to break:
+                    // ReturnSuccess should keep stopping
+                    // SubPrograms until a procedure
+                    // or a program stops.
                     return rContext;
 
                 case ExitCode.Failure:

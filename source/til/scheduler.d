@@ -52,12 +52,12 @@ class Scheduler
             activeCounter = 0;
             foreach(fiber; fibers)
             {
-                debug {stderr.writeln(" FIBER CALL ");}
                 if (fiber.state == Fiber.State.TERM)
                 {
                     continue;
                 }
                 activeCounter++;
+                debug {stderr.writeln(" FIBER CALL: ", fiber.process.index);}
                 fiber.call();
             }
         } while (activeCounter > 0);

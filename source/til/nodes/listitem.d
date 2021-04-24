@@ -26,5 +26,5 @@ class ListItem
     }
 
     CommandContext evaluate(CommandContext context, bool force) {return this.evaluate(context);}
-    CommandContext evaluate(CommandContext context) {return context;}
+    CommandContext evaluate(CommandContext context) {context.push(this); return context;}
 }
