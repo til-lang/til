@@ -74,7 +74,8 @@ class Pipeline
                     return rContext;
 
                 case ExitCode.Failure:
-                    throw new Exception("Failure: " ~ to!string(rContext));
+                    // Failures, for now, are going to be propagated:
+                    return rContext;
 
                 // -----------------
                 // Loops:

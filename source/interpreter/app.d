@@ -1,6 +1,6 @@
 import std.datetime.stopwatch;
 import std.file;
-import std.stdio : stderr, stdin, writeln;
+import std.stdio : stderr, stdin, write, writeln;
 
 import pegged.grammar : ParseTree;
 
@@ -12,7 +12,7 @@ import til.scheduler;
 import til.semantics;
 
 
-void main(string[] args)
+int main(string[] args)
 {
     auto sw = StopWatch(AutoStart.no);
 
@@ -67,20 +67,31 @@ void main(string[] args)
     mixin(importModule("std.sharedlib"));
 
     sw.start();
-    auto process = new Process(null, program);
-    // auto context = process.run();
-
-    auto scheduler = new Scheduler([process]);
+    auto scheduler = new Scheduler(new Process(null, program));
     scheduler.run();
 
     // Print everything remaining in the stack:
+    int returnCode = 0;
     foreach(fiber; scheduler.fibers)
     {
-        foreach(item; fiber.context.items)
+        stderr.write("Process ", fiber.process.index, ": ");
+        if (fiber.context.exitCode == ExitCode.Failure)
         {
-            writeln(item.asString);
+            stderr.writeln("ERROR");
+            auto e = cast(Erro)fiber.context.pop();
+            stderr.writeln(e.asString);
+            returnCode = e.code;
+        }
+        else
+        {
+            stderr.writeln("Success");
+            foreach(item; fiber.context.items)
+            {
+                stderr.writeln(item.asString);
+            }
         }
     }
     sw.stop();
     stderr.writeln("Program was run in ", sw.peek.total!"msecs", " miliseconds");
+    return returnCode;
 }

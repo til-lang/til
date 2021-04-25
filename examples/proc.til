@@ -15,5 +15,9 @@ proc g (a) {
 
 io.out [g "blebs"]
 io.out [f 100 200 300]
-set x [f 1 2 3] [g 4]
-io.out $x
+
+# x : >1< 2 3 >4<
+set result [f 1 2 3] [g 4]
+
+io.out "Expected: >1< 2 3 >4<"
+io.out $result

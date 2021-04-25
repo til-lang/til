@@ -30,6 +30,10 @@ class ProcessFiber : Fiber
 class Scheduler
 {
     ProcessFiber[] fibers = null;
+    this(Process process)
+    {
+        this([process]);
+    }
     this(Process[] processes)
     {
         foreach(process; processes)
@@ -44,7 +48,7 @@ class Scheduler
         fibers ~= new ProcessFiber(process);
     }
 
-    void run()
+    ExitCode run()
     {
         uint activeCounter;
         do
@@ -61,6 +65,32 @@ class Scheduler
                 fiber.call();
             }
         } while (activeCounter > 0);
+
+        /*
+        In the end, check if any of the processes
+        was terminated with failure:
+        */
+        foreach(fiber; fibers)
+        {
+            if (fiber.context.exitCode == ExitCode.Failure)
+            {
+                return fiber.context.exitCode;
+            }
+        }
+        return ExitCode.CommandSuccess;
+    }
+
+    CommandContext[] failingContexts()
+    {
+        CommandContext[] contexts;
+        foreach(fiber; fibers)
+        {
+            if (fiber.context.exitCode == ExitCode.Failure)
+            {
+                contexts ~= fiber.context;
+            }
+        }
+        return contexts;
     }
 
     void yield()

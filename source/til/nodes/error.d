@@ -10,6 +10,13 @@ debug
 }
 
 
+enum ErrorCode
+{
+    Unknown,
+    CommandNotFound,
+}
+
+
 class Erro : ListItem
 {
     int code = -1;
@@ -27,8 +34,9 @@ class Erro : ListItem
 
     override string asString()
     {
-        return "Error " ~ to!string(code)
-               ~ " for process" ~ to!string(process.index);
+        return "Error class=" ~ classe
+               ~ " code=" ~ to!string(code)
+               ~ " message=" ~ message;
     }
     override int asInteger()
     {

@@ -42,7 +42,7 @@ struct CommandContext
     }
     CommandContext next(Process escopo, int argumentCount)
     {
-        auto newContext = CommandContext(this.escopo, argumentCount);
+        auto newContext = CommandContext(escopo, argumentCount);
         // Pass along stream and any other data
         // shared between commands int the
         // pipeline:
@@ -111,11 +111,13 @@ struct CommandContext
         // I don't think so, but not sure...
     }
 
+    // Scheduler-related things
     void yield()
     {
-        escopo.scheduler.yield();
+        escopo.getRoot().scheduler.yield();
     }
 
+    // Execution
     void run(CommandContext function(CommandContext) f)
     {
         return this.run(f, 0);
@@ -129,5 +131,22 @@ struct CommandContext
     {
         auto rContext = f(this.next);
         this.assimilate(rContext);
+    }
+
+    // Errors
+    CommandContext error(string message, int code, string classe)
+    {
+        auto e = new Erro(escopo, message, code, classe);
+        push(e);
+        this.exitCode = ExitCode.Failure;
+        this.stream = null;
+
+        /*
+        Return this so we can simply write
+        "return context.error(...)"
+        inside commands
+        implementations
+        */
+        return this;
     }
 }

@@ -99,7 +99,7 @@ class Atom : ListItem
             }
             else
             {
-                foreach(value; values)
+                foreach(value; values.retro)
                 {
                     context.push(value);
                 }

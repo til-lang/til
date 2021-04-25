@@ -6,6 +6,11 @@ import til.exceptions;
 import til.ranges;
 import til.nodes;
 
+debug
+{
+    import std.stdio;
+}
+
 
 class Procedure
 {
@@ -22,15 +27,16 @@ class Procedure
 
     CommandContext run(string name, CommandContext context)
     {
-        // We open a new scope only because we
-        // want a new namespace that do not
-        // interfere with the caller one
-        auto newContext = context;   // struct copy
-        newContext.escopo = new Process(context.escopo);
+        debug {
+            stderr.writeln("proc.run:", name, " ", context);
+            stderr.writeln(" parameters:", parameters);
+        }
+        auto newScope = new Process(context.escopo);
 
+        // "Empty" caller scope context/stack:
         foreach(parameter; parameters.items)
         {
-            if (newContext.size == 0)
+            if (context.size == 0)
             {
                 throw new InvalidException(
                     "Not enough arguments passed to command"
@@ -38,22 +44,38 @@ class Procedure
                 );
             }
             string parameterName = parameter.asString;
-            auto argument = newContext.pop();
-            newContext.escopo[parameterName] = argument;
+            auto argument = context.pop();
+            newScope[parameterName] = argument;
         }
+        /*
+        XXX : yeap, this is kind of messy, but
+        we must make this copy...
+        */
+        newScope.stack = context.escopo.stack;
+        auto newContext = context.next(newScope, context.size);
 
         // RUN!
         newContext = newContext.escopo.run(body.subprogram, newContext);
 
-        if (newContext.exitCode != ExitCode.Failure)
+        // Empty procedure stack:
+        foreach(item; newContext.items.retro)
         {
-            context.exitCode = ExitCode.CommandSuccess;
-
-            // Now we must COPY the stack
-            // and update context.size
-            context.size = newContext.size;
-            context.escopo.stack = newContext.escopo.stack;
+            debug {stderr.writeln("PROC STACK MOVING ", item);}
+            context.push(item);
         }
+
+        /*
+        We will simply COPY the exitCode and, yes, that will
+        allow procedures to end with `continue` or `break`
+        and, yes, this is kind weird, but also good,
+        because this way you won't need to
+        "uplevel" these things and
+        separate a lot of
+        behaviours in
+        some common
+        procs.
+        */
+        context.exitCode = newContext.exitCode;
         return context;
     }
 }

@@ -35,10 +35,10 @@ static this()
         }
 
         auto firstArgument = context.pop();
-        auto secondArgument = context.pop();
 
         if (firstArgument.type == ObjectTypes.List)
         {
+            auto secondArgument = context.pop();
             if (secondArgument.type != ObjectTypes.List)
             {
                 throw new Exception(
@@ -81,7 +81,7 @@ static this()
         }
         else
         {
-            context.escopo[firstArgument.asString] = secondArgument;
+            context.escopo[firstArgument.asString] = context.items;
         }
 
         context.exitCode = ExitCode.CommandSuccess;
@@ -603,20 +603,6 @@ static this()
             classe = context.pop().asString;
         }
 
-        auto e = new Erro(
-            context.escopo,
-            message, code, classe
-        );
-        // Put it in the stack so the
-        // handler can access it:
-        context.push(e);
-
-        // `error` is a sink!
-        context.stream = null;
-
-        // And, for a little change, we
-        // return a Failure:
-        context.exitCode = ExitCode.Failure;
-        return context;
+        return context.error(message, code, classe);
     };
 }

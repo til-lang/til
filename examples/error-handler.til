@@ -1,0 +1,13 @@
+proc e () {
+    error "Test error"
+}
+
+proc error.handler (x) {
+    puts "error.handler called."
+    puts "  received: $x"
+    puts "  IGNORING IT!"
+}
+
+io.out "Calling procedure `e`..."
+e
+io.out "Procedure `e` was called."

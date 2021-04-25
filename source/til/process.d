@@ -69,16 +69,19 @@ class Process
         }
         else
         {
+            debug {stderr.writeln(name, " is ", *value);}
             return *value;
         }
     }
     // escopo["x"] = new Atom(123);
     void opIndexAssign(ListItem value, string name)
     {
+        debug {stderr.writeln(name, " = ", value);}
         variables[name] = [value];
     }
     void opIndexAssign(Items value, string name)
     {
+        debug {stderr.writeln(name, " = ", value);}
         variables[name] = value;
     }
 
@@ -291,7 +294,38 @@ class Process
                     return context;
 
                 case ExitCode.Failure:
-                    throw new Exception("Failure: " ~ to!string(context));
+                    /*
+                    Error handling:
+                    1- Call **local** procedure `error.handler`, if
+                       it exists and analyse ITS exitCode.
+                    2- Or, if it doesn't exist, return `context`
+                       as we would already do.
+                    */
+                    CommandHandler* errorHandler = ("error.handler" in subprogram.commands);
+                    if (errorHandler !is null)
+                    {
+                        debug {
+                            stderr.writeln("Calling error.handler");
+                            stderr.writeln(" context: ", context);
+                        }
+                        context = (*errorHandler)("error.handler", context);
+                        /*
+                        errorHandler can simply "rethrow"
+                        the Error or even return a new
+                        one. That's ok. We aren't
+                        trying to do anything
+                        much fancy, here.
+                        */
+                    }
+                    /*
+                    Wheter we called errorHandler or not,
+                    we ARE going to exit the current
+                    scope right now. The idea of
+                    a errorHandler is NOT to
+                    allow continuing in the
+                    same scope.
+                    */
+                    return context;
 
                 // -----------------
                 // Loops:

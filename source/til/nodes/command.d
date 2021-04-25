@@ -47,21 +47,27 @@ class Command
 
     CommandContext run(CommandContext context)
     {
-        debug {stderr.writeln(" Running Command ", this);}
+        debug {
+            stderr.writeln(" Running Command ", this);
+            stderr.writeln("  context: ", context);
+        }
         if (this.handler is null)
         {
             this.handler = context.escopo.getCommand(this.name);
             if (this.handler is null)
             {
-                // error("Command not found: " ~ this.name);
-                debug {stderr.writeln("  Command not found ", this.name);}
-                context.exitCode = ExitCode.Failure;
-                return context;
+                return context.error(
+                    "Command not found", ErrorCode.CommandNotFound, "internal"
+                );
             }
         }
 
         // evaluate arguments and set proper context.size:
         context = this.evaluateArguments(context);
+
+        debug {
+            stderr.writeln("  context for ", this, " is now: ", context);
+        }
 
         return this.runHandler(context, this.handler);
     }
