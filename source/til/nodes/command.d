@@ -48,11 +48,15 @@ class Command
     CommandContext run(CommandContext context)
     {
         debug {
-            stderr.writeln(" Running Command ", this);
+            stderr.writeln(" Running Command ", this, " ", this.arguments);
             stderr.writeln("  context: ", context);
         }
         if (this.handler is null)
         {
+            debug {
+                stderr.writeln("getCommand ", this.name);
+                stderr.writeln(" ", context.escopo);
+            }
             this.handler = context.escopo.getCommand(this.name);
             if (this.handler is null)
             {
@@ -60,6 +64,7 @@ class Command
                     "Command not found", ErrorCode.CommandNotFound, "internal"
                 );
             }
+            debug {stderr.writeln("getCommand ", this.name, " = OK");}
         }
 
         // evaluate arguments and set proper context.size:

@@ -29,7 +29,7 @@ class Procedure
     {
         debug {
             stderr.writeln("proc.run:", name, " ", context);
-            stderr.writeln(" parameters:", parameters);
+            stderr.writeln(" parameters:", parameters.items);
         }
         auto newScope = new Process(context.escopo);
 

@@ -3,9 +3,9 @@ proc e () {
 }
 
 proc error.handler (x) {
-    puts "error.handler called."
-    puts "  received: $x"
-    puts "  IGNORING IT!"
+    io.out "error.handler called."
+    io.out "  received: $x"
+    io.out "  IGNORING IT!"
 }
 
 io.out "Calling procedure `e`..."
