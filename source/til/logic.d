@@ -41,17 +41,18 @@ CommandContext pureBoolean(CommandContext context)
             {
                 // -----------------------------------------------
                 // Operators implementations:
-                // TODO: use asInteger, asFloat and asString
-                // TODO: this could be entirely made at compile
+                // XXX: this could be entirely made at compile
                 // time, I assume...
+                case "==":
+                    return (t1.asInteger == t2.asInteger);
                 case "<":
-                    return (to!int(t1.asString) < to!int(t2.asString));
+                    return (t1.asInteger < t2.asInteger);
                 case ">":
-                    return (to!int(t1.asString) > to!int(t2.asString));
+                    return (t1.asInteger > t2.asInteger);
                 case ">=":
-                    return (to!int(t1.asString) >= to!int(t2.asString));
+                    return (t1.asInteger >= t2.asInteger);
                 case "<=":
-                    return (to!int(t1.asString) <= to!int(t2.asString));
+                    return (t1.asInteger <= t2.asInteger);
                 default:
                     throw new Exception(
                         "Unknown operator: "

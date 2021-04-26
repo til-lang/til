@@ -1,0 +1,18 @@
+set x 10
+
+if ($x > 10) {
+    io.out "if condition is WRONG. $x is NOT greater than 10."
+} else {
+    io.out "Correct: $x is not greater than 10."
+}
+if ($x == 10) {
+    io.out "Correct: $x is 10"
+} else {
+    io.out "if condition is WRONG. $x is indeed 10."
+}
+
+if ($x < 11) {
+    io.out "Correct: $x is lesser than 11."
+} else {
+    io.out "if condition is WRONG. $x is not greater nor equal than 11."
+}

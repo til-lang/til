@@ -43,5 +43,5 @@ mixin(grammar(`
         Boolean           <- BooleanTrue / BooleanFalse
         BooleanTrue       <~ "true" / "yes"
         BooleanFalse      <~ "false" / "no"
-        Operator          <~ "||" / "&&" / "<=" / ">=" / [+\-*/<>]
+        Operator          <~ "||" / "&&" / "<=" / ">=" / "==" / [+\-*/<>]
     `));
