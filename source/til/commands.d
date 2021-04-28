@@ -173,15 +173,26 @@ static this()
         context.run(&boolean, 1);
         auto isConditionTrue = context.pop().asBoolean;
 
+        debug {
+            stderr.writeln(conditions, " is ", isConditionTrue);
+        }
+
         if (isConditionTrue)
         {
+            debug {stderr.writeln("if: executing thenBody");}
             context = context.escopo.run(thenBody.subprogram);
+            debug {stderr.writeln("    thenBody returned ", context.exitCode);}
         }
         else if (elseBody !is null)
         {
+            debug {stderr.writeln("if: executing elseBody");}
             context = context.escopo.run(elseBody.subprogram);
+            debug {stderr.writeln("    elseBody returned ", context.exitCode);}
         }
-        context.exitCode = ExitCode.CommandSuccess;
+        else
+        {
+            context.exitCode = ExitCode.CommandSuccess;
+        }
         return context;
     };
 
