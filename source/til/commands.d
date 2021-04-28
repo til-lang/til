@@ -147,49 +147,71 @@ static this()
     // Flow control
     commands["if"] = (string path, CommandContext context)
     {
-        auto conditions = cast(SimpleList)context.pop();
-        auto thenBody = cast(SubList)context.pop();
-
-        SubList elseBody;
-        // if (condition) {then} else {else}
-        if (context.size == 2)
+        context = ()
         {
-            auto elseWord = context.pop().asString;
-            if (elseWord != "else")
+            while(true)
             {
-                throw new InvalidException(
-                    "Invalid format for if/then/else clause"
-                );
+                auto conditions = cast(SimpleList)context.pop();
+                auto thenBody = cast(SubList)context.pop();
+
+                debug {stderr.writeln("context before conditions evaluation:", context);}
+                conditions.forceEvaluate(context);
+                context.run(&boolean, 1);
+                auto isConditionTrue = context.pop().asBoolean;
+                debug {stderr.writeln("context AFTER conditions evaluation:", context);}
+
+                debug {stderr.writeln(conditions, " is ", isConditionTrue);}
+
+                // if (x == 0) {...}
+                if (isConditionTrue)
+                {
+                    return context.escopo.run(thenBody.subprogram);
+                }
+                // no else:
+                else if (context.size == 0)
+                {
+                    context.exitCode = ExitCode.CommandSuccess;
+                    return context;
+                }
+                // else {...}
+                // else if {...}
+                else
+                {
+                    auto elseWord = context.pop().asString;
+                    if (elseWord != "else")
+                    {
+                        throw new InvalidException(
+                            "Invalid format for if/then/else clause:"
+                            ~ " elseWord found was " ~ elseWord
+                        );
+                    }
+
+                    debug {stderr.writeln("context:", context);}
+
+                    // If only one part is left, it's for sure the last "else":
+                    if (context.size == 1)
+                    {
+                        auto elseBody = cast(SubList)context.pop();
+                        return context.escopo.run(elseBody.subprogram);
+                    }
+                    else
+                    {
+                        auto ifWord = context.pop().asString;
+                        if (ifWord != "if")
+                        {
+                            throw new InvalidException(
+                                "Invalid format for if/then/else clause"
+                                ~ " ifWord found was " ~ ifWord
+                            );
+                        }
+                        // The next item is an "if", so we can
+                        // simply return to the beginning:
+                        continue;
+                    }
+                }
             }
-            elseBody = cast(SubList)context.pop();
-        }
-        else
-        {
-            elseBody = null;
-        }
-
-        // Run the condition:
-        context.run(&conditions.forceEvaluate);
-        context.run(&boolean, 1);
-        auto isConditionTrue = context.pop().asBoolean;
-
-        debug {
-            stderr.writeln(conditions, " is ", isConditionTrue);
-        }
-
-        if (isConditionTrue)
-        {
-            debug {stderr.writeln("if: executing thenBody");}
-            context = context.escopo.run(thenBody.subprogram);
-            debug {stderr.writeln("    thenBody returned ", context.exitCode);}
-        }
-        else if (elseBody !is null)
-        {
-            debug {stderr.writeln("if: executing elseBody");}
-            context = context.escopo.run(elseBody.subprogram);
-            debug {stderr.writeln("    elseBody returned ", context.exitCode);}
-        }
-        else
+        }();
+        if (context.exitCode == ExitCode.Proceed)
         {
             context.exitCode = ExitCode.CommandSuccess;
         }

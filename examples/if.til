@@ -16,3 +16,11 @@ if ($x < 11) {
 } else {
     io.out "if condition is WRONG. $x is not greater nor equal than 11."
 }
+
+if ($x > 11) {
+    io.out "if condition is WRONG. $x is not greater nor equal than 11."
+} else if ($x > 12) {
+    io.out "if condition is WRONG. $x is not greater nor equal than 12."
+} else {
+    io.out "Correct: $x is lesser than 11 and 12."
+}
