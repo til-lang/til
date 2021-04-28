@@ -1,0 +1,34 @@
+proc p (name) {
+    set counter 0
+    range.time | foreach t {
+        set counter [math ($counter + 1)]
+        if ($counter > 5000) {break}
+    }
+    set received_count [p_wait "$name-child"]
+    io.out "range.time exited. Received $received_count messages."
+}
+proc p_wait (name) {
+    set counter 0
+    range.time | foreach t {
+        receive.wait | foreach msg {
+            io.out " Procedure $name received message '$msg ($t)'"
+            set counter [math ($counter + 1)]
+            if ($msg == "QUIT") {break}
+        }
+        if ($msg == "QUIT") {break}
+    }
+    io.out "  $name exit"
+    return $counter
+}
+
+set p1 [spawn p "alfa"]
+
+set counter 0
+range.time | foreach t {
+    set counter [math ($counter + 1)]
+    if ($counter > 128) {break}
+    io.out "Sending message to p1"
+    send $p1 "message-$counter"
+}
+send $p1 "QUIT"
+io.out "Main program exit"

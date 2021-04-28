@@ -75,7 +75,14 @@ class Procedure
         some common
         procs.
         */
-        context.exitCode = newContext.exitCode;
+        if (newContext.exitCode == ExitCode.Proceed)
+        {
+            context.exitCode = ExitCode.CommandSuccess;
+        }
+        else
+        {
+            context.exitCode = newContext.exitCode;
+        }
         return context;
     }
 }

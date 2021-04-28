@@ -44,7 +44,14 @@ CommandContext pureBoolean(CommandContext context)
                 // XXX: this could be entirely made at compile
                 // time, I assume...
                 case "==":
-                    return (t1.asInteger == t2.asInteger);
+                    if (t1.type == ObjectTypes.String && t2.type == ObjectTypes.String)
+                    {
+                        return (t1.asString == t2.asString);
+                    }
+                    else
+                    {
+                        return (t1.asInteger == t2.asInteger);
+                    }
                 case "<":
                     return (t1.asInteger < t2.asInteger);
                 case ">":

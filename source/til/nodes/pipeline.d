@@ -63,7 +63,9 @@ class Pipeline
 
                 case ExitCode.Proceed:
                     throw new InvalidException(
-                        "Commands should not return `Proceed`: " ~ to!string(rContext));
+                        "Commands should not return `Proceed`: " ~ to!string(rContext)
+                        ~ " (command: " ~ to!string(command) ~ ")"
+                    );
 
                 // -----------------
                 // Proc execution:
