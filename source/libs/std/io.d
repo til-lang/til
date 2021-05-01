@@ -12,8 +12,8 @@ static this()
 {
     commands["out"] = (string path, CommandContext context)
     {
-        while(context.size > 1) stdout.write(context.pop().asString, " ");
-        stdout.write(context.pop().asString);
+        while(context.size > 1) stdout.write(context.pop!string, " ");
+        stdout.write(context.pop!string);
         stdout.writeln();
 
         context.exitCode = ExitCode.CommandSuccess;
@@ -22,8 +22,8 @@ static this()
 
     commands["err"] = (string path, CommandContext context)
     {
-        while(context.size > 1) stderr.write(context.pop().asString, " ");
-        stderr.write(context.pop().asString);
+        while(context.size > 1) stderr.write(context.pop!string, " ");
+        stderr.write(context.pop!string);
         stderr.writeln();
 
         context.exitCode = ExitCode.CommandSuccess;

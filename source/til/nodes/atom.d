@@ -2,78 +2,54 @@ module til.nodes.atom;
 
 import til.nodes;
 
-
-class Atom : ListItem
+debug
 {
-    int integer;
-    float floatingPoint;
-    bool boolean;
-    string _repr;
-    bool hasSubstitution = true;
+    import std.stdio;
+}
+
+class NameAtom : ListItem
+{
+    string value;
+    bool hasSubstitution = false;
 
     this(string s)
     {
-        this.repr = s;
-    }
-    this(string s, ObjectTypes t)
-    {
-        this(s);
-        this.type = t;
-    }
-    this(int i)
-    {
-        this.integer = i;
-        this._repr = to!string(i);
-        this.type = ObjectTypes.Integer;
-    }
-    this(float f)
-    {
-        this.floatingPoint = f;
-        this._repr = to!string(f);
-        this.type = ObjectTypes.Float;
-    }
-    this(bool b)
-    {
-        this.boolean = b;
-        this.integer = to!int(b);
-        this._repr = to!string(b);
-        this.type = ObjectTypes.Boolean;
-        this.hasSubstitution = false;
+        this.value = s;
+        this.type = ObjectTypes.String;
+
+        // 1- Check if it is an InputName:
+        auto len = s.length;
+        if (len > 1)
+        {
+            auto firstChar = s[0];
+
+            if (firstChar == '>')
+            {
+                type = ObjectTypes.InputName;
+                s = s[1..$];
+            }
+            else
+            {
+                type = ObjectTypes.Name;
+            }
+        }
+
+        // 2- Check if it has substitutions:
+        len = s.length;
+        if (len > 1)
+        {
+            auto firstChar = s[0];
+            hasSubstitution = (
+                firstChar == '$'
+                || len >= 3 && firstChar == '-' && s[1] == '$'
+            );
+        }
     }
 
     // Utilities and operators:
     override string toString()
     {
-        // return ":" ~ this.repr ~ "_" ~ to!string(this.type);
-        return ":" ~ this.repr;
-    }
-    string debugRepr()
-    {
-        string context = "";
-        context ~= "int:" ~ to!string(this.integer) ~ ";";
-        context ~= "float:" ~ to!string(this.floatingPoint) ~ ";";
-        context ~= "bool:" ~ to!string(this.boolean) ~ ";";
-        context ~= "string:" ~ this.repr;
-        return context;
-    }
-
-    // Methods:
-    @property
-    string repr()
-    {
-        return this._repr;
-
-    }
-    @property
-    string repr(string s)
-    {
-        this._repr = s;
-
-        this.hasSubstitution = (
-            s[0] == '$' || s.length >= 3 && s[0] == '-' && s[1] == '$'
-        );
-
-        return s;
+        return this.value;
     }
 
     override CommandContext evaluate(CommandContext context)
@@ -85,11 +61,10 @@ class Atom : ListItem
             return context;
         }
 
-        string repr = this.repr;
-        char firstChar = repr[0];
+        char firstChar = value[0];
         if (firstChar == '$')
         {
-            string key = repr[1..$];
+            string key = value[1..$];
             auto values = context.escopo[key];
             if (values is null)
             {
@@ -105,9 +80,9 @@ class Atom : ListItem
                 }
             }
         }
-        else if (repr.length >= 3 && firstChar == '-' && repr[1] == '$')
+        else if (value.length >= 3 && firstChar == '-' && value[1] == '$')
         {
-            string key = repr[2..$];
+            string key = value[2..$];
             // set x 10
             // set y -$x
             //  → set y -10
@@ -122,7 +97,7 @@ class Atom : ListItem
             */
             foreach(value; values)
             {
-                context.push(value.inverted);
+                context.push(-value);
             }
         }
         else {
@@ -133,73 +108,224 @@ class Atom : ListItem
         context.exitCode = ExitCode.Proceed;
         return context;
     }
+}
 
-    override string asString()
+class IntegerAtom : ListItem
+{
+    int value;
+
+    this(int value)
     {
-        return this.repr;
+        this.value = value;
+        this.type = ObjectTypes.Integer;
+    }
+    IntegerAtom opUnary(string operator)
+    {
+        // TODO: filter by `operator`
+        return new IntegerAtom(-value);
     }
 
-    override int asInteger()
+    override bool toBool()
     {
-        switch(this.type)
-        {
-            case ObjectTypes.Integer:
-                return this.integer;
-            case ObjectTypes.Float:
-                return cast(int)this.floatingPoint;
-            default:
-                throw new Exception(
-                    "Cannot convert a "
-                    ~ to!string(this.type)
-                    ~ " into an integer"
-                );
-        }
+        return cast(bool)value;
     }
-    override float asFloat()
+    override int toInt()
     {
-        switch(this.type)
-        {
-            case ObjectTypes.Float:
-                return this.floatingPoint;
-            case ObjectTypes.Integer:
-                return cast(float)this.integer;
-            default:
-                throw new Exception(
-                    "Cannot convert a "
-                    ~ to!string(this.type)
-                    ~ " into a float"
-                );
-        }
+        return value;
     }
-    override bool asBoolean()
+    override float toFloat()
     {
-        if (this.type == ObjectTypes.Boolean)
+        return cast(float)value;
+    }
+    override string toString()
+    {
+        return to!string(value);
+    }
+
+    override ListItem operate(string operator, ListItem rhs, bool reversed)
+    {
+        if (reversed) return null;
+
+        debug {stderr.writeln(" > ", this.type, " ", operator, " ", rhs.type);}
+
+        if (rhs.type == ObjectTypes.Integer)
         {
-            return this.boolean;
+            auto t2 = cast(IntegerAtom)rhs;
+            int result = {
+                final switch(operator)
+                {
+                    // Logic:
+                    case "==":
+                        return this.value == t2.value;
+                    case ">":
+                        return this.value > t2.value;
+                    case ">=":
+                        return this.value >= t2.value;
+                    case "<":
+                        return this.value < t2.value;
+                    case "<=":
+                        return this.value <= t2.value;
+
+                    // Math:
+                    case "+":
+                        return this.value + t2.value;
+                    case "-":
+                        return this.value - t2.value;
+                    case "*":
+                        return this.value * t2.value;
+                    case "/":
+                        return this.value / t2.value;
+                }
+            }();
+            return new IntegerAtom(result);
+        }
+        else if (rhs.type == ObjectTypes.Float)
+        {
+            auto t2 = cast(FloatAtom)rhs;
+            debug {stderr.writeln(this.value, " ", operator, " ", t2.value);}
+            float result = {
+                final switch(operator)
+                {
+                    // Logic:
+                    case "==":
+                        return this.value == t2.value;
+                    case ">":
+                        return this.value > t2.value;
+                    case ">=":
+                        return this.value >= t2.value;
+                    case "<":
+                        return this.value < t2.value;
+                    case "<=":
+                        return this.value <= t2.value;
+
+                    // Math:
+                    case "+":
+                        return this.value + t2.value;
+                    case "-":
+                        return this.value - t2.value;
+                    case "*":
+                        return this.value * t2.value;
+                    case "/":
+                        return this.value / t2.value;
+                }
+            }();
+            return new FloatAtom(result);
+        }
+        return null;
+    }
+}
+
+class FloatAtom : ListItem
+{
+    float value;
+    this(float value)
+    {
+        this.value = value;
+        this.type = ObjectTypes.Float;
+    }
+    override bool toBool()
+    {
+        return cast(bool)value;
+    }
+    override int toInt()
+    {
+        return cast(int)value;
+    }
+    override float toFloat()
+    {
+        return value;
+    }
+    override string toString()
+    {
+        return to!string(this.value);
+    }
+
+    // Operators:
+    FloatAtom opUnary(string operator)
+    {
+        // TODO: filter by `operator`
+        return new FloatAtom(-value);
+    }
+
+    override ListItem operate(string operator, ListItem rhs, bool reversed)
+    {
+        if (reversed) return null;
+
+        debug {stderr.writeln(" > ", this.type, " ", operator, " ", rhs.type);}
+
+        FloatAtom t2;
+
+        if (rhs.type == ObjectTypes.Integer)
+        {
+            auto it2 = cast(IntegerAtom)rhs;
+            t2 = new FloatAtom(cast(float)it2.value);
+        }
+        else if (rhs.type == ObjectTypes.Float)
+        {
+            t2 = cast(FloatAtom)rhs;
         }
         else
         {
-            throw new Exception(
-                "Cannot convert a "
-                ~ to!string(this.type)
-                ~ " into a boolean"
-            );
+            return null;
         }
+
+        float result = {
+            final switch(operator)
+            {
+                case "+":
+                    return this.value + t2.value;
+                case "-":
+                    return this.value - t2.value;
+                case "*":
+                    return this.value * t2.value;
+                case "/":
+                    return this.value / t2.value;
+            }
+        }();
+        return new FloatAtom(result);
+    }
+}
+
+
+class BooleanAtom : ListItem
+{
+    bool value;
+    this(bool value)
+    {
+        this.value = value;
+        this.type = ObjectTypes.Boolean;
+    }
+    override bool toBool()
+    {
+        return cast(bool)value;
+    }
+    override int toInt()
+    {
+        return cast(int)value;
+    }
+    override float toFloat()
+    {
+        return value;
+    }
+    override string toString()
+    {
+        return to!string(value);
+    }
+}
+
+class OperatorAtom : ListItem
+{
+    string value;
+
+    this(string s)
+    {
+        value = s;
+        this.type = ObjectTypes.Operator;
     }
 
-    override ListItem inverted()
+    // Utilities and operators:
+    override string toString()
     {
-        switch(this.type)
-        {
-            case ObjectTypes.Integer:
-                return new Atom(-this.integer);
-            case ObjectTypes.Float:
-                return new Atom(-this.floatingPoint);
-            default:
-                throw new Exception(
-                    "Atom: don't know how to invert a "
-                    ~ to!string(this.type)
-                );
-        }
+        return this.value;
     }
 }

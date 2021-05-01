@@ -17,27 +17,6 @@ class Pid : ListItem
         this.process = process;
     }
 
-    override string asString()
-    {
-        return "PID(" ~ to!string(process.index) ~ ")";
-    }
-    override int asInteger()
-    {
-        return cast(int)process.index;
-    }
-    override float asFloat()
-    {
-        return cast(float)process.index;
-    }
-    override bool asBoolean()
-    {
-        return true;
-    }
-    override ListItem inverted()
-    {
-        throw new Exception("Cannot invert a PID");
-    }
-
     // TODO: extractions
     // state : process.state
     // msgbox.size

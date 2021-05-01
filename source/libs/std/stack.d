@@ -15,8 +15,7 @@ static this()
         int itemsCounter = 1;
         if (context.size > 0)
         {
-            auto argument = context.pop();
-            itemsCounter = argument.asInteger;
+            itemsCounter = context.pop!int;
         }
         // The items are already at the stack, we
         // just need to inform our caller how
@@ -68,13 +67,13 @@ static this()
             throw new Exception(
                 "Cannot reverse a "
                 ~ to!string(head.type)
-                ~ " (" ~ head.asString ~ ")"
+                ~ " (" ~ to!string(head) ~ ")"
             );
         }
         string copy = "";
-        copy ~= head.asString;
+        copy ~= to!string(head);
         char[] r = reverse!(char[])(cast(char[])copy);
-        context.push(new SimpleString(cast(string)r));
+        context.push(new SimpleString(to!string(r)));
 
         context.exitCode = ExitCode.CommandSuccess;
         return context;
@@ -83,7 +82,7 @@ static this()
     {
         auto t1 = context.pop();
         auto t2 = context.pop();
-        context.push(new Atom(t1.asString == t2.asString));
+        context.push(new BooleanAtom(t1 == t2));
         context.exitCode = ExitCode.CommandSuccess;
         return context;
     };

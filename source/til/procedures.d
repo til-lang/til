@@ -18,11 +18,11 @@ class Procedure
     SimpleList parameters;
     SubList body;
 
-    this(string name, ListItem parameters, ListItem body)
+    this(string name, SimpleList parameters, SubList body)
     {
         this.name = name;
-        this.parameters = cast(SimpleList)parameters;
-        this.body = cast(SubList)body;
+        this.parameters = parameters;
+        this.body = body;
     }
 
     CommandContext run(string name, CommandContext context)
@@ -43,16 +43,20 @@ class Procedure
                     ~ " \"" ~ name ~ "\"."
                 );
             }
-            string parameterName = parameter.asString;
+            string parameterName = to!string(parameter);
             auto argument = context.pop();
             newScope[parameterName] = argument;
         }
+        debug {stderr.writeln("caller scope:", context.escopo);}
         /*
         XXX : yeap, this is kind of messy, but
         we must make this copy...
         */
         newScope.stack = context.escopo.stack;
+        newScope.stackPointer = context.escopo.stackPointer;
         auto newContext = context.next(newScope, context.size);
+
+        debug {stderr.writeln("newScope:", newScope);}
 
         // RUN!
         newContext = newContext.escopo.run(body.subprogram, newContext);

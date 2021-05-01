@@ -17,8 +17,7 @@ class SubList : BaseList
     // Utilities and operators:
     override string toString()
     {
-        string s = this.subprogram.asString;
-        return "{" ~ s ~ "}";
+        return "{" ~ to!string(this.subprogram) ~ "}";
     }
 
     override CommandContext evaluate(CommandContext context)

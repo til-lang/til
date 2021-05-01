@@ -24,3 +24,5 @@ if ($x > 11) {
 } else {
     io.out "Correct: $x is lesser than 11 and 12."
 }
+
+io.out "END"

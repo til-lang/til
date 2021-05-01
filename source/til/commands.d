@@ -47,13 +47,13 @@ static this()
             }
 
             auto l1 = cast(SimpleList)firstArgument;
-            names = l1.items.map!(x => x.asString).array;
+            names = l1.items.map!(x => to!string(x)).array;
 
             Items values;
 
             auto l2 = cast(SimpleList)secondArgument;
             context = l2.forceEvaluate(context);
-            auto l3 = cast(SimpleList)context.pop();
+            auto l3 = context.pop!SimpleList;
             values = l3.items;
 
             if (values.length < names.length)
@@ -81,7 +81,7 @@ static this()
         }
         else
         {
-            context.escopo[firstArgument.asString] = context.items;
+            context.escopo[to!string(firstArgument)] = context.items;
         }
 
         context.exitCode = ExitCode.CommandSuccess;
@@ -98,7 +98,7 @@ static this()
         import std.stdio;
         import std.file;
 
-        string filePath = context.pop().asString;
+        string filePath = context.pop!string;
         auto f = File(filePath, "r");
         string code = "";
         foreach(line; f.byLine)
@@ -120,20 +120,21 @@ static this()
     commands["import"] = (string path, CommandContext context)
     {
         // import std.io as x
-        auto modulePath = context.pop().asString;
+        auto modulePath = context.pop!string;
         string newName = modulePath;
 
         // import std.io as x
         if (context.size == 2)
         {
-            auto as = context.pop().asString;
-            if (as != "as")
+            string asWord = context.pop!string;
+            debug {stderr.writeln("asWord:", asWord);}
+            if (asWord != "as")
             {
                 throw new InvalidException(
                     "Invalid syntax for import"
                 );
             }
-            newName = context.pop().asString;
+            newName = context.pop!string;
         }
         context.escopo.program.importModule(modulePath, newName);
 
@@ -151,13 +152,15 @@ static this()
         {
             while(true)
             {
-                auto conditions = cast(SimpleList)context.pop();
-                auto thenBody = cast(SubList)context.pop();
+                auto conditions = context.pop!SimpleList;
+                auto thenBody = context.pop!SubList;
 
                 debug {stderr.writeln("context before conditions evaluation:", context);}
                 conditions.forceEvaluate(context);
+                // auto resultContext = boolean(context.next(1));
                 context.run(&boolean, 1);
-                auto isConditionTrue = context.pop().asBoolean;
+
+                auto isConditionTrue = context.pop!bool;
                 debug {stderr.writeln("context AFTER conditions evaluation:", context);}
 
                 debug {stderr.writeln(conditions, " is ", isConditionTrue);}
@@ -177,7 +180,7 @@ static this()
                 // else if {...}
                 else
                 {
-                    auto elseWord = context.pop().asString;
+                    auto elseWord = context.pop!string;
                     if (elseWord != "else")
                     {
                         throw new InvalidException(
@@ -191,12 +194,12 @@ static this()
                     // If only one part is left, it's for sure the last "else":
                     if (context.size == 1)
                     {
-                        auto elseBody = cast(SubList)context.pop();
+                        auto elseBody = context.pop!SubList;
                         return context.escopo.run(elseBody.subprogram);
                     }
                     else
                     {
-                        auto ifWord = context.pop().asString;
+                        auto ifWord = context.pop!string;
                         if (ifWord != "if")
                         {
                             throw new InvalidException(
@@ -220,8 +223,8 @@ static this()
 
     commands["foreach"] = (string path, CommandContext context)
     {
-        auto argName = context.pop().asString;
-        auto argBody = cast(SubList)context.pop();
+        auto argName = context.pop!string;
+        auto argBody = context.pop!SubList;
 
         /*
         Do NOT create a new scope for the
@@ -244,8 +247,10 @@ static this()
         }
 
         uint index = 0;
+        debug {stderr.writeln("foreach context.stream: ", context.stream);}
         foreach(item; context.stream)
         {
+            debug {stderr.writeln("foreach item: ", item);}
             loopScope[argName] = item;
 
             context = loopScope.run(argBody.subprogram);
@@ -333,10 +338,10 @@ static this()
             }
         }
 
-        auto varName = context.pop().asString;
-        auto body = context.pop();  // SubList
+        auto varName = context.pop!string;
+        auto body = context.pop!SubList;
 
-        auto newStream = new TransformRange(context.stream, varName, cast(SubList)body, context.escopo);
+        auto newStream = new TransformRange(context.stream, varName, body, context.escopo);
         context.exitCode = ExitCode.CommandSuccess;
         context.stream = newStream;
         return context;
@@ -388,14 +393,14 @@ static this()
                     if (variable.type == ObjectTypes.InputName)
                     {
                         // Assignment
-                        escopo[variable.asString] = item;
+                        escopo[to!string(variable)] = item;
                         matched++;
                     }
                     else
                     {
                         // Comparison
-                        string value = variable.asString;
-                        if (value == item.asString)
+                        string value = to!string(variable);
+                        if (value == to!string(item))
                         {
                             matched++;
                         }
@@ -429,9 +434,9 @@ static this()
             }
         }
 
-        auto argNames = cast(SimpleList)context.pop();
+        auto argNames = context.pop!SimpleList;
         auto variables = argNames.items;
-        auto body = cast(SubList)context.pop();
+        auto body = context.pop!SubList;
 
         auto newStream = new CaseRange(context.stream, variables, body, context.escopo);
         context.stream = newStream;
@@ -446,9 +451,9 @@ static this()
     {
         // proc name (parameters) {body}
 
-        string name = context.pop().asString;
-        ListItem parameters = context.pop();
-        ListItem body = context.pop();
+        string name = context.pop!(string);
+        auto parameters = context.pop!SimpleList;
+        auto body = context.pop!SubList;
 
         auto proc = new Procedure(
             name,
@@ -494,7 +499,7 @@ static this()
         uplevel set x 1 2 3  ← this command has 5 arguments
            -    set x 1 2 3  ← and this one has 4
         */
-        auto cmdName = context.pop().asString;
+        auto cmdName = context.pop!(string);
 
         /*
         Also important to remember: `uplevel` is a command itself.
@@ -543,7 +548,7 @@ static this()
     commands["spawn"] = (string path, CommandContext context)
     {
         // set pid [spawn f $x]
-        auto commandName = context.pop().asString;
+        auto commandName = context.pop!string;
         Items arguments = context.items;
 
         auto command = new Command(commandName, arguments);
@@ -560,7 +565,7 @@ static this()
     commands["send"] = (string path, CommandContext context)
     {
         // send $pid "any ListItem"
-        auto pid = cast(Pid)context.pop();
+        auto pid = context.pop!Pid;
         auto message = context.pop();
 
         pid.send(message);
@@ -569,24 +574,6 @@ static this()
         return context;
     };
     commands["receive"] = (string path, CommandContext context)
-    {
-        // receive | foreach msg { ... }
-        auto rootProcess = context.escopo.getRoot();
-        debug {
-            stderr.writeln(
-                "process ", context.escopo.index,
-                " has root ", rootProcess.index
-            );
-            stderr.writeln(
-                "receiving in ", rootProcess.index,
-                " : ", rootProcess.msgbox
-            );
-        }
-        context.stream = new MsgboxRange(rootProcess);
-        context.exitCode = ExitCode.CommandSuccess;
-        return context;
-    };
-    commands["receive.wait"] = (string path, CommandContext context)
     {
         // receive.wait | foreach msg { ... }
         auto rootProcess = context.escopo.getRoot();
@@ -625,15 +612,15 @@ static this()
         // error "segmentation fault" 11 os
         if (context.size > 0)
         {
-            message = context.pop().asString;
+            message = context.pop!string;
         }
         if (context.size > 0)
         {
-            code = context.pop().asInteger;
+            code = context.pop!int;
         }
         if (context.size > 0)
         {
-            classe = context.pop().asString;
+            classe = context.pop!string;
         }
 
         return context.error(message, code, classe);

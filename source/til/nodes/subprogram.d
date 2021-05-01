@@ -37,10 +37,4 @@ class SubProgram
         }
         return s;
     }
-    string asString()
-    {
-        return to!string(pipelines
-            .map!(x => x.asString)
-            .joiner("\n"));
-    }
 }

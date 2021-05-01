@@ -79,7 +79,7 @@ int main(string[] args)
         {
             stderr.writeln("ERROR");
             auto e = cast(Erro)fiber.context.pop();
-            stderr.writeln(e.asString);
+            stderr.writeln(e);
             returnCode = e.code;
         }
         else
@@ -87,7 +87,7 @@ int main(string[] args)
             stderr.writeln("Success");
             foreach(item; fiber.context.items)
             {
-                stderr.writeln(item.asString);
+                stderr.writeln(item);
             }
         }
     }

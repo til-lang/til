@@ -1,33 +1,21 @@
 proc p (name) {
-    range.time | foreach t {
-        io.out "$name enter: $t"
-        receive | foreach msg {
-            io.out " Process $name received message '$msg ($t)'"
-            return
-        }
-        io.out "  $name exit: $t"
+    io.out "$name enter"
+    receive | foreach msg {
+        io.out " Process $name received message: $msg"
+        break
     }
-    io.out "range.time exited"
-}
-proc p_wait (name) {
-    range.time | foreach t {
-        io.out "$name enter: $t"
-        receive.wait | foreach msg {
-            io.out " Process $name received message '$msg ($t)'"
-            return
-        }
-        io.out "  $name exit: $t"
-    }
-    io.out "range.time exited"
+    io.out "  $name END"
 }
 
-set p1 [spawn p_wait "alfa"]
+set p1 [spawn p "alfa"]
 set p2 [spawn p "beta"]
-# set p3 [spawn p "gama"]
+set p3 [spawn p "gama"]
 
 io.out "Sending message to p1"
 send $p1 "p1 is alfa"
 io.out "Sending message to p2"
 send $p2 "p2 is beta"
-# io.out "Sending message to p3"
-# send $p3 "p3 is gama"
+io.out "Sending message to p3"
+send $p3 "p3 is gama"
+
+io.out "END"

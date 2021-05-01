@@ -1,9 +1,28 @@
-import std.io as io
-import std.math as math
+io.out "Integer math:"
+io.out "1 * 0: " [math (1 * 0)]
+io.out "1 + 0: " [math (1 + 0)]
+io.out "4 / 2: " [math (4 / 2)]
+io.out "5 - 2: " [math (5 - 2)]
+io.out "1 + 2 * 3: " [math (1 + 2 * 3)]
 
-io.out [math.run 1 * 0]
-io.out [math.run 1 + 0]
-io.out [math.run 4 / 2]
-io.out [math.run 5 - 2]
-io.out "..."
-io.out [math.run 1 + 2 * 3]
+io.out "Float math:"
+io.out " Float : Integer"
+io.out "1.1 * 0: " [math (1.1 * 0)]
+io.out "1.2 + 0: " [math (1.2 + 0)]
+io.out "4.3 / 2: " [math (4.3 / 2)]
+io.out "5.4 - 2: " [math (5.4 - 2)]
+io.out "1.5 + 2 * 3: " [math (1.5 + 2 * 3)]
+
+io.out " Integer : Float"
+io.out "1 * 0.1: " [math (1 * 0.1)]
+io.out "1 + 0.2: " [math (1 + 0.2)]
+io.out "4 / 2.3: " [math (4 / 2.3)]
+io.out "5 - 2.4: " [math (5 - 2.4)]
+io.out "1 + 2.5 * 3: " [math (1 + 2.5 * 3)]
+
+io.out " Float : Float"
+io.out "1.1 * 0.1: " [math (1.1 * 0.1)]
+io.out "1.2 + 0.2: " [math (1.2 + 0.2)]
+io.out "4.3 / 2.3: " [math (4.3 / 2.3)]
+io.out "5.4 - 2.4: " [math (5.4 - 2.4)]
+io.out "1.5 + 2.5 * 3.5: " [math (1.5 + 2.5 * 3.5)]

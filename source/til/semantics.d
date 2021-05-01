@@ -237,7 +237,7 @@ SimpleList analyseSimpleList(ParseTree p)
 }
 
 // Strings:
-String analyseString(ParseTree p)
+SimpleString analyseString(ParseTree p)
 {
     foreach(index, child; p.children)
     {
@@ -294,51 +294,31 @@ SubstString analyseSubstString(ParseTree p)
     return new SubstString(parts, substitutions);
 }
 
-Atom analyseAtom(ParseTree p)
+ListItem analyseAtom(ParseTree p)
 {
     string str = p.matches.join("");
-    auto atom = new Atom(str);
 
     foreach(child; p.children)
     {
         final switch(child.name)
         {
             case "Til.Name":
-                if (str[0] == '>')
-                {
-                    atom.type = ObjectTypes.InputName;
-                    atom.repr = str[1..$];
-                }
-                else
-                {
-                    atom.type = ObjectTypes.Name;
-                }
-                break;
+                return new NameAtom(str);
             case "Til.Float":
-                atom.floatingPoint = to!float(str);
-                atom.type = ObjectTypes.Float;
-                break;
+                return new FloatAtom(to!float(str));
             case "Til.Integer":
-                atom.integer = to!int(str);
-                atom.type = ObjectTypes.Integer;
-                break;
+                return new IntegerAtom(to!int(str));
             case "Til.UnitInteger":
                 str = p.matches[0];
                 string unit = p.matches[1];
-                atom.integer = to!int(str) * unitsMap[unit];
-                atom.repr = to!string(atom.integer);
-                atom.type = ObjectTypes.Integer;
-                break;
+                return new IntegerAtom(to!int(str) * unitsMap[unit]);
             case "Til.Boolean":
-                atom.boolean = (
+                return new BooleanAtom(
                     child.children[0].name == "Til.BooleanTrue"
                 );
-                atom.type = ObjectTypes.Boolean;
-                break;
             case "Til.Operator":
-                atom.type = ObjectTypes.Operator;
-                break;
+                return new OperatorAtom(str);
         }
     }
-    return atom;
+    assert(0);
 }

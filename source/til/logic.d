@@ -7,11 +7,18 @@ import til.math;
 import til.nodes;
 import til.ranges;
 
+debug
+{
+    import std.stdio;
+}
+
 
 CommandContext boolean(CommandContext context)
 {
+    assert(context.size == 1);
     // Resolve any math beforehand:
     auto resolvedContext = int_run(context);
+    assert(resolvedContext.size == 1);
     return pureBoolean(resolvedContext);
 }
 
@@ -33,41 +40,23 @@ CommandContext pureBoolean(CommandContext context)
 
         // It was pushed in reading order...
         auto t2 = context.pop();
-        auto operatorName = context.pop().asString;
+        auto operator = context.pop!string;
         auto t1 = context.pop();
 
-        bool newResult = {
-            switch(operatorName)
-            {
-                // -----------------------------------------------
-                // Operators implementations:
-                // XXX: this could be entirely made at compile
-                // time, I assume...
-                case "==":
-                    if (t1.type == ObjectTypes.String && t2.type == ObjectTypes.String)
-                    {
-                        return (t1.asString == t2.asString);
-                    }
-                    else
-                    {
-                        return (t1.asInteger == t2.asInteger);
-                    }
-                case "<":
-                    return (t1.asInteger < t2.asInteger);
-                case ">":
-                    return (t1.asInteger > t2.asInteger);
-                case ">=":
-                    return (t1.asInteger >= t2.asInteger);
-                case "<=":
-                    return (t1.asInteger <= t2.asInteger);
-                default:
-                    throw new Exception(
-                        "Unknown operator: "
-                        ~ operatorName
-                    );
-            }
-        }();
-        currentResult = currentResult || newResult;
+        ListItem newResult = t1.operate(operator, t2, false);
+        if (newResult is null)
+        {
+            newResult = t2.operate(operator, t1, true);
+        }
+
+        if (newResult is null)
+        {
+            throw new Exception(
+                "Unknown operator: "
+                ~ operator
+            );
+        }
+        currentResult = currentResult || newResult.toBool();
     }
 
     // -----------------------------------------------
@@ -81,19 +70,21 @@ CommandContext pureBoolean(CommandContext context)
     */
     void and(ulong index)
     {
+        debug {stderr.writeln("context before AND: ", context);}
         auto nextList = new SimpleList(items[index..$]);
         context.push(nextList);
 
-        auto context = boolean(context);
+        context = boolean(context.next(1));
         auto newResult = context.pop();
-        currentResult = currentResult && newResult.asBoolean;
+        currentResult = currentResult && newResult.toBool();
+        debug {stderr.writeln("context after AND: ", context);}
     }
 
     // -----------------------------------------------
     // The loop:
     foreach(index, item; items)
     {
-        string s = item.asString;
+        string s = to!string(item);
 
         if (item.type == ObjectTypes.Operator)
         {
@@ -116,7 +107,8 @@ CommandContext pureBoolean(CommandContext context)
             listContext = boolean(listContext);
             // There should be an Atom(bool) at the top of the stack.
             auto newResult = listContext.pop();
-            currentResult = currentResult || newResult.asBoolean;
+            debug {stderr.writeln("newResult for OR: ", newResult);}
+            currentResult = currentResult || newResult.toBool();
             continue;
         }
 
@@ -127,7 +119,7 @@ CommandContext pureBoolean(CommandContext context)
         }
         else if (item.type == ObjectTypes.Boolean)
         {
-            currentResult = currentResult || item.asBoolean;
+            currentResult = currentResult || item;
             continue;
         }
         // Not an operator? Must be a value...
@@ -135,5 +127,9 @@ CommandContext pureBoolean(CommandContext context)
         operate();
     }
     context.push(currentResult);
+    debug {
+        stderr.writeln(" pureBoolean result for ", list, " : ", currentResult);
+    }
+    assert(context.size == 1);
     return context;
 }

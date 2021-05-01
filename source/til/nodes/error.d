@@ -32,40 +32,17 @@ class Erro : ListItem
         this.classe = classe;
     }
 
-    override string asString()
-    {
-        return "Error class=" ~ classe
-               ~ " code=" ~ to!string(code)
-               ~ " message=" ~ message;
-    }
-    override int asInteger()
-    {
-        return code;
-    }
-    override float asFloat()
-    {
-        return cast(float)code;
-    }
-    override bool asBoolean()
-    {
-        return false;
-    }
-    override ListItem inverted()
-    {
-        throw new Exception("Cannot invert an Error");
-    }
-
     override ListItem extract(Items items)
     {
         if (items.length == 0) return this;
-        auto arg = items.map!(x => x.asString).join(" ");
+        auto arg = items.map!(x => to!string(x)).join(" ");
 
         switch(arg)
         {
             case "code":
-                return new Atom(code);
+                return new IntegerAtom(code);
             case "process id":
-                return new Atom(process.index);
+                return new IntegerAtom(process.index);
             default:
                 throw new Exception(
                     "`" ~ arg ~ "` extraction not implemented"

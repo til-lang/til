@@ -18,7 +18,7 @@ static this()
             SimpleList l = cast(SimpleList)argument;
             ListItem value = l.items.back;
             l.items.popBack();
-            string key = to!string(l.items.map!(x => x.asString).join("."));
+            string key = to!string(l.items.map!(x => to!string(x)).join("."));
             dict[key] = value;
         }
         context.push(dict);
@@ -38,7 +38,7 @@ static this()
         {
             SimpleList kvList = cast(SimpleList)kvPair;
             auto value = kvList.items.back;
-            auto key = to!string(kvList.items[0..$-1].map!(x => x.asString).join("."));
+            auto key = to!string(kvList.items[0..$-1].map!(x => to!string(x)).join("."));
             dict[key] = value;
         }
         context.exitCode = ExitCode.CommandSuccess;

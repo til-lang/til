@@ -63,13 +63,19 @@ class Process
     Items opIndex(string name)
     {
         Items* value = (name in this.variables);
-        if (value is null && this.parent !is null)
+        if (value is null)
         {
-            return this.parent[name];
+            if (this.parent !is null)
+            {
+                return this.parent[name];
+            }
+            else
+            {
+                throw new Exception(name ~ " variable not found!");
+            }
         }
         else
         {
-            debug {stderr.writeln(name, " is ", *value);}
             return *value;
         }
     }
@@ -86,21 +92,23 @@ class Process
     }
 
     // The Stack:
+    string stackAsString()
+    {
+        if (stackPointer == 0) return "empty";
+        return to!string(stack[0..stackPointer]);
+
+    }
+
     ListItem peek()
     {
         /*
-        Just look at the first item, do
+        Just LOOK at the first item, do
         not pop it off.
         */
         return stack[stackPointer-1];
     }
     ListItem pop()
     {
-        debug {
-            stderr.writeln("process.pop");
-            stderr.writeln(" stack: ", stack[0..stackPointer]);
-            stderr.writeln(" SP: ", stackPointer);
-        }
         auto item = stack[--stackPointer];
         return item;
     }
@@ -110,11 +118,6 @@ class Process
     }
     Items pop(ulong count)
     {
-        debug {
-            stderr.writeln("process.pop(", count, ")");
-            stderr.writeln(" stack: ", stack[0..stackPointer]);
-            stderr.writeln(" SP: ", stackPointer);
-        }
         Items items;
         foreach(i; 0..count)
         {
@@ -124,15 +127,34 @@ class Process
     }
     void push(ListItem item)
     {
-        debug {stderr.writeln("process.push ", item);}
         stack[stackPointer++] = item;
-        debug {stderr.writeln(" stack: ", stack[0..stackPointer]);}
     }
-    template push(T)
+    template push(T : int)
     {
         void push(T x)
         {
-            this.push(new Atom(x));
+            return push(new IntegerAtom(x));
+        }
+    }
+    template push(T : float)
+    {
+        void push(T x)
+        {
+            return push(new FloatAtom(x));
+        }
+    }
+    template push(T : bool)
+    {
+        void push(T x)
+        {
+            return push(new BooleanAtom(x));
+        }
+    }
+    template push(T : string)
+    {
+        void push(T x)
+        {
+            return push(new NameAtom(x));
         }
     }
 
@@ -158,8 +180,10 @@ class Process
     {
         string s = "Process[" ~ to!string(this.index) ~ "]";
         s ~= "(" ~ program.name ~ "):\n";
+        return s;
+        /*
 
-        s ~= "STACK:" ~ to!string(stack[0..stackPointer]) ~ "\n";
+        s ~= "STACK:" ~ stackAsString ~ " SP:" ~ to!string(stackPointer) ~ "\n";
         foreach(name, value; variables)
         {
             s ~= " " ~ name ~ "=<" ~ to!string(value) ~">\n";
@@ -172,6 +196,7 @@ class Process
         }
         s ~= "\n";
         return s;
+        */
     }
 
     // Commands
@@ -187,6 +212,8 @@ class Process
         that is the option that makes
         more sense.
         */
+
+        debug {stderr.writeln("getCommand ", name, " in ", this);}
 
         CommandHandler* handler;
 

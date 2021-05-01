@@ -59,7 +59,7 @@ static this()
             throw new Exception(libraryName ~ " was not loaded");
         }
 
-        auto functionName = context.pop().asString;
+        auto functionName = context.pop!string;
         auto functionNameZ = functionName.toStringz;
 
         fnCall(lh, functionNameZ);
@@ -84,14 +84,14 @@ static this()
     commands["load"] = (string path, CommandContext context)
     {
         // sharedlib.load "libhello.so" as h
-        auto libraryPath = context.pop().asString;
+        auto libraryPath = context.pop!string;
         auto libraryPathZ = libraryPath.toStringz;
 
         if (context.size != 2)
         {
             throw new Exception("Invalid number of arguments to `load`");
         }
-        auto asWord = context.pop().asString;
+        auto asWord = context.pop!string;
         if (asWord != "as")
         {
             throw new Exception(
@@ -99,7 +99,7 @@ static this()
                 ~ " Usage: load \"libname.so\" as name"
             );
         }
-        auto cmdName = context.pop().asString;
+        auto cmdName = context.pop!string;
 
         // lh = "library handler"
         void* lh = dlopen(libraryPathZ, RTLD_LAZY);
@@ -122,7 +122,7 @@ static this()
     };
     commands["unload"] = (string path, CommandContext context)
     {
-        auto libraryName = context.pop().asString;
+        auto libraryName = context.pop!string;
         lhUnload(libraryName);
 
         context.exitCode = ExitCode.CommandSuccess;
@@ -130,7 +130,7 @@ static this()
     };
     commands["call"] = (string path, CommandContext context)
     {
-        auto cmdName = context.pop().asString;
+        auto cmdName = context.pop!string;
         void* lh = sharedLibraries.get(cmdName, null);
         if (lh is null)
         {
@@ -142,7 +142,7 @@ static this()
             throw new Exception("Wrong arguments to `call`");
         }
 
-        auto functionName = context.pop().asString;
+        auto functionName = context.pop!string;
         auto functionNameZ = functionName.toStringz;
 
         fnCall(lh, functionNameZ);

@@ -2,13 +2,14 @@ module til.nodes.string;
 
 import til.nodes;
 
-
-// A string without substitutions:
-class String : ListItem
+debug
 {
+    import std.stdio;
 }
 
-class SimpleString : String
+
+// A string without substitutions:
+class SimpleString : ListItem
 {
     string repr;
 
@@ -18,47 +19,61 @@ class SimpleString : String
         this.type = ObjectTypes.String;
     }
 
-    // Operators:
+    // Conversions:
     override string toString()
     {
-        return '"' ~ this.repr ~ '"';
+        return this.repr;
     }
 
+    // Operators:
+    override ListItem operate(string operator, ListItem rhs, bool reversed)
+    {
+        if (reversed) return null;
+        if (rhs.type != ObjectTypes.String) return null;
+
+        /*
+        Remember: we are receiving and
+        already-evaluated value, so
+        it can only be a
+        SimpleString.
+        */
+        auto t2 = cast(SimpleString)rhs;
+
+        return new BooleanAtom(this.repr == t2.repr);
+    }
+
+
+
+    // 
     override CommandContext evaluate(CommandContext context)
     {
         context.push(this);
         return context;
     }
 
-    override string asString()
+    template opCast(T : string)
     {
-        return this.repr;
-    }
-    override int asInteger()
-    {
-        throw new Exception("Cannot convert a String into an integer");
-    }
-    override float asFloat()
-    {
-        throw new Exception("Cannot convert a String into a float");
-    }
-    override bool asBoolean()
-    {
-        throw new Exception("Cannot convert a String into a boolean");
-    }
-    override ListItem inverted()
-    {
-        string newRepr;
-        string repr = this.asString;
-        if (repr[0] == '-')
+        string opCast()
         {
-            newRepr = repr[1..$];
+            return this.repr;
         }
-        else
+    }
+    template opUnary(string operator)
+    {
+        override ListItem opUnary()
         {
-            newRepr = "-" ~ repr;
+            string newRepr;
+            string repr = to!string(this);
+            if (repr[0] == '-')
+            {
+                newRepr = repr[1..$];
+            }
+            else
+            {
+                newRepr = "-" ~ repr;
+            }
+            return new SimpleString(newRepr);
         }
-        return new SimpleString(newRepr);
     }
 
     // -----------------------------
@@ -71,13 +86,13 @@ class SimpleString : String
         {
             if (arguments.length == 2 && arguments[1].type == ObjectTypes.Integer)
             {
-                auto idx1 = firstArgument.asInteger;
-                auto idx2 = arguments[1].asInteger;
+                auto idx1 = firstArgument.toInt;
+                auto idx2 = arguments[1].toInt;
                 return new SimpleString(this.repr[idx1..idx2]);
             }
             else if (arguments.length == 1)
             {
-                auto idx = firstArgument.asInteger;
+                auto idx = firstArgument.toInt;
                 return new SimpleString(this.repr[idx..idx+1]);
             }
         }
@@ -101,9 +116,9 @@ class SubstString : SimpleString
     // Operators:
     override string toString()
     {
-        return '"' ~ to!string(this.parts
+        return to!string(this.parts
             .map!(x => to!string(x))
-            .joiner("")) ~ '"';
+            .joiner(""));
     }
 
     override CommandContext evaluate(CommandContext context)
@@ -112,6 +127,7 @@ class SubstString : SimpleString
         string subst;
         string value;
 
+        debug {stderr.writeln("SubstString.evaluate: ", parts);}
         foreach(index, part;parts)
         {
             subst = this.substitutions.get(cast(int)index, null);
@@ -129,7 +145,7 @@ class SubstString : SimpleString
                 else
                 {
                     result ~= to!string(values
-                        .map!(x => x.asString)
+                        .map!(x => to!string(x))
                         .joiner(" "));
                 }
             }
@@ -138,10 +154,5 @@ class SubstString : SimpleString
         context.push(new SimpleString(result));
         context.exitCode = ExitCode.Proceed;
         return context;
-    }
-
-    override string asString()
-    {
-        return to!string(this.parts.joiner(""));
     }
 }

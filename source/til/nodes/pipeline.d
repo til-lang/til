@@ -18,10 +18,6 @@ class Pipeline
 
     override string toString()
     {
-        return "<<" ~ this.asString ~ ">>";
-    }
-    string asString()
-    {
         return to!string(commands
             .map!(x => to!string(x))
             .joiner(" | "));

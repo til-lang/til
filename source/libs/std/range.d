@@ -6,6 +6,11 @@ import std.conv;
 import til.nodes;
 import til.ranges;
 
+debug
+{
+    import std.stdio;
+}
+
 
 class IntegerRange : InfiniteRange
 {
@@ -46,7 +51,7 @@ class IntegerRange : InfiniteRange
     }
     override ListItem front()
     {
-        return new Atom(current);
+        return new IntegerAtom(current);
     }
     override bool empty()
     {
@@ -83,14 +88,25 @@ class ItemsRange : Range
 
 class TimeRange : InfiniteRange
 {
+    float current = 0.23;
     override ListItem front()
     {
+        current += 1.0;
+        debug {stderr.writeln("TimeRange.front(): ", current);}
+        return new FloatAtom(current);
+        /*
         time_t tx;
         auto t = time(&tx);
-        return new Atom(tx);
+        return new FloatAtom(tx);
+        */
     }
     override void popFront()
     {
+    }
+
+    override string toString()
+    {
+        return "TimeRange";
     }
 }
 
@@ -107,11 +123,11 @@ static this()
            range 10 20    # [10, 20]
            range 10 14 2  # 10 12 14
         */
-        auto start = context.pop().asInteger;
+        auto start = context.pop!int;
         int limit = 0;
         if (context.size)
         {
-            limit = context.pop().asInteger;
+            limit = context.pop!int;
         }
         else
         {
@@ -127,7 +143,7 @@ static this()
         int step = 1;
         if (context.size)
         {
-            step = context.pop().asInteger;
+            step = context.pop!int;
         }
 
         auto range = new IntegerRange(start, limit, step);
@@ -140,7 +156,7 @@ static this()
         /*
         range (1 2 3 4 5)
         */
-        SimpleList list = cast(SimpleList)context.pop();
+        SimpleList list = context.pop!SimpleList;
         context.stream = new ItemsRange(list.items);
         return context;
     }

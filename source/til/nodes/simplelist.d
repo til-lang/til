@@ -10,9 +10,6 @@ class SimpleList : BaseList
        Its primary use is for passing parameters
        for `if`, for instance, like
        if ($x > 10) {...}
-       Also, its asInteger, asFloat and asBoolean methods
-       must be implemented (so that `if`, for instance,
-       can simply call it without much worries).
     */
 
     this(Items items)
@@ -25,12 +22,8 @@ class SimpleList : BaseList
     // Utilities and operators:
     override string toString()
     {
-        return "(" ~ this.asString ~ ")";
-    }
-    override string asString()
-    {
         return to!string(this.items
-            .map!(x => x.asString)
+            .map!(x => to!string(x))
             .joiner(" "));
     }
 
@@ -103,11 +96,11 @@ class SimpleList : BaseList
                 // <(1 2 3) 0> → 1  (not inside any list)
                 else if (arguments.length == 1)
                 {
-                    return items[firstArgument.asInteger];
+                    return items[firstArgument.toInt];
                 }
                 break;
             case ObjectTypes.Name:
-                auto str = firstArgument.asString;
+                auto str = firstArgument.toString;
                 switch(str)
                 {
                     case "head":
@@ -125,7 +118,7 @@ class SimpleList : BaseList
         // else...
         throw new Exception(
             "Extraction not implemented in SimpleList for ("
-            ~ to!string(arguments.map!(x => x.toString).join(" "))
+            ~ to!string(arguments.map!(x => to!string(x)).join(" "))
             ~ ")"
         );
     }

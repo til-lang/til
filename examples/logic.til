@@ -41,8 +41,11 @@ if ((($a < $b && 55 > 57) || ($a < $b && (97 > 98 || 12 < 34)))) {
     io.out "Lots of parentesis is WRONG"
 }
 
+#        t    f     f     f      t    f      t    f     f
 if ((($a < $b && 55 > 57) || ($a < $b && (97 < 98 && 12 > 34)))) {
     io.out "Second lot of parentesis is WRONG"
 } else {
     io.out "Second lot of parentesis is okay"
 }
+
+io.out "END"

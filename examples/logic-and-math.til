@@ -1,18 +1,19 @@
-import std.io as std
+io.out "START"
+io.out "Expected: 2 'Correct'."
 
 set a 1
 set b 2
 
 if ($a > $b + 3) {
-    std.out "Wrong!"
+    io.out "Wrong! [1]"
 } else {
-    std.out "Correct."
+    io.out "Correct. [1]"
 }
 
 if ($a + 1 >= $b) {
-    std.out "Correct."
+    io.out "Correct. [2]"
 } else {
-    std.out "Wrong!"
+    io.out "Wrong! [2]"
 }
 
-std.out "End"
+io.out "END"

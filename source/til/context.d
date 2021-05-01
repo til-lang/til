@@ -1,8 +1,14 @@
 module til.context;
 
+import std.array;
+
 import til.nodes;
 import til.ranges;
 
+debug
+{
+    import std.stdio;
+}
 
 struct CommandContext
 {
@@ -47,14 +53,14 @@ struct CommandContext
         // shared between commands int the
         // pipeline:
         newContext.stream = this.stream;
-        newContext.escopo = escopo;
         return newContext;
     }
 
     string toString()
     {
-        string s = "STACK:" ~ to!string(escopo.stack[0..escopo.stackPointer]);
+        string s = "STACK:" ~ to!string(escopo.stackAsString);
         s ~= " (" ~ to!string(size) ~ ")";
+        s ~= " process " ~ to!string(this.escopo.index);
         return s;
     }
 
@@ -62,6 +68,48 @@ struct CommandContext
     ListItem peek()
     {
         return escopo.peek();
+    }
+    template pop(T : ListItem)
+    {
+        T pop()
+        {
+            auto info = typeid(T);
+            debug {stderr.writeln("popping as a class: ", info);}
+            auto value = this.pop();
+            return cast(T)value;
+        }
+    }
+    template pop(T : int)
+    {
+        T pop()
+        {
+            auto value = this.pop();
+            return value.toInt;
+        }
+    }
+    template pop(T : float)
+    {
+        T pop()
+        {
+            auto value = this.pop();
+            return value.toFloat;
+        }
+    }
+    template pop(T : bool)
+    {
+        T pop()
+        {
+            auto value = this.pop();
+            return value.toBool;
+        }
+    }
+    template pop(T : string)
+    {
+        T pop()
+        {
+            auto value = this.pop();
+            return value.toString;
+        }
     }
     ListItem pop()
     {

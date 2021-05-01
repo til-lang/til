@@ -22,7 +22,7 @@ class Command
     override string toString()
     {
         // return "cmd(" ~ this.name ~ to!string(this.arguments) ~ ")";
-        return "cmd(" ~ this.name ~ ")";
+        return this.name;
     }
 
     CommandContext evaluateArguments(CommandContext context)
@@ -36,7 +36,10 @@ class Command
             Each item already pushes its evaluation
             result into the stack
             */
-            debug {stderr.writeln("   evaluating argument ", argument);}
+            debug {
+                stderr.writeln("   evaluating argument ", argument);
+                stderr.writeln("    in context ", context);
+            }
             context = argument.evaluate(context.next);
             realArgumentsCounter += context.size;
         }
@@ -55,7 +58,7 @@ class Command
         {
             debug {
                 stderr.writeln("getCommand ", this.name);
-                stderr.writeln(" ", context.escopo);
+                stderr.writeln(" process:", context.escopo);
             }
             this.handler = context.escopo.getCommand(this.name);
             if (this.handler is null)
@@ -69,10 +72,6 @@ class Command
 
         // evaluate arguments and set proper context.size:
         context = this.evaluateArguments(context);
-
-        debug {
-            stderr.writeln("  context for ", this, " is now: ", context);
-        }
 
         return this.runHandler(context, this.handler);
     }

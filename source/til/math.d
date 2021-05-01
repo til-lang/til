@@ -1,10 +1,21 @@
 module til.math;
 
+import std.algorithm : canFind;
 import std.conv : to;
 import std.range;
 
 import til.nodes;
 import til.ranges;
+
+debug
+{
+    import std.stdio;
+}
+
+string[][2] precedences = [
+    ["*", "/"],
+    ["+", "-"],
+];
 
 CommandContext int_run(CommandContext context)
 {
@@ -15,12 +26,16 @@ CommandContext int_run(CommandContext context)
     resolve → 7
     */
     assert(context.size == 1);
-    auto r1Context = int_run(context, &int_precedence_1);
-    auto r2Context = int_run(r1Context, &int_precedence_2);
-    return r2Context;
+    CommandContext lastContext = null;
+    foreach(operators; precedences)
+    {
+        lastContext = int_run(context, operators);
+    }
+    assert(context.size == 1);
+    return lastContext;
 }
 
-CommandContext int_run(CommandContext context, CommandContext function(CommandContext) resolver)
+CommandContext int_run(CommandContext context, string[] operators)
 {
     // There should be a SimpleList at the top of the stack.
     auto list = cast(SimpleList)context.pop();
@@ -42,7 +57,6 @@ CommandContext int_run(CommandContext context, CommandContext function(CommandCo
             assert(rContext.size == 1);
             // Assimilate the result into our own context:
             context.size += rContext.size;
-            // TODO: make it a method, like context.assimilate(rContext);
 
             /*
             The result (now in the stack) can be both a proper one like
@@ -64,10 +78,11 @@ CommandContext int_run(CommandContext context, CommandContext function(CommandCo
         {
             // Not an operator? Must be a value...
             context.push(item);
-            context = resolver(context);
+            context = resolver(context, operators);
         }
     }
-    // WRONG!
+
+    // XXX : check if this is right:
     auto terms = context.items;
     // un-reverse the list...
     Items resultItems;
@@ -80,21 +95,21 @@ CommandContext int_run(CommandContext context, CommandContext function(CommandCo
     return context;
 }
 
-// CommandContext int_precedence_1(ListItem operator, ListItem t1, ListItem t2)
-CommandContext int_precedence_1(CommandContext context)
+CommandContext resolver(CommandContext context, string[] operators)
 {
     if (context.size < 3)
     {
         return context;
     }
 
-    // It was pushed in reading order...
+    // The terms were pushed in reading order...
     auto t2 = context.pop();
     auto operator = context.pop();
     auto t1 = context.pop();
-    if ((t1.type == ObjectTypes.List || t1.type == ObjectTypes.Operator) ||
-        (operator.type != ObjectTypes.Operator) ||
-        (t2.type == ObjectTypes.List || t2.type == ObjectTypes.Operator))
+    debug {stderr.writeln(" >> ", to!string(t1.type), " ", operator, " ", to!string(t2.type));}
+
+    if ((t1.type == ObjectTypes.List || t1.type == ObjectTypes.Operator)
+        || (operator.type != ObjectTypes.Operator))
     {
         context.push(t1);
         context.push(operator);
@@ -102,68 +117,31 @@ CommandContext int_precedence_1(CommandContext context)
         return context;
     }
 
-    switch(operator.asString)
-    {
-        // -----------------------------------------------
-        // Operators implementations:
-        // TODO: use asInteger, asFloat and asString
-        // TODO: this could be entirely made at compile
-        // time, I assume...
-        case "*":
-            context.push(new Atom(to!int(t1.asString) * to!int(t2.asString)));
-            break;
-        case "/":
-            context.push(new Atom(to!int(t1.asString) / to!int(t2.asString)));
-            break;
-        default:
-            context.push(t1);
-            context.push(operator);
-            context.push(t2);
-            break;
-    }
-    return context;
-}
+    auto operatorStr = to!string(operator);
 
-CommandContext int_precedence_2(CommandContext context)
-{
-    if (context.size < 3)
+    if (operators.canFind(operatorStr))
     {
-        return context;
+        ListItem result = t1.operate(operatorStr, t2, false);
+        if (result is null)
+        {
+            result = t2.operate(operatorStr, t1, true);
+        }
+        if (result is null)
+        {
+            throw new Exception(
+                "Cannot operate "
+                ~ t1.toString() ~ " "
+                ~ operatorStr ~ " "
+                ~ t2.toString()
+            );
+        }
+        context.push(result);
     }
-
-    // It was pushed in reading order...
-    auto t2 = context.pop();
-    auto operator = context.pop();
-    auto t1 = context.pop();
-    if ((t1.type == ObjectTypes.List || t1.type == ObjectTypes.Operator) ||
-        (operator.type != ObjectTypes.Operator) ||
-        (t2.type == ObjectTypes.List || t2.type == ObjectTypes.Operator))
+    else
     {
         context.push(t1);
         context.push(operator);
         context.push(t2);
-        return context;
-    }
-
-    switch(operator.asString)
-    {
-        // -----------------------------------------------
-        // Operators implementations:
-        // TODO: use asInteger, asFloat and asString
-        // TODO: this could be entirely made at compile
-        // time, I assume...
-        case "+":
-            context.push(new Atom(to!int(t1.asString) + to!int(t2.asString)));
-            break;
-        case "-":
-            context.push(new Atom(to!int(t1.asString) - to!int(t2.asString)));
-            break;
-        default:
-            context.push(t1);
-            context.push(operator);
-            context.push(t2);
-            break;
     }
     return context;
 }
-

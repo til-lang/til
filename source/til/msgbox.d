@@ -6,6 +6,11 @@ import std.range;
 import til.nodes;
 import til.ranges;
 
+debug
+{
+    import std.stdio;
+}
+
 
 class MsgboxRange : Range
 {
@@ -21,6 +26,7 @@ class MsgboxRange : Range
     }
     override ListItem front()
     {
+        debug {stderr.writeln("process.msgbox:", process.msgbox);}
         return process.msgbox[0];
     }
     override void popFront()

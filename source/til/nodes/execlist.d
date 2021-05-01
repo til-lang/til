@@ -16,7 +16,7 @@ class ExecList : BaseList
     // Utilities and operators:
     override string toString()
     {
-        string s = this.subprogram.asString;
+        string s = to!string(this.subprogram);
         return "[" ~ s ~ "]";
     }
 
