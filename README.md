@@ -1,36 +1,33 @@
 # Til
 
-A better Tcl. :)
+Just another programming language.
 
 
 ## Example
 
 ```tcl
-import std.io as io
-import std.math as math
+# You can import things manually but most of the time the
+# auto-import feature works just fine...
+# import std.io as io
+# import std.math as math
 
 # Most of the syntax is the same as Tcl, except
 # we have "simple lists" using "()":
-set x [math.run (1 + 2 + 3 + 1)]
+set x [math (1 + 2 + 3 + 1)]
 io.out $x
 # → 7
 
 # Contrary to Tcl, "{}" enclosed things are
-# not strings, but simply a SubProgram.
+# NOT strings, but simply a "SubProgram".
 # They are parsed as any other part
-# of the language.
+# of the language, just not
+# immediately run.
 if ($x > 6) {
     io.out "Great!"
 }
 
 # Til implements the concept of "streams", almost
 # like stdin/stdout in shell script.
-import std.posix as shell
-
-shell.ls | foreach filename {
-    io.out $filename
-}
-
 range 0 5 | foreach x { io.out $x }
 
 # We also have dictionaries!
@@ -56,11 +53,14 @@ task.
 
 ## Plans
 
-1. Make the basics usable: (flow control, loops, ranges, stack
-   manipulation, introspection, etc)
+1. Make the basics usable: (~flow control~, loops, ~ranges~, ~stack
+   manipulation~, introspection, etc)
 1. Improve the implementation (better use of Pegged features, specially)
 1. ~Allow **dynamic loading** of libraries (compiled as shared object
-   files)~
-1. Implement **Actor Model**
+   files)~ DONE
+1. ~Implement **Actor Model**~ DONE
 1. Integrate properly with **Tk** or other good cross-platform GUI library
-1. Make code execution faster (without byte-compiling)
+1. ~Make code execution faster (without byte-compiling)~ DONE? A very
+   (VERY!) simple benchmark (iterating a lot and printing current counter)
+   gave "*same as Python3*" as result, which are very encouraging,
+   actually.
