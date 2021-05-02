@@ -45,7 +45,7 @@ CommandContext int_run(CommandContext context, string[] operators)
     // The loop:
     foreach(item; items)
     {
-        if (item.type == ObjectTypes.List)
+        if (item.type == ObjectType.List)
         {
             SimpleList l = cast(SimpleList)item;
             // "evaluate" will push all evaluated sub-items
@@ -70,7 +70,7 @@ CommandContext int_run(CommandContext context, string[] operators)
             it is in the top of the stack, now, as we want.
             */
         }
-        else if (item.type == ObjectTypes.Operator)
+        else if (item.type == ObjectType.Operator)
         {
             context.push(item);
         }
@@ -108,8 +108,8 @@ CommandContext resolver(CommandContext context, string[] operators)
     auto t1 = context.pop();
     debug {stderr.writeln(" >> ", to!string(t1.type), " ", operator, " ", to!string(t2.type));}
 
-    if ((t1.type == ObjectTypes.List || t1.type == ObjectTypes.Operator)
-        || (operator.type != ObjectTypes.Operator))
+    if ((t1.type == ObjectType.List || t1.type == ObjectType.Operator)
+        || (operator.type != ObjectType.Operator))
     {
         context.push(t1);
         context.push(operator);

@@ -86,7 +86,7 @@ CommandContext pureBoolean(CommandContext context)
     {
         string s = to!string(item);
 
-        if (item.type == ObjectTypes.Operator)
+        if (item.type == ObjectType.Operator)
         {
             if (s == "&&")
             {
@@ -100,7 +100,7 @@ CommandContext pureBoolean(CommandContext context)
                 continue;
             }
         }
-        else if (item.type == ObjectTypes.List)
+        else if (item.type == ObjectType.List)
         {
             SimpleList l = cast(SimpleList)item;
             auto listContext = l.evaluate(context, true);
@@ -112,12 +112,12 @@ CommandContext pureBoolean(CommandContext context)
             continue;
         }
 
-        if (item.type == ObjectTypes.Operator)
+        if (item.type == ObjectType.Operator)
         {
             context.push(item);
             continue;
         }
-        else if (item.type == ObjectTypes.Boolean)
+        else if (item.type == ObjectType.Boolean)
         {
             currentResult = currentResult || item;
             continue;

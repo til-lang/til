@@ -8,7 +8,7 @@ import til.nodes;
 // compose a list (including Lists):
 class ListItem
 {
-    ObjectTypes type;
+    ObjectType type;
 
     ListItem operate(string operator, ListItem rhs, bool reversed)
     {

@@ -36,10 +36,10 @@ static this()
 
         auto firstArgument = context.pop();
 
-        if (firstArgument.type == ObjectTypes.List)
+        if (firstArgument.type == ObjectType.List)
         {
             auto secondArgument = context.pop();
-            if (secondArgument.type != ObjectTypes.List)
+            if (secondArgument.type != ObjectType.List)
             {
                 throw new Exception(
                     "You can only use destructuring `set` with two SimpleLists"
@@ -376,7 +376,7 @@ static this()
                 auto originalFront = origin.front;
 
                 SimpleList list;
-                if (originalFront.type == ObjectTypes.List)
+                if (originalFront.type == ObjectType.List)
                 {
                     list = cast(SimpleList)originalFront;
                 }
@@ -390,7 +390,7 @@ static this()
                 {
                     // case (>name, "txt")
                     auto variable = variables[index];
-                    if (variable.type == ObjectTypes.InputName)
+                    if (variable.type == ObjectType.InputName)
                     {
                         // Assignment
                         escopo[to!string(variable)] = item;

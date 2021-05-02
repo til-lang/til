@@ -164,7 +164,7 @@ static this()
     commands["range"] = (string path, CommandContext context)
     {
         auto firstArgument = context.peek();
-        if (firstArgument.type == ObjectTypes.List)
+        if (firstArgument.type == ObjectType.List)
         {
             context = rangeFromList(path, context);
         }

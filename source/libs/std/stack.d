@@ -62,7 +62,7 @@ static this()
     commands["reverse"] = (string path, CommandContext context)
     {
         auto head = context.pop();
-        if (head.type != ObjectTypes.String)
+        if (head.type != ObjectType.String)
         {
             throw new Exception(
                 "Cannot reverse a "

@@ -86,10 +86,10 @@ class SimpleList : BaseList
         // <(1 2 3 4 5) (0 2 4)> → (1 3 5)
         switch(firstArgument.type)
         {
-            case ObjectTypes.Integer:
+            case ObjectType.Integer:
                 // by range:
                 // <(1 2 3 4 5) 0 2> → (1 2)
-                if (arguments.length == 2 && arguments[1].type == ObjectTypes.Integer)
+                if (arguments.length == 2 && arguments[1].type == ObjectType.Integer)
                 {
                 }
                 // by index:
@@ -99,7 +99,7 @@ class SimpleList : BaseList
                     return items[firstArgument.toInt];
                 }
                 break;
-            case ObjectTypes.Name:
+            case ObjectType.Name:
                 auto str = firstArgument.toString;
                 switch(str)
                 {

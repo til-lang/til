@@ -16,7 +16,7 @@ class SimpleString : ListItem
     this(string s)
     {
         this.repr = s;
-        this.type = ObjectTypes.String;
+        this.type = ObjectType.String;
     }
 
     // Conversions:
@@ -29,7 +29,7 @@ class SimpleString : ListItem
     override ListItem operate(string operator, ListItem rhs, bool reversed)
     {
         if (reversed) return null;
-        if (rhs.type != ObjectTypes.String) return null;
+        if (rhs.type != ObjectType.String) return null;
 
         /*
         Remember: we are receiving and
@@ -82,9 +82,9 @@ class SimpleString : ListItem
         if (arguments.length == 0) return this;
         auto firstArgument = arguments[0];
 
-        if (firstArgument.type == ObjectTypes.Integer)
+        if (firstArgument.type == ObjectType.Integer)
         {
-            if (arguments.length == 2 && arguments[1].type == ObjectTypes.Integer)
+            if (arguments.length == 2 && arguments[1].type == ObjectType.Integer)
             {
                 auto idx1 = firstArgument.toInt;
                 auto idx2 = arguments[1].toInt;
@@ -110,7 +110,7 @@ class SubstString : SimpleString
         super("");
         this.parts = parts;
         this.substitutions = substitutions;
-        this.type = ObjectTypes.String;
+        this.type = ObjectType.String;
     }
 
     // Operators:

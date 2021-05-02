@@ -15,7 +15,7 @@ class NameAtom : ListItem
     this(string s)
     {
         this.value = s;
-        this.type = ObjectTypes.String;
+        this.type = ObjectType.String;
 
         // 1- Check if it is an InputName:
         auto len = s.length;
@@ -25,12 +25,12 @@ class NameAtom : ListItem
 
             if (firstChar == '>')
             {
-                type = ObjectTypes.InputName;
+                type = ObjectType.InputName;
                 s = s[1..$];
             }
             else
             {
-                type = ObjectTypes.Name;
+                type = ObjectType.Name;
             }
         }
 
@@ -117,7 +117,7 @@ class IntegerAtom : ListItem
     this(int value)
     {
         this.value = value;
-        this.type = ObjectTypes.Integer;
+        this.type = ObjectType.Integer;
     }
     IntegerAtom opUnary(string operator)
     {
@@ -148,7 +148,7 @@ class IntegerAtom : ListItem
 
         debug {stderr.writeln(" > ", this.type, " ", operator, " ", rhs.type);}
 
-        if (rhs.type == ObjectTypes.Integer)
+        if (rhs.type == ObjectType.Integer)
         {
             auto t2 = cast(IntegerAtom)rhs;
             int result = {
@@ -179,7 +179,7 @@ class IntegerAtom : ListItem
             }();
             return new IntegerAtom(result);
         }
-        else if (rhs.type == ObjectTypes.Float)
+        else if (rhs.type == ObjectType.Float)
         {
             auto t2 = cast(FloatAtom)rhs;
             debug {stderr.writeln(this.value, " ", operator, " ", t2.value);}
@@ -221,7 +221,7 @@ class FloatAtom : ListItem
     this(float value)
     {
         this.value = value;
-        this.type = ObjectTypes.Float;
+        this.type = ObjectType.Float;
     }
     override bool toBool()
     {
@@ -255,12 +255,12 @@ class FloatAtom : ListItem
 
         FloatAtom t2;
 
-        if (rhs.type == ObjectTypes.Integer)
+        if (rhs.type == ObjectType.Integer)
         {
             auto it2 = cast(IntegerAtom)rhs;
             t2 = new FloatAtom(cast(float)it2.value);
         }
-        else if (rhs.type == ObjectTypes.Float)
+        else if (rhs.type == ObjectType.Float)
         {
             t2 = cast(FloatAtom)rhs;
         }
@@ -293,7 +293,7 @@ class BooleanAtom : ListItem
     this(bool value)
     {
         this.value = value;
-        this.type = ObjectTypes.Boolean;
+        this.type = ObjectType.Boolean;
     }
     override bool toBool()
     {
@@ -320,7 +320,7 @@ class OperatorAtom : ListItem
     this(string s)
     {
         value = s;
-        this.type = ObjectTypes.Operator;
+        this.type = ObjectType.Operator;
     }
 
     // Utilities and operators:

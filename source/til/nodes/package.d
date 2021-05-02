@@ -45,7 +45,7 @@ enum ExitCode
     Continue,         // Continue to the next iteraction
 }
 
-enum ObjectTypes
+enum ObjectType
 {
     Undefined,
     List,
