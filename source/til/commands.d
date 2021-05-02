@@ -31,7 +31,8 @@ static this()
 
         if (context.size < 2)
         {
-            throw new Exception("`set` must receive at least two arguments.");
+            auto msg = "`set` must receive at least two arguments.";
+            return context.error(msg, ErrorCode.InvalidArgument, "");
         }
 
         auto firstArgument = context.pop();
@@ -41,9 +42,8 @@ static this()
             auto secondArgument = context.pop();
             if (secondArgument.type != ObjectType.List)
             {
-                throw new Exception(
-                    "You can only use destructuring `set` with two SimpleLists"
-                );
+                auto msg = "You can only use destructuring `set` with two SimpleLists";
+                return context.error(msg, ErrorCode.InvalidArgument, "");
             }
 
             auto l1 = cast(SimpleList)firstArgument;
@@ -58,9 +58,8 @@ static this()
 
             if (values.length < names.length)
             {
-                throw new Exception(
-                    "Insuficient number of items in the second list"
-                );
+                auto msg = "Insuficient number of items in the second list";
+                return context.error(msg, ErrorCode.InvalidArgument, "");
             }
 
             string lastName;
@@ -130,9 +129,8 @@ static this()
             debug {stderr.writeln("asWord:", asWord);}
             if (asWord != "as")
             {
-                throw new InvalidException(
-                    "Invalid syntax for import"
-                );
+                auto msg = "Invalid syntax for import";
+                return context.error(msg, ErrorCode.InvalidArgument, "");
             }
             newName = context.pop!string;
         }
@@ -183,10 +181,9 @@ static this()
                     auto elseWord = context.pop!string;
                     if (elseWord != "else")
                     {
-                        throw new InvalidException(
-                            "Invalid format for if/then/else clause:"
-                            ~ " elseWord found was " ~ elseWord
-                        );
+                        auto msg = "Invalid format for if/then/else clause:"
+                                   ~ " elseWord found was " ~ elseWord;
+                        return context.error(msg, ErrorCode.InvalidSyntax, "");
                     }
 
                     debug {stderr.writeln("context:", context);}
@@ -202,10 +199,9 @@ static this()
                         auto ifWord = context.pop!string;
                         if (ifWord != "if")
                         {
-                            throw new InvalidException(
-                                "Invalid format for if/then/else clause"
-                                ~ " ifWord found was " ~ ifWord
-                            );
+                            auto msg = "Invalid format for if/then/else clause"
+                                       ~ " ifWord found was " ~ ifWord;
+                            return context.error(msg, ErrorCode.InvalidSyntax, "");
                         }
                         // The next item is an "if", so we can
                         // simply return to the beginning:
@@ -488,7 +484,8 @@ static this()
         auto parentScope = context.escopo.parent;
         if (parentScope is null)
         {
-            throw new Exception("No upper level to access.");
+            auto msg = "No upper level to access.";
+            return context.error(msg, ErrorCode.SemanticError, "");
         }
 
         /*
@@ -521,25 +518,12 @@ static this()
         newContext.size = context.size;
 
         // 3- run the command
-        /*
-        IMPORTANT: always remember the previous (parent) scope
-        has an outdated stack that is NOT synchronized
-        with the current one. So we need to let
-        Command.run "evaluate" all arguments
-        again (remember: we passed them
-        as a simple Items list), so
-        that they end up in the
-        old stack as it
-        is expected.
-        */
-
         auto returnedContext = command.run(newContext);
 
-        if (returnedContext.exitCode == ExitCode.Failure)
+        if (returnedContext.exitCode != ExitCode.Failure)
         {
-            throw new Exception("uplevel/command " ~ cmdName ~ ": Failure");
+            context.exitCode = ExitCode.CommandSuccess;
         }
-        context.exitCode = ExitCode.CommandSuccess;
         return context;
     };
 

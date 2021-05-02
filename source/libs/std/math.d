@@ -18,11 +18,10 @@ static this()
         auto newContext = int_run(context);
         if (newContext.size != 1)
         {
-            throw new Exception(
-                "math.run: error. Should return 1 item.\n"
-                ~ to!string(newContext.escopo)
-                ~ " returned " ~ to!string(newContext.size)
-            );
+            auto msg = "math.run: error. Should return 1 item.\n"
+                       ~ to!string(newContext.escopo)
+                       ~ " returned " ~ to!string(newContext.size);
+            return context.error(msg, ErrorCode.InternalError, "til.internal");
         }
 
         // int_run pushes a new list, but we don't want that.

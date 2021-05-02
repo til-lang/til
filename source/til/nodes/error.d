@@ -13,7 +13,11 @@ debug
 enum ErrorCode
 {
     Unknown,
+    InternalError,
     CommandNotFound,
+    InvalidArgument,
+    InvalidSyntax,
+    SemanticError,
 }
 
 
@@ -32,6 +36,19 @@ class Erro : ListItem
         this.classe = classe;
     }
 
+    // Conversions:
+    override string toString()
+    {
+        string s = "Error " ~ to!string(code)
+                   ~ ": " ~ message;
+        if (classe)
+        {
+            s ~= " (" ~ classe ~ ")";
+        }
+        return s;
+    }
+
+    // Extractions:
     override ListItem extract(Items items)
     {
         if (items.length == 0) return this;

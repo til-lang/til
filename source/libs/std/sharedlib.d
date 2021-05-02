@@ -56,7 +56,8 @@ static this()
         void* lh = sharedLibraries.get(libraryName, null);
         if (lh is null)
         {
-            throw new Exception(libraryName ~ " was not loaded");
+            auto msg = libraryName ~ " was not loaded";
+            return context.error(msg, ErrorCode.InvalidArgument, "");
         }
 
         auto functionName = context.pop!string;
@@ -89,15 +90,15 @@ static this()
 
         if (context.size != 2)
         {
-            throw new Exception("Invalid number of arguments to `load`");
+            auto msg = "Invalid number of arguments to `load`";
+            return context.error(msg, ErrorCode.InvalidArgument, "");
         }
         auto asWord = context.pop!string;
         if (asWord != "as")
         {
-            throw new Exception(
-                "Invalid arguments to `load`."
-                ~ " Usage: load \"libname.so\" as name"
-            );
+            auto msg = "Invalid arguments to `load`."
+                       ~ " Usage: load \"libname.so\" as name";
+            return context.error(msg, ErrorCode.InvalidArgument, "");
         }
         auto cmdName = context.pop!string;
 
@@ -106,7 +107,8 @@ static this()
         if (!lh)
         {
             const char* error = dlerror();
-            throw new Exception("dlopen error: " ~ to!string(error));
+            auto msg = "dlopen error: " ~ to!string(error);
+            return context.error(msg, ErrorCode.InvalidArgument, "");
         }
 
         sharedLibraries[cmdName] = lh;
@@ -134,12 +136,14 @@ static this()
         void* lh = sharedLibraries.get(cmdName, null);
         if (lh is null)
         {
-            throw new Exception(cmdName ~ " is not loaded");
+            auto msg = cmdName ~ " is not loaded";
+            return context.error(msg, ErrorCode.InvalidArgument, "");
         }
 
         if (context.size != 1)
         {
-            throw new Exception("Wrong arguments to `call`");
+            auto msg = "Wrong arguments to `call`";
+            return context.error(msg, ErrorCode.InvalidArgument, "");
         }
 
         auto functionName = context.pop!string;

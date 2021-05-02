@@ -137,7 +137,8 @@ static this()
         }
         if (limit <= start)
         {
-            throw new Exception("Invalid range");
+            auto msg = "Invalid range";
+            return context.error(msg, ErrorCode.InvalidArgument, "");
         }
 
         int step = 1;
