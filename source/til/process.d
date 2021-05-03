@@ -280,8 +280,9 @@ class Process
             {
                 throw new Exception("Command not found: " ~ name);
             }
+            return *handler;
         }
-        return *handler;
+        throw new Exception("Command not found: " ~ name);
     }
 
     // Execution

@@ -134,7 +134,12 @@ static this()
             }
             newName = context.pop!string;
         }
-        context.escopo.program.importModule(modulePath, newName);
+
+        if (!context.escopo.program.importModule(modulePath, newName))
+        {
+            auto msg = "Module not found: " ~ modulePath;
+            return context.error(msg, ErrorCode.InvalidArgument, "");
+        }
 
         // import std.io as io
         // "io.out" = command

@@ -12,7 +12,7 @@ extern (C) CommandHandler[string] getCommands()
         Items arguments = context.items;
         foreach(arg; arguments)
         {
-            writeln(arg.asString);
+            writeln(arg.toString);
         }
 
         context.exitCode = ExitCode.CommandSuccess;
