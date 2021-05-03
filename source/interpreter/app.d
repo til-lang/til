@@ -34,6 +34,7 @@ int main(string[] args)
         // TODO: print a better explanation of what happened.
         throw new Exception("Program seems invalid.");
     }
+    debug {stderr.writeln("tree:\n", tree);}
     sw.stop();
     stderr.writeln("Code was loaded and parsed in ", sw.peek.total!"msecs", " miliseconds");
 

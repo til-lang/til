@@ -14,8 +14,7 @@ class NameAtom : ListItem
 
     this(string s)
     {
-        this.value = s;
-        this.type = ObjectType.String;
+        this.type = ObjectType.Name;
 
         // 1- Check if it is an InputName:
         auto len = s.length;
@@ -33,6 +32,7 @@ class NameAtom : ListItem
                 type = ObjectType.Name;
             }
         }
+        this.value = s;
 
         // 2- Check if it has substitutions:
         len = s.length;

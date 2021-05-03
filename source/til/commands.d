@@ -3,6 +3,10 @@ module til.commands;
 import std.algorithm.iteration : map, joiner;
 import std.array;
 import std.conv : to;
+import std.file : read;
+
+import til.grammar;
+import til.semantics;
 
 import til.exceptions;
 import til.logic;
@@ -18,6 +22,19 @@ debug
 }
 
 CommandHandler[string] commands;
+
+
+SubProgram parse(string code)
+{
+    auto tree = Til(code);
+    if (!tree.successful)
+    {
+        return null;
+    }
+    debug {stderr.writeln("parse.tree:", tree);}
+
+    return analyse(tree);
+}
 
 
 // Commands:
@@ -91,24 +108,21 @@ static this()
     // Modules / includes
     commands["include"] = (string path, CommandContext context)
     {
-        import til.grammar;
-        import til.semantics;
-
         import std.stdio;
         import std.file;
 
         string filePath = context.pop!string;
-        auto f = File(filePath, "r");
-        string code = "";
-        foreach(line; f.byLine)
+        debug {stderr.writeln("include.filePath:", filePath);}
+
+        auto program = parse(to!string(read(filePath)));
+        if (program is null)
         {
-            code ~= line ~ "\n";
+            auto msg = "Program in " ~ filePath ~ " is invalid";
+            return context.error(msg, ErrorCode.InvalidSyntax, "");
         }
 
-        auto tree = Til(code);
-        auto program = analyse(tree);
-
         context = context.escopo.run(program, context);
+
         if (context.exitCode != ExitCode.Failure)
         {
             context.exitCode = ExitCode.CommandSuccess;

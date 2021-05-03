@@ -3,28 +3,15 @@ description "Yet another programming language"
 authors "Cléber Zavadniak"
 copyright "Copyright © 2021, Cléber Zavadniak"
 license "zlib"
-libs "phobos2"
 version "0.0.1"
-dependency "pegged" version="~>0.4.4"
-targetPath "dist/core"
-targetType "library"
 
-subPackage {
-    name "libs"
-    sourcePaths "source/libs"
-    targetPath "dist/libs"
-    targetType "staticLibrary"
-    version "0.0.1"
-    libs "phobos2"
-    dependency "til" version="0.0.1"
-}
-subPackage {
-    name "run"
-    sourcePaths "source/interpreter"
-    targetType "executable"
-    libs "phobos2"
-    dependency "til:libs" version="0.0.1"
-}
+targetPath "dist"
+targetType "executable"
+
+libs "phobos2"
+
+dependency "pegged" version="~>0.4.4"
+
 subPackage {
     name "hellomodule"
     sourcePaths "modules/hello"

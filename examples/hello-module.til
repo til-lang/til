@@ -1,3 +1,0 @@
-import til_hellomodule as h
-
-h.print "Hello, World!" "(from a shared library)"

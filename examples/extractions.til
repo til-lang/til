@@ -1,8 +1,6 @@
 set str "abcdefghijk"
 set x 2048
 set list (1 2 3 4 5)
-set multi_items 2 (a b c)
 
 io.out "By index: " <$list 0>
 io.out "head/tail: " <$list head> <$list tail>
-io.out "multi_items: " <$multi_items>

@@ -1,3 +1,4 @@
+til
 til.*
 til_run
 til.so
@@ -5,6 +6,7 @@ til.dylib
 til.dll
 til.a
 til.lib
+dist/
 
 *.so
 *.o

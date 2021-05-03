@@ -1,2 +1,5 @@
-include "examples/include_2.til"
-hello
+# TODO: make it work again...
+# include "examples/include_2.til"
+
+# hello
+io.out "NOT WORKING"

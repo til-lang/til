@@ -2,9 +2,15 @@ module til.grammar;
 
 import pegged.grammar;
 
+debug
+{
+    import std.stdio;
+}
+
 
 ParseTree promote(ParseTree p)
 {
+    debug {stderr.writeln("Til:promoting ", p);}
     return p.children[0];
 }
 

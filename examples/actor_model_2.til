@@ -1,7 +1,0 @@
-msgbox.receive | case (init) {
-        io.out "initializing process2..."
-        parent.send "initialized"
-        break
-    } | case (response >msg) {
-        io.out "process2 received as response: $msg"
-    }

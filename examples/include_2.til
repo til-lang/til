@@ -1,3 +1,6 @@
 proc hello () {
     io.out "Hello, World!"
 }
+
+io.out "Inclusion is execution!"
+hello
