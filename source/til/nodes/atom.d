@@ -7,43 +7,19 @@ debug
     import std.stdio;
 }
 
-class NameAtom : ListItem
+
+class Atom : ListItem
+{
+}
+
+class NameAtom : Atom
 {
     string value;
-    bool hasSubstitution = false;
 
     this(string s)
     {
         this.type = ObjectType.Name;
-
-        // 1- Check if it is an InputName:
-        auto len = s.length;
-        if (len > 1)
-        {
-            auto firstChar = s[0];
-
-            if (firstChar == '>')
-            {
-                type = ObjectType.InputName;
-                s = s[1..$];
-            }
-            else
-            {
-                type = ObjectType.Name;
-            }
-        }
         this.value = s;
-
-        // 2- Check if it has substitutions:
-        len = s.length;
-        if (len > 1)
-        {
-            auto firstChar = s[0];
-            hasSubstitution = (
-                firstChar == '$'
-                || len >= 3 && firstChar == '-' && s[1] == '$'
-            );
-        }
     }
 
     // Utilities and operators:
@@ -54,55 +30,50 @@ class NameAtom : ListItem
 
     override CommandContext evaluate(CommandContext context)
     {
-        if (!this.hasSubstitution)
-        {
-            context.push(this);
-            context.exitCode = ExitCode.Proceed;
-            return context;
-        }
+        context.push(this);
+        context.exitCode = ExitCode.Proceed;
+        return context;
+    }
+}
 
-        char firstChar = value[0];
-        if (firstChar == '$')
+class InputNameAtom : NameAtom
+{
+    this(string s)
+    {
+        this.type = ObjectType.InputName;
+        super(s);
+    }
+
+    override CommandContext evaluate(CommandContext context)
+    {
+        context.push(this);
+        context.exitCode = ExitCode.Proceed;
+        return context;
+    }
+}
+
+class SubstAtom : NameAtom
+{
+    this(string s)
+    {
+        super(s);
+    }
+
+    override CommandContext evaluate(CommandContext context)
+    {
+        auto values = context.escopo[value];
+        if (values is null)
         {
-            string key = value[1..$];
-            auto values = context.escopo[key];
-            if (values is null)
-            {
-                throw new Exception(
-                    "Key not found: " ~ key
-                );
-            }
-            else
-            {
-                foreach(value; values.retro)
-                {
-                    context.push(value);
-                }
-            }
+            throw new Exception(
+                "Key not found: " ~ value
+            );
         }
-        else if (value.length >= 3 && firstChar == '-' && value[1] == '$')
+        else
         {
-            string key = value[2..$];
-            // set x 10
-            // set y -$x
-            //  → set y -10
-            auto values = context.escopo[key];
-            /*
-            It's not a good idea to simply return
-            a `new Atom(value.repr)` because we
-            don't want to lose information
-            about the value, as its
-            integer or float
-            values...
-            */
-            foreach(value; values)
+            foreach(value; values.retro)
             {
-                context.push(-value);
+                context.push(value);
             }
-        }
-        else {
-            this.hasSubstitution = false;
-            context.push(this);
         }
 
         context.exitCode = ExitCode.Proceed;
@@ -110,7 +81,7 @@ class NameAtom : ListItem
     }
 }
 
-class IntegerAtom : ListItem
+class IntegerAtom : Atom
 {
     int value;
 
@@ -215,7 +186,7 @@ class IntegerAtom : ListItem
     }
 }
 
-class FloatAtom : ListItem
+class FloatAtom : Atom
 {
     float value;
     this(float value)
@@ -287,7 +258,7 @@ class FloatAtom : ListItem
 }
 
 
-class BooleanAtom : ListItem
+class BooleanAtom : Atom
 {
     bool value;
     this(bool value)
@@ -313,7 +284,7 @@ class BooleanAtom : ListItem
     }
 }
 
-class OperatorAtom : ListItem
+class OperatorAtom : Atom
 {
     string value;
 

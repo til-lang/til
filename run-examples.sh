@@ -2,13 +2,22 @@
 
 # TODO: transcribe this script to Til, someday. :)
 
+if [[ $1 == "" ]];then
+    version=release
+else
+    version=$1
+fi
+
 export LD_LIBRARY_PATH=$PWD
 
 for file in examples/*.til;do
     echo "=== $file ==="
     if [[ $file == "examples/unhandled-error.til" ]];then
-        ./til.release $file && break
+        ./til.$version $file && break
         continue
     fi
-    ./til.release $file || break
+    if ! ./til.$version $file;then
+        echo "$file : ERROR"
+        break
+    fi
 done

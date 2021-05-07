@@ -22,6 +22,13 @@ class Dict : ListItem
     }
 
     // ------------------
+    // Conversions
+    override string toString()
+    {
+        return "DICT";
+    }
+
+    // ------------------
     // Operators
     ListItem opIndex(string k)
     {

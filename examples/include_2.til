@@ -1,6 +1,6 @@
-proc hello () {
-    io.out "Hello, World!"
+proc hello (origin) {
+    io.out "Hello, World! -- $origin"
 }
 
 io.out "Inclusion is execution!"
-hello
+hello "include_2"

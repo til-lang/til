@@ -1,5 +1,6 @@
 # Creation
 set d [dict (x 11) (y 22) (z 33)]
+io.out "d: $d"
 io.out <$d x> <$d y> <$d z>
 
 # Set new keys

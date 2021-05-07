@@ -10,8 +10,6 @@ targetType "executable"
 
 libs "phobos2"
 
-dependency "pegged" version="~>0.4.4"
-
 subPackage {
     name "hellomodule"
     sourcePaths "modules/hello"

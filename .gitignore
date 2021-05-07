@@ -1,4 +1,3 @@
-til
 til.*
 til_run
 til.so
@@ -20,7 +19,6 @@ test.til
 docs.json
 __dummy.html
 docs/
-/til
 til-test-*
 *.exe
 *.o

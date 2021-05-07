@@ -179,14 +179,15 @@ class Process
     override string toString()
     {
         string s = "Process[" ~ to!string(this.index) ~ "]";
-        s ~= "(" ~ program.name ~ "):\n";
-        return s;
         /*
+        s ~= "(" ~ program.name ~ "):\n";
 
         s ~= "STACK:" ~ stackAsString ~ " SP:" ~ to!string(stackPointer) ~ "\n";
+        */
         foreach(name, value; variables)
         {
-            s ~= " " ~ name ~ "=<" ~ to!string(value) ~">\n";
+            // s ~= " " ~ name ~ "=<" ~ to!string(value) ~">\n";
+            s ~= " " ~ name ~ "\n";
         }
 
         s ~= "COMMANDS:\n";
@@ -196,7 +197,6 @@ class Process
         }
         s ~= "\n";
         return s;
-        */
     }
 
     // Commands

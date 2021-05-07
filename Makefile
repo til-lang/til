@@ -6,6 +6,14 @@ debug:
 	nice -17 dub build -b debug
 	mv dist/til til.debug
 
+release-ldc:
+	dub build -b release --compiler=ldc2
+	mv dist/til til.ldc2.release
+
+debug-ldc:
+	nice -17 dub build -b debug --compiler=ldc2
+	mv dist/til til.ldc2.debug
+
 profile:
 	dmd -profile -release \
 		source/*/*.d \
@@ -25,7 +33,3 @@ hellomodule.o: hellomodule.o
 
 hellomodule: hellomodule.o
 	dmd -oflibhellomodule.so hellomodule.o -shared -defaultlib=libphobos2.so
-
-release-ldc:
-	dub build -b release --compiler=ldc2
-	mv dist/til til.ldc2.release

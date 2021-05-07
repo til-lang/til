@@ -6,7 +6,6 @@ import std.conv : to;
 import std.file : read;
 
 import til.grammar;
-import til.semantics;
 
 import til.exceptions;
 import til.logic;
@@ -26,14 +25,8 @@ CommandHandler[string] commands;
 
 SubProgram parse(string code)
 {
-    auto tree = Til(code);
-    if (!tree.successful)
-    {
-        return null;
-    }
-    debug {stderr.writeln("parse.tree:", tree);}
-
-    return analyse(tree);
+    auto parser = new Parser(code);
+    return parser.run();
 }
 
 

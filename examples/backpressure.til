@@ -13,7 +13,7 @@ proc p_wait (name) {
     io.out "p_wait $name"
 
     range.time | foreach t {
-        io.out "x"
+        io.out "$counter"
         # receive | foreach msg {
             # io.out " Procedure $name received message: $msg"
             set counter [math ($counter + 1)]
@@ -21,7 +21,7 @@ proc p_wait (name) {
             if ($counter > 100) {return 0}
         # }
     }
-    io.out "  $name exit"
+    io.out "  $name exit ($counter)"
     return $counter
 }
 
@@ -36,4 +36,4 @@ range.time | foreach t {
     # send $p1 "message-$counter"
 }
 # send $p1 "QUIT"
-io.out "Main program exit"
+io.out "Main program: END"

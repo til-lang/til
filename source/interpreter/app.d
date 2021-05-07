@@ -2,50 +2,35 @@ import std.datetime.stopwatch;
 import std.file;
 import std.stdio : stderr, stdin, write, writeln;
 
-import pegged.grammar : ParseTree;
-
 import til.commands;
 import til.exceptions;
 import til.grammar;
 import til.nodes;
 import til.scheduler;
-import til.semantics;
 
 
 int main(string[] args)
 {
+    Parser parser;
     auto sw = StopWatch(AutoStart.no);
-
     sw.start();
-    auto filename = args[1];
-    ParseTree tree;
 
+    auto filename = args[1];
     if (filename == "-")
     {
-        tree = Til(to!string(stdin.byLine.join("\n")));
+        parser = new Parser(to!string(stdin.byLine.join("\n")));
     }
     else
     {
-        tree = Til(to!string(read(filename)));
+        parser = new Parser(to!string(read(filename)));
     }
 
-    if (!tree.successful)
-    {
-        // TODO: print a better explanation of what happened.
-        throw new Exception("Program seems invalid.");
-    }
-    debug {stderr.writeln("tree:\n", tree);}
     sw.stop();
     stderr.writeln("Code was loaded and parsed in ", sw.peek.total!"msecs", " miliseconds");
 
-    sw.start();
     SubProgram program;
-    try {
-        program = analyse(tree);
-    }
-    catch (Exception e) {
-        throw new Exception("==== ERROR ====");
-    }
+    sw.start();
+    program = parser.run();
     sw.stop();
     stderr.writeln("Semantic analysis took ", sw.peek.total!"msecs", " miliseconds");
 
@@ -64,7 +49,6 @@ int main(string[] args)
     mixin(importModule("std.lists"));
     mixin(importModule("std.math"));
     mixin(importModule("std.range"));
-    mixin(importModule("std.stack"));
     mixin(importModule("std.sharedlib"));
 
     sw.start();

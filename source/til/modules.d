@@ -32,7 +32,6 @@ static this()
             to!string(asNormalizedPath(p))
         ));
     }
-    debug {stderr.writeln("modulesPath: ", modulesPath);}
 }
 
 

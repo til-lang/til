@@ -11,6 +11,11 @@ class Extraction : BaseList
         this.items = items;
     }
 
+    override string toString()
+    {
+        return "<" ~ to!string(items) ~ ">";
+    }
+
     override CommandContext evaluate(CommandContext context)
     {
         context.size = 0;
@@ -19,19 +24,13 @@ class Extraction : BaseList
             context.run(&(item.evaluate));
         }
 
-        /*
-        What resides in the stack, at the end, is not
-        the items inside the original SimpleLists,
-        but a new SimpleLists with its original
-        items already evaluated. We are only
-        using the stack as temporary space.
-        */
         ListItem target = context.pop();
         Items arguments = context.items;
 
         auto result = target.extract(arguments);
         context.push(result);
 
+        context.exitCode = ExitCode.Proceed;
         return context;
     }
 }

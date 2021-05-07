@@ -9,7 +9,7 @@ debug
 
 
 // A string without substitutions:
-class SimpleString : ListItem
+class String : ListItem
 {
     string repr;
 
@@ -34,10 +34,10 @@ class SimpleString : ListItem
         /*
         Remember: we are receiving and
         already-evaluated value, so
-        it can only be a
-        SimpleString.
+        it can only be a "simple"
+        String.
         */
-        auto t2 = cast(SimpleString)rhs;
+        auto t2 = cast(String)rhs;
 
         return new BooleanAtom(this.repr == t2.repr);
     }
@@ -72,7 +72,7 @@ class SimpleString : ListItem
             {
                 newRepr = "-" ~ repr;
             }
-            return new SimpleString(newRepr);
+            return new String(newRepr);
         }
     }
 
@@ -88,28 +88,26 @@ class SimpleString : ListItem
             {
                 auto idx1 = firstArgument.toInt;
                 auto idx2 = arguments[1].toInt;
-                return new SimpleString(this.repr[idx1..idx2]);
+                return new String(this.repr[idx1..idx2]);
             }
             else if (arguments.length == 1)
             {
                 auto idx = firstArgument.toInt;
-                return new SimpleString(this.repr[idx..idx+1]);
+                return new String(this.repr[idx..idx+1]);
             }
         }
         throw new Exception("not implemented");
     }
 }
 
-class SubstString : SimpleString
+class SubstString : String
 {
     string[] parts;
-    string[int] substitutions;
 
-    this(string[] parts, string[int] substitutions)
+    this(string[] parts)
     {
         super("");
         this.parts = parts;
-        this.substitutions = substitutions;
         this.type = ObjectType.String;
     }
 
@@ -124,23 +122,26 @@ class SubstString : SimpleString
     override CommandContext evaluate(CommandContext context)
     {
         string result;
-        string subst;
         string value;
 
         debug {stderr.writeln("SubstString.evaluate: ", parts);}
-        foreach(index, part;parts)
+        foreach(part;parts)
         {
-            subst = this.substitutions.get(cast(int)index, null);
-            if (subst is null)
+            if (part[0] != '$')
             {
                 result ~= part;
             }
             else
             {
-                Items values = context.escopo[subst];
+                auto key = part[1..$];
+                debug {
+                    stderr.writeln(" key: ", key);
+                    stderr.writeln(" escopo: ", context.escopo);
+                }
+                Items values = context.escopo[key];
                 if (values is null)
                 {
-                    result ~= "<?" ~ subst ~ "?>";
+                    result ~= "<?" ~ key ~ "?>";
                 }
                 else
                 {
@@ -151,7 +152,7 @@ class SubstString : SimpleString
             }
         }
 
-        context.push(new SimpleString(result));
+        context.push(new String(result));
         context.exitCode = ExitCode.Proceed;
         return context;
     }

@@ -1,5 +1,6 @@
-# TODO: make it work again...
-# include "examples/include_2.til"
+io.out "Including a file..."
 
-# hello
-io.out "NOT WORKING"
+include "examples/include_2.til"
+
+hello "include_1"
+io.out "END"
