@@ -2,7 +2,7 @@ proc p (name) {
     set counter 0
     range.time | foreach t {
         set counter [math ($counter + 1)]
-        if ($counter > 50) {break}
+        if ($counter > 5000) {break}
     }
     io.out $counter
     set received_count [p_wait "$name-child"]
@@ -14,26 +14,25 @@ proc p_wait (name) {
 
     range.time | foreach t {
         io.out "$counter"
-        # receive | foreach msg {
-            # io.out " Procedure $name received message: $msg"
+        receive | foreach msg {
+            io.out " Procedure $name received message: $msg"
             set counter [math ($counter + 1)]
-            # if ($msg == "QUIT") {return $counter}
-            if ($counter > 100) {return 0}
-        # }
+            if ($msg == "QUIT") {return $counter}
+            if ($counter > 10000) {return 0}
+        }
     }
     io.out "  $name exit ($counter)"
     return $counter
 }
 
-# set p1 [spawn p "alfa"]
-p "alfa"
+set p1 [spawn p "alfa"]
 
 set counter 0
 range.time | foreach t {
     set counter [math ($counter + 1)]
     if ($counter > 128) {break}
-    # io.out "Sending message to p1"
-    # send $p1 "message-$counter"
+    io.out "Sending message to p1"
+    send $p1 "message-$counter"
 }
-# send $p1 "QUIT"
+send $p1 "QUIT"
 io.out "Main program: END"
