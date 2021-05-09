@@ -252,6 +252,9 @@ class Process
         bool success = {
             string modulePath = to!string(name.split(".")[0..$-1].join("."));
 
+            // -------------------------
+            // 1- From builtin sources:
+
             // std.io.out
             // = std.io
             if (program.importModule(modulePath)) return true;
@@ -267,6 +270,24 @@ class Process
             // math
             // = std.math as math
             if (program.importModule("std." ~ name, name)) return true;
+
+            // -------------------------
+            // 2- From shared libraries:
+            // std.io.out
+            // = std.io
+            if (program.importModuleFromSharedLibrary(modulePath)) return true;
+
+            // io.out
+            // = std.io as io
+            if (program.importModuleFromSharedLibrary("std." ~ modulePath, modulePath)) return true;
+
+            // std.math
+            // = std.math
+            if (program.importModuleFromSharedLibrary(name, name)) return true;
+
+            // math
+            // = std.math as math
+            if (program.importModuleFromSharedLibrary("std." ~ name, name)) return true;
 
             return false;
         }();

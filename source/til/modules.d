@@ -57,14 +57,30 @@ bool importModule(SubProgram program, string modulePath, string prefix)
     // 2- from shared libraries:
     if (source is null)
     {
-        try {
-            source = importFromSharedLibrary(modulePath, prefix);
-        }
-        catch(Exception ex)
-        {
-            debug {stderr.writeln(ex);}
-            return false;
-        }
+        return false;
+    }
+
+    // Save on cache:
+    program.importNamesFrom(source, prefix);
+    sourcesCache[modulePath] = source;
+    return true;
+}
+
+bool importModuleFromSharedLibrary(SubProgram program, string modulePath)
+{
+    return importModuleFromSharedLibrary(program, modulePath, modulePath);
+}
+bool importModuleFromSharedLibrary(SubProgram program, string modulePath, string prefix)
+{
+    CommandHandler[string] source;
+
+    try {
+        source = importFromSharedLibrary(modulePath, prefix);
+    }
+    catch(Exception ex)
+    {
+        debug {stderr.writeln(ex);}
+        return false;
     }
 
     // Save on cache:
