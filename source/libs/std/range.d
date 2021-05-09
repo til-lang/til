@@ -14,22 +14,22 @@ debug
 
 class IntegerRange : InfiniteRange
 {
-    int start = 0;
-    int limit = 0;
-    int step = 1;
-    int current = 0;
+    long start = 0;
+    long limit = 0;
+    long step = 1;
+    long current = 0;
 
-    this(int limit)
+    this(long limit)
     {
         this.limit = limit;
     }
-    this(int start, int limit)
+    this(long start, long limit)
     {
         this(limit);
         this.current = start;
         this.start = start;
     }
-    this(int start, int limit, int step)
+    this(long start, long limit, long step)
     {
         this(start, limit);
         this.step = step;
@@ -123,11 +123,11 @@ static this()
            range 10 20    # [10, 20]
            range 10 14 2  # 10 12 14
         */
-        auto start = context.pop!int;
-        int limit = 0;
+        auto start = context.pop!long;
+        long limit = 0;
         if (context.size)
         {
-            limit = context.pop!int;
+            limit = context.pop!long;
         }
         else
         {
@@ -141,10 +141,10 @@ static this()
             return context.error(msg, ErrorCode.InvalidArgument, "");
         }
 
-        int step = 1;
+        long step = 1;
         if (context.size)
         {
-            step = context.pop!int;
+            step = context.pop!long;
         }
 
         auto range = new IntegerRange(start, limit, step);

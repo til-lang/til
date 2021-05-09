@@ -21,6 +21,6 @@ set map [
 
 range (a b c) | foreach x {
     range (a b c) | foreach y {
-        io.out <$map $x $y>
+        io.out "$x $y: " <$map $x $y>
     }
 }

@@ -79,7 +79,7 @@ struct CommandContext
             return cast(T)value;
         }
     }
-    template pop(T : int)
+    template pop(T : long)
     {
         T pop()
         {

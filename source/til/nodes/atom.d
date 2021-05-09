@@ -83,9 +83,9 @@ class SubstAtom : NameAtom
 
 class IntegerAtom : Atom
 {
-    int value;
+    long value;
 
-    this(int value)
+    this(long value)
     {
         this.value = value;
         this.type = ObjectType.Integer;
@@ -100,7 +100,7 @@ class IntegerAtom : Atom
     {
         return cast(bool)value;
     }
-    override int toInt()
+    override long toInt()
     {
         return value;
     }
@@ -122,7 +122,7 @@ class IntegerAtom : Atom
         if (rhs.type == ObjectType.Integer)
         {
             auto t2 = cast(IntegerAtom)rhs;
-            int result = {
+            long result = {
                 final switch(operator)
                 {
                     // Logic:
@@ -198,7 +198,7 @@ class FloatAtom : Atom
     {
         return cast(bool)value;
     }
-    override int toInt()
+    override long toInt()
     {
         return cast(int)value;
     }
@@ -270,9 +270,9 @@ class BooleanAtom : Atom
     {
         return cast(bool)value;
     }
-    override int toInt()
+    override long toInt()
     {
-        return cast(int)value;
+        return cast(long)value;
     }
     override float toFloat()
     {

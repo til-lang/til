@@ -612,7 +612,7 @@ static this()
         }
         if (context.size > 0)
         {
-            code = context.pop!int;
+            code = cast(int)context.pop!long;
         }
         if (context.size > 0)
         {

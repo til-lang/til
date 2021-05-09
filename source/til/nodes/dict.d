@@ -25,7 +25,12 @@ class Dict : ListItem
     // Conversions
     override string toString()
     {
-        return "DICT";
+        string s = "dict ";
+        foreach(key, value; values)
+        {
+            s ~= key ~ "=" ~ to!string(value) ~ " ";
+        }
+        return s;
     }
 
     // ------------------

@@ -38,7 +38,7 @@ class ListItem
             ~ thisInfo.toString() ~ " to bool not implemented."
         );
     }
-    int toInt()
+    long toInt()
     {
         auto thisInfo = typeid(this);
         throw new Exception(

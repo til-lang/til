@@ -2,6 +2,7 @@ module til.grammar;
 
 import std.algorithm : among;
 import std.conv : to;
+import std.math : pow;
 import std.range : back, popBack;
 
 import til.exceptions;
@@ -20,6 +21,16 @@ const SPACE = ' ';
 const TAB = '\t';
 const PIPE = '|';
 
+
+// Integers units:
+uint[char] units;
+
+static this()
+{
+    units['K'] = 1;
+    units['M'] = 2;
+    units['G'] = 3;
+}
 
 class Parser
 {
@@ -199,6 +210,10 @@ class Parser
                 consumeChar();
                 consumeSpace();
             }
+            else
+            {
+                break;
+            }
         }
 
         if (isEndOfLine && !eof) consumeChar();
@@ -222,6 +237,25 @@ class Parser
                 break;
             }
             arguments ~= consumeListItem();
+
+            if (currentChar == EOL)
+            {
+                /*
+                Verify if it is not a continuation:
+                cmd a b c
+                  . d e
+                */
+                consumeWhitespaces();
+                if (currentChar == '.')
+                {
+                    consumeChar();
+                    continue;
+                }
+                else
+                {
+                    break;
+                }
+            }
         }
         pop();
         return new Command(commandName.toString(), arguments);
@@ -513,8 +547,28 @@ class Parser
                 }
                 else
                 {
-                    debug {stderr.writeln("new IntegerAtom: ", s);}
-                    return new IntegerAtom(to!int(s));
+                    uint multiplier = 1;
+                    uint* p = (currentChar in units);
+                    if (p !is null)
+                    {
+                        consumeChar();
+                        if (currentChar == 'i')
+                        {
+                            consumeChar();
+                            multiplier = pow(1024, *p);
+                        }
+                        else
+                        {
+                            multiplier = pow(1000, *p);
+                        }
+                    }
+
+                    debug {
+                        stderr.writeln(
+                            "new IntegerAtom: ", s, " * ", multiplier
+                        );
+                    }
+                    return new IntegerAtom(to!long(s) * multiplier);
                 }
             }
             else if (dotCounter == 1)
