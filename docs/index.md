@@ -75,9 +75,9 @@ the use of square brackets (`[]`). They form what we call an ExecList.
 
 An ExecList contains any SubProgram and **are evaluated immediately**,
 that is, the SubProgram is executed before the command (in this case,
-`set`) is run. So, when saying `set result [math ($a + $b)]`, `math ($a
- + $b)` will be executed and the result (`33`) will become the last
-argument of the `set` command, becoming `set result 33`.
+`set`) is run. So, when saying `set result [math ($a + $b)]`,
+`math ($a + $b)` will be executed and the result (`33`) will become the
+last argument of the `set` command, becoming `set result 33`.
 
 
 But where `math` came from? Well, it´s not a builtin command of the
@@ -122,6 +122,51 @@ simply calling `math` will do.
 And, the last item in this session is **string substitution**. It works as
 expected, really: you can reference values inside a string using the `$`
 sign.
+
+## Extractions
+
+The following snippet come from [the first version of
+Redis](https://gist.github.com/antirez/6ca04dd191bdb82aad9fb241013e88a8),
+when it was still called LMDB:
+
+```tcl
+proc cmd_push {fd argv dir} {
+    if {[catch {
+        llength $::db([lindex $argv 1])
+    }]} {
+    ...
+```
+
+What is being said is "*if there is something in the in-memory database
+slot whose key is given by the second item inside argv*". The problem is:
+phew!, that´s a lot of commands, specially for so common operations.
+
+In Til there´s the concept of **Extractions**:
+
+```tcl
+set d [dict (alfa 11) (beta 22) (gama 33)]
+io.out "alfa is " <$d alfa>
+# Output: alfa is 11
+```
+
+The `<>` syntax follows the pattern `<data index>` or `<data range>`. One
+can retrieve elements from a list easily:
+
+```tcl
+set lista (a b c d e)
+io.out "Second element is " <$lista 1>
+# a
+io.out "Fourth and fifth elements are " <$lista 3 5>
+# (d e)
+io.out "First element is " <$lista head>
+# a
+io.out "Tail is " <$lista tail>
+# (b c d e)
+io.out "Even-indexed elements are " <$lista (0 2 4)>
+# (a c e)
+```
+
+This makes the code much cleaner and easier to understand.
 
 ## Procedures, SubLists and SimpleLists
 
@@ -254,7 +299,7 @@ proc pong () {
 }
 
 set writer_process [spawn pong]
-set sender_process [spawn ping $p1]
+set sender_process [spawn ping $writer_process]
 
 send $sender_process "a message and exited"
 ```
