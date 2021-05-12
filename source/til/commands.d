@@ -142,10 +142,14 @@ static this()
             newName = context.pop!string;
         }
 
-        if (!context.escopo.program.importModule(modulePath, newName))
+        auto program = context.escopo.program;
+        if (!program.importModule(modulePath, newName))
         {
-            auto msg = "Module not found: " ~ modulePath;
-            return context.error(msg, ErrorCode.InvalidArgument, "");
+            if (!program.importModuleFromSharedLibrary(modulePath, newName))
+            {
+                auto msg = "Module not found: " ~ modulePath;
+                return context.error(msg, ErrorCode.InvalidArgument, "");
+            }
         }
 
         // import std.io as io

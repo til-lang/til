@@ -2,18 +2,15 @@ name "til"
 description "Yet another programming language"
 authors "Cléber Zavadniak"
 copyright "Copyright © 2021, Cléber Zavadniak"
+version "0.1.0"
 license "zlib"
-version "0.0.1"
 
-targetPath "dist"
 targetType "executable"
-
-libs "phobos2"
+targetPath "dist"
 
 subPackage {
     name "hellomodule"
     sourcePaths "modules/hello"
+    dependency "til" version="0.1.0"
     targetType "dynamicLibrary"
-    libs "phobos2"
-    dependency "til:libs" version="0.0.1"
 }

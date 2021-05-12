@@ -166,7 +166,14 @@ io.out "Even-indexed elements are " <$lista (0 2 4)>
 # (a c e)
 ```
 
-This makes the code much cleaner and easier to understand.
+This makes the code much cleaner and easier to understand. The example
+from LMDB could be written this way:
+
+```tcl
+proc cmd_push {fd argv dir} {
+    if {list.length <$db <$argv 1>> > 0} {
+    ...
+```
 
 ## Procedures, SubLists and SimpleLists
 
