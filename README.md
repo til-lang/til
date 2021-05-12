@@ -41,26 +41,3 @@ set lista (a b c d e)
 io.out <$lista 0>    # prints "a"
 io.out <$lista 1 5>  # prints "(b c d e)"
 ```
-
-
-## Objectives
-
-This language must be simple, easy to use and, above all things,
-**pleasant to use**, to the point that coming back to an old project after
-2 years without touching it feel like a simple and totally manageable
-task.
-
-
-## Plans
-
-1. Make the basics usable: (~flow control~, loops, ~ranges~, ~stack
-   manipulation~, introspection, etc)
-1. Improve the implementation (better use of Pegged features, specially)
-1. ~Allow **dynamic loading** of libraries (compiled as shared object
-   files)~ DONE
-1. ~Implement **Actor Model**~ DONE
-1. Integrate properly with **Tk** or other good cross-platform GUI library
-1. ~Make code execution faster (without byte-compiling)~ DONE? A very
-   (VERY!) simple benchmark (iterating a lot and printing current counter)
-   gave "*same as Python3*" as result, which are very encouraging,
-   actually.
