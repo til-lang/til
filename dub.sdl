@@ -4,8 +4,18 @@ authors "Cléber Zavadniak"
 copyright "Copyright © 2021, Cléber Zavadniak"
 license "zlib"
 
-targetType "executable"
+targetType "library"
 targetPath "dist"
+
+subPackage {
+    name "run"
+    sourcePaths "interpreter/source"
+    sourcePaths "source"
+    targetType "executable"
+    targetPath "dist"
+    targetName "til"
+    dependency "til" version="0.1.0"
+}
 
 subPackage {
     name "hellomodule"

@@ -1,9 +1,9 @@
 release:
-	nice -17 dub build -b release
+	nice -17 dub build -b release :run
 	mv dist/til til.release
 
 debug:
-	nice -17 dub build -b debug
+	nice -17 dub build -b debug :run
 	mv dist/til til.debug
 
 profile:
