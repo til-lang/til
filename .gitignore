@@ -6,6 +6,7 @@ til.dll
 til.a
 til.lib
 dist/
+dub.selections.*
 
 *.so
 *.o
