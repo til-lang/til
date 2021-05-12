@@ -373,4 +373,4 @@ In the Til repository, look for the `examples` directory.
 
 ## Building your own modules
 
-See `modules/hello/hellomodule.d`.
+See [Building your own module](modules).
