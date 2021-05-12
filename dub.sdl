@@ -2,7 +2,6 @@ name "til"
 description "Yet another programming language"
 authors "Cléber Zavadniak"
 copyright "Copyright © 2021, Cléber Zavadniak"
-version "0.1.0"
 license "zlib"
 
 targetType "executable"
