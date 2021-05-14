@@ -125,6 +125,19 @@ struct CommandContext
         size -= count;
         return escopo.pop(count);
     }
+    template pop(T)
+    {
+        T[] pop(ulong count)
+        {
+            T[] items;
+            foreach(i; 0..count)
+            {
+                items ~= pop!T;
+            }
+            return items;
+        }
+    }
+
     void push(ListItem item)
     {
         escopo.push(item);
@@ -138,7 +151,23 @@ struct CommandContext
             size++;
         }
     }
-    ListItem[] items()
+    template items(T)
+    {
+        T[] items()
+        {
+            if (size > 0)
+            {
+                auto x = size;
+                size = 0;
+                return pop!T(x);
+            }
+            else
+            {
+                return [];
+            }
+        }
+    }
+    Items items()
     {
         if (size > 0)
         {

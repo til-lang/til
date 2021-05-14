@@ -14,12 +14,10 @@ subPackage {
     targetType "executable"
     targetPath "dist"
     targetName "til"
-    dependency "til" version="0.1.0"
 }
 
 subPackage {
     name "hellomodule"
     sourcePaths "modules/hello"
-    dependency "til" version="0.1.0"
     targetType "dynamicLibrary"
 }
