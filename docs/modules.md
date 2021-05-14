@@ -5,6 +5,11 @@ In order to write your own module you must have, installed in your system:
 * The DMD compiler, v2.095.0 or higer;
 * Dub, the D package manager.
 
+## Real world example
+
+See [til_exec](https://github.com/til-lang/til-exec) module.
+
+
 ## Dub init
 
 First, create your new Dub project:
