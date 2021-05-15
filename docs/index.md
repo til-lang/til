@@ -17,6 +17,10 @@ spawning a new *process* ("process" not in the OS sense, but in the
 And, finally, Til has **data streams** that allow you to process data
 using a (hopefully) familiar concept: **pipes**.
 
+
+(Oh, and [Til is very opinionated](opinionated.md). Beware.)
+
+
 ## So, in brief, Til is
 
 * an **interpreted** and **dynamic** command language;
