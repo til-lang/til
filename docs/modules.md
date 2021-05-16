@@ -26,7 +26,6 @@ adequate one):
 name "til_teste"
 description "Your module description"
 authors "Your Name"
-version "0.1.0"
 
 targetType "dynamicLibrary"
 dependency "til" version="<til-last-version>"
@@ -34,7 +33,7 @@ dependency "til" version="<til-last-version>"
 
 Note that it´s very important that **your module name be prefixed with
 `til_`**. The end result should be a file in the format
-`til_<your_module_name>.so`.
+`libtil_<your_module_name>.so`.
 
 ## Your module code
 
