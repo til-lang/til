@@ -175,7 +175,7 @@ from LMDB could be written this way:
 
 ```tcl
 proc cmd_push {fd argv dir} {
-    if {list.length <$db <$argv 1>> > 0} {
+    if ([list.length <$db <$argv 1>>] > 0) {
     ...
 ```
 
