@@ -367,9 +367,23 @@ you are not encouraged to write much more than "a program" in it, that is,
 it´s expected to be used as a "command and control" of other components,
 not as the main language implementing algorithms or data structures.
 
-## Error handling
+## Errors and error handling
 
-See `examples/error-handler.til` and `examples/unhandled-error.til`.
+```tcl
+proc throw_error () {
+    error "Test error"
+}
+
+proc error.handler (x) {
+    io.out "error.handler called."
+    io.out "  received: $x"
+    io.out "  IGNORING IT!"
+}
+
+io.out "Calling procedure `throw_error`..."
+throw_error
+io.out "Procedure `throw_error` was called and the error was handled."
+```
 
 ## And more
 
