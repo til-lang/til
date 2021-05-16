@@ -4,6 +4,9 @@
 
 ## One space only
 
+**MARKED TO CHANGE** - Thanks,
+[samatman](https://news.ycombinator.com/item?id=27170371).
+
 The number of spaces does count. Not counting indentation, it should
 always be **one**.
 
