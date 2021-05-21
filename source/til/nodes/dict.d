@@ -20,6 +20,55 @@ class Dict : ListItem
         string key = to!string(arguments.map!(x => to!string(x)).join("."));
         return this[key];
     }
+    override CommandContext set(CommandContext context)
+    {
+        // set $d (a 11) (b 22)
+        foreach(argument; context.items)
+        {
+            auto list = cast(SimpleList)argument;
+            auto argContext = list.evaluate(context.next());
+            auto evaluatedList = cast(SimpleList)argContext.pop();
+            auto arguments = evaluatedList.items;
+
+            // (a 11)
+            // (a b c 123)
+            ListItem value = arguments.back;
+            arguments.popBack;
+
+            string key = to!string(
+                arguments.map!(x => to!string(x)).join(".")
+            );
+            this[key] = value;
+        }
+        return context;
+    }
+    override CommandContext unset(CommandContext context)
+    {
+        // set $d a 11
+        // set $d (a b c 123)
+        // unset $d a (a b c)
+        foreach (argument; context.items)
+        {
+            string key;
+            if (argument.type == ObjectType.List)
+            {
+                auto list = cast(SimpleList)argument;
+                auto keysContext = list.evaluate(context.next());
+                auto evaluatedList = cast(SimpleList)keysContext.pop();
+                auto parts = evaluatedList.items;
+
+                key = to!string(
+                    parts.map!(x => to!string(x)).join(".")
+                );
+            }
+            else
+            {
+                key = to!string(argument);
+            }
+            this.values.remove(key);
+        }
+        return context;
+    }
 
     // ------------------
     // Conversions

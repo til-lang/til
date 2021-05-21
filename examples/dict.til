@@ -4,14 +4,24 @@ io.out "d: $d"
 io.out <$d x> <$d y> <$d z>
 
 # Set new keys
-dict.set $d (a 1) (b 2)
-dict.set $d (b 2)
-dict.set $d (c 3)
+set $d (a 1) (b 2)
+set $d (b 2)
+set $d (c 3)
+io.out "a b c: " <$d a> <$d b> <$d c>
+
+# Set new keys with "dynamic set"
+set $d (a 11) (b 22)
+set $d (b 22)
+set $d (c 33)
 io.out "a b c: " <$d a> <$d b> <$d c>
 
 # Multi-dimensional dicts:
 dict.set $d (a b c 123)
 io.out "a.b.c: " <$d a b c>
+unset $d (a b c)
+
+set $d (a b c 123)
+io.out "a.b.c (with simple `set`): " <$d a b c>
 
 set map [
     dict (a a 1) (a b 2) (a c 3)

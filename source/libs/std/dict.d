@@ -8,7 +8,7 @@ CommandHandler[string] commands;
 
 static this()
 {
-    commands["create"] = (string path, CommandContext context)
+    commands[null] = (string path, CommandContext context)
     {
         auto arguments = context.items;
         auto dict = new Dict();
@@ -23,24 +23,6 @@ static this()
         }
         context.push(dict);
 
-        context.exitCode = ExitCode.CommandSuccess;
-        return context;
-    };
-    commands[null] = commands["create"];
-
-    commands["set"] = (string path, CommandContext context)
-    {
-        auto dictVariable = context.pop();
-        auto dict = cast(Dict)dictVariable;
-
-        auto kvPairs = context.items;
-        foreach(kvPair; kvPairs)
-        {
-            SimpleList kvList = cast(SimpleList)kvPair;
-            auto value = kvList.items.back;
-            auto key = to!string(kvList.items[0..$-1].map!(x => to!string(x)).join("."));
-            dict[key] = value;
-        }
         context.exitCode = ExitCode.CommandSuccess;
         return context;
     };

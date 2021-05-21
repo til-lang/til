@@ -281,7 +281,7 @@ use **destructuring set** to store each one into a variable:
 ```tcl
 my_stream | foreach item {
     # $item is (origin headers data)
-    set origin headers data $item
+    set (origin headers data) $item
 }
 ```
 
@@ -386,6 +386,8 @@ io.out "Procedure `throw_error` was called and the error was handled."
 ```
 
 ## And more
+
+* [Til built-in types](types)
 
 In the Til repository, look for the `examples` directory.
 
