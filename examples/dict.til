@@ -16,7 +16,7 @@ set $d (c 33)
 io.out "a b c: " <$d a> <$d b> <$d c>
 
 # Multi-dimensional dicts:
-dict.set $d (a b c 123)
+set $d (a b c 123)
 io.out "a.b.c: " <$d a b c>
 unset $d (a b c)
 

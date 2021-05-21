@@ -1,0 +1,7 @@
+proc printer () {
+    read | foreach line {
+        io.out "> $line"
+    }
+}
+
+range 5 | spawn printer

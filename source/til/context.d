@@ -138,17 +138,19 @@ struct CommandContext
         }
     }
 
-    void push(ListItem item)
+    CommandContext push(ListItem item)
     {
         escopo.push(item);
         size++;
+        return this;
     }
     template push(T)
     {
-        void push(T x)
+        CommandContext push(T x)
         {
             escopo.push(x);
             size++;
+            return this;
         }
     }
     template items(T)
@@ -189,7 +191,7 @@ struct CommandContext
     // Scheduler-related things
     void yield()
     {
-        escopo.getRoot().scheduler.yield();
+        escopo.yield();
     }
 
     // Execution

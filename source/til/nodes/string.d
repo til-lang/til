@@ -77,26 +77,31 @@ class String : ListItem
     }
 
     // -----------------------------
-    override ListItem extract(Items arguments)
+    override CommandContext extract(CommandContext context)
     {
-        if (arguments.length == 0) return this;
-        auto firstArgument = arguments[0];
+        if (context.size == 0) return context.push(this);
+        auto firstArgument = context.pop();
 
         if (firstArgument.type == ObjectType.Integer)
         {
-            if (arguments.length == 2 && arguments[1].type == ObjectType.Integer)
+            if (context.size == 1)
             {
-                auto idx1 = firstArgument.toInt;
-                auto idx2 = arguments[1].toInt;
-                return new String(this.repr[idx1..idx2]);
+                auto nextArg = context.pop();
+                if (nextArg.type == ObjectType.Integer)
+                {
+                    auto idx1 = firstArgument.toInt;
+                    auto idx2 = nextArg.toInt;
+                    return context.push(new String(this.repr[idx1..idx2]));
+                }
             }
-            else if (arguments.length == 1)
+            else if (context.size == 0)
             {
                 auto idx = firstArgument.toInt;
-                return new String(this.repr[idx..idx+1]);
+                return context.push(new String(this.repr[idx..idx+1]));
             }
         }
-        throw new Exception("not implemented");
+        auto msg = "Invalid argument to String extraction";
+        return context.error(msg, ErrorCode.InvalidArgument, "");
     }
 }
 

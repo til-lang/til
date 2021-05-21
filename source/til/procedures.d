@@ -33,8 +33,8 @@ class Procedure
         }
         auto newScope = new Process(context.escopo);
 
-        // "Empty" caller scope context/stack:
-        foreach(parameter; parameters.items)
+        // Empty the caller scope context/stack:
+        foreach (parameter; parameters.items)
         {
             if (context.size == 0)
             {
@@ -87,6 +87,7 @@ class Procedure
         {
             context.exitCode = newContext.exitCode;
         }
+
         return context;
     }
 }

@@ -5,6 +5,7 @@ import std.container : DList;
 
 import til.nodes;
 import til.modules;
+import til.ranges;
 import til.scheduler;
 
 debug
@@ -18,6 +19,69 @@ enum ProcessState
     Running,
     Receiving,
     Waiting,
+    Finished,
+}
+
+
+class ProcessIORange : Range
+{
+    ListItem buffer;
+    Process process;
+    string name;
+
+    this(Process process, string name)
+    {
+        this.process = process;
+        this.name = name;
+    }
+
+    void write(ListItem item)
+    {
+        // While someone does not consume...
+        while (buffer !is null)
+        {
+            debug {
+                stderr.writeln(
+                    "writing ", item,
+                    ": ", name, ".buffer is not null: ",
+                    buffer,
+                    " process: ", process
+                );
+            }
+            this.process.yield();
+        }
+        buffer = item;
+    }
+
+    override bool empty()
+    {
+        while (process.state != ProcessState.Finished)
+        {
+            if (buffer !is null) return false;
+
+            // Give the process a change to terminate
+            // or send something to the pipe:
+            debug {
+                stderr.writeln(
+                    "empty: ", name, ".buffer is still null"
+                );
+            }
+            process.yield();
+        }
+        return (buffer is null);
+    }
+    override ListItem front()
+    {
+        return this.buffer;
+    }
+    override void popFront()
+    {
+        this.buffer = null;
+    }
+    override string toString()
+    {
+        return "ProcessIORange " ~ name;
+    }
 }
 
 
@@ -32,21 +96,26 @@ class Process
     ulong stackPointer = 0;
     Items[string] variables;
 
-    // PIDs:
+    // PIDs
     static uint counter = 0;
     uint index;
 
     // Scheduling
     Scheduler scheduler = null;
-    const uint msgboxSize = 4;
-    ListItem[] msgbox;
+
+    // Piping
+    Range input = null;
+    ProcessIORange output = null;
 
     this(Process parent)
     {
         this.index = this.counter++;
         this.parent = parent;
+
         if (parent !is null)
         {
+            this.input = parent.input;
+            this.output = parent.output;
             this.stack = parent.stack[];
             this.stackPointer = parent.stackPointer;
             this.program = parent.program;
@@ -89,6 +158,12 @@ class Process
     {
         debug {stderr.writeln(name, " = ", value);}
         variables[name] = value;
+    }
+
+    // Scheduler-related things
+    void yield()
+    {
+        this.getRoot().scheduler.yield();
     }
 
     // The Stack:
@@ -320,6 +395,8 @@ class Process
     }
     CommandContext run(SubProgram subprogram, CommandContext context)
     {
+        this.state = ProcessState.Running;
+
         foreach(index, pipeline; subprogram.pipelines)
         {
             context = pipeline.run(context);
@@ -391,7 +468,7 @@ class Process
                     );
             }
             // Each 8 pipelines we yield fiber/thread control:
-            if ((index & 0x07) == 0x07) this.scheduler.yield();
+            if ((index & 0x07) == 0x07) this.yield();
         }
 
         // Returns the context of the last expression:

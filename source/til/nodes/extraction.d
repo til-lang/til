@@ -25,10 +25,8 @@ class Extraction : BaseList
         }
 
         ListItem target = context.pop();
-        Items arguments = context.items;
 
-        auto result = target.extract(arguments);
-        context.push(result);
+        context = target.extract(context);
 
         context.exitCode = ExitCode.Proceed;
         return context;

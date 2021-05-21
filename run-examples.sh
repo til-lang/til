@@ -15,6 +15,9 @@ for file in examples/*.til;do
     if [[ $file == "examples/unhandled-error.til" ]];then
         ./til.$version $file && break
         continue
+    elif [[ $file == "examples/shared-library.til" ]];then
+        echo "Skipping $file"
+        continue
     fi
     if ! ./til.$version $file;then
         echo "$file : ERROR"

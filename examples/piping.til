@@ -1,0 +1,11 @@
+proc prefixer (prefix) {
+    io.out "prefixer started"
+    read | foreach item {
+        io.out "Prefixing $item ..."
+        write "$prefix $item"
+    }
+}
+
+range ("Angela" "Bob" "Carla" "David") | spawn prefixer "The name is" | foreach phrase {
+    io.out $phrase
+}

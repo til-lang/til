@@ -49,21 +49,21 @@ class Erro : ListItem
     }
 
     // Extractions:
-    override ListItem extract(Items items)
+    override CommandContext extract(CommandContext context)
     {
-        if (items.length == 0) return this;
-        auto arg = items.map!(x => to!string(x)).join(" ");
+        if (context.size == 0) return context.push(this);
+        auto args = context.items!string;
+        auto arg = args.join(" ");
 
         switch(arg)
         {
             case "code":
-                return new IntegerAtom(code);
+                return context.push(new IntegerAtom(code));
             case "process id":
-                return new IntegerAtom(process.index);
+                return context.push(new IntegerAtom(process.index));
             default:
-                throw new Exception(
-                    "`" ~ arg ~ "` extraction not implemented"
-                );
+                auto msg = "Invalid argument to Error extraction";
+                return context.error(msg, ErrorCode.InvalidArgument, "");
         }
     }
 }

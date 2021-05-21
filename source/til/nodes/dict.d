@@ -15,10 +15,12 @@ class Dict : ListItem
         this.values = values;
     }
 
-    override ListItem extract(Items arguments)
+    override CommandContext extract(CommandContext context)
     {
-        string key = to!string(arguments.map!(x => to!string(x)).join("."));
-        return this[key];
+        auto arguments = context.items!string;
+        string key = to!string(arguments.join("."));
+        context.push(this[key]);
+        return context;
     }
     override CommandContext set(CommandContext context)
     {

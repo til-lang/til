@@ -78,7 +78,7 @@ class ListItem
     }
 
     // Extractions:
-    ListItem extract(Items)
+    CommandContext extract(CommandContext context)
     {
         auto info = typeid(this);
         throw new Exception(

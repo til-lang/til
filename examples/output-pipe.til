@@ -1,0 +1,12 @@
+proc generator (x) {
+    io.out "generator started"
+
+    range $x | foreach i {
+        write "i=$i"
+    }
+}
+
+spawn generator 4 | foreach i {
+    io.out $i
+}
+

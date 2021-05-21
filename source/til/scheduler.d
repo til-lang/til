@@ -42,10 +42,11 @@ class Scheduler
         }
     }
 
-    void add(Process process)
+    Pid add(Process process)
     {
         process.scheduler = this;
         fibers ~= new ProcessFiber(process);
+        return new Pid(process);
     }
 
     ExitCode run()
@@ -58,6 +59,15 @@ class Scheduler
             {
                 if (fiber.state == Fiber.State.TERM)
                 {
+                    debug {
+                        stderr.writeln(" FIBER TERM: ", fiber.process.index);
+                    }
+                    // That's the only safe place to determine
+                    // if the process is actually
+                    // in Finished state:
+                    fiber.process.state = ProcessState.Finished;
+
+                    // TODO: remove from fibers list!!!
                     continue;
                 }
                 activeCounter++;

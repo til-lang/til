@@ -31,35 +31,52 @@ class Pipeline
         a stream. So every "previous command"
         NECESSARILY MUST generate a
         stream or else we found
-        an logic bug and it's
-        a good idea to
+        a logic bug - and it
+        is a good idea to
         alert the
         user.
         */
 
         debug {stderr.writeln("Running Pipeline ", this);}
 
+        Command previous = null;
         foreach(index, command; commands)
         {
-
-            if (index != 0 && context.stream is null)
+            if (index != 0)
             {
-                throw new Exception(
-                    "You cannot have a sink in the middle of a Pipeline!"
-                    ~ " command:" ~ command.name
-                );
+                if (context.stream is null)
+                {
+                    throw new Exception(
+                        "You cannot have a sink in the middle of a Pipeline!"
+                        ~ " command:" ~ previous.name
+                    );
+                }
+
+                /*
+                set x [a | b | c]
+                `c` can return a value, but the first
+                two commands in the pipeline must
+                have any return values
+                OBLITERATED!
+                */
+                if (context.size != 0)
+                {
+                    // Just pop everything:
+                    context.items;
+                }
             }
 
-            auto rContext = command.run(context);
+            auto runContext = command.run(context);
+            previous = command;
 
-            final switch(rContext.exitCode)
+            final switch(runContext.exitCode)
             {
                 case ExitCode.Undefined:
                     throw new Exception(to!string(command) ~ " returned Undefined");
 
                 case ExitCode.Proceed:
                     throw new InvalidException(
-                        "Commands should not return `Proceed`: " ~ to!string(rContext)
+                        "Commands should not return `Proceed`: " ~ to!string(runContext)
                         ~ " (command: " ~ to!string(command) ~ ")"
                     );
 
@@ -69,32 +86,33 @@ class Pipeline
                     // ReturnSuccess should keep stopping
                     // SubPrograms until a procedure
                     // or a program stops.
-                    return rContext;
+                    return runContext;
 
                 case ExitCode.Failure:
                     // Failures, for now, are going to be propagated:
-                    return rContext;
+                    return runContext;
 
                 // -----------------
                 // Loops:
                 case ExitCode.Break:
                 case ExitCode.Continue:
-                    return rContext;
+                    return runContext;
 
                 // -----------------
                 case ExitCode.CommandSuccess:
                     // pass
                     break;
             }
-            context.size += rContext.size;
+            context.size += runContext.size;
             // Pass along the new stream:
-            context.stream = rContext.stream;
+            context.stream = runContext.stream;
         }
 
         /*
         If there is not a sink in the end of the pipeline,
         consume each item so that the data may flow.
         */
+        /*
         if (context.stream !is null && !context.stream.empty)
         {
             uint counter = 0;
@@ -106,6 +124,7 @@ class Pipeline
                 if ((counter++ & 0x0F) == 0x0F) context.escopo.scheduler.yield();
             }
         }
+        */
 
         // The expected context of a pipeline is "Proceed".
         context.exitCode = ExitCode.Proceed;

@@ -9,7 +9,6 @@ import til.grammar;
 
 import til.exceptions;
 import til.logic;
-import til.msgbox;
 import til.modules;
 import til.nodes;
 import til.procedures;
@@ -88,7 +87,8 @@ static this()
                 values.popFront();
             }
         }
-        else if (firstArgument.type != ObjectType.Name)
+        else if (firstArgument.type != ObjectType.Name
+                 && firstArgument.type != ObjectType.String)
         {
             context = firstArgument.set(context);
         }
@@ -307,7 +307,11 @@ static this()
                 return context;
             }
 
-            if ((index++ & yieldStep) == yieldStep) context.yield();
+            if ((index++ & yieldStep) == yieldStep)
+            {
+                debug {stderr.writeln("foreach yieldStep");}
+                context.yield();
+            }
         }
 
         /*
@@ -570,6 +574,9 @@ static this()
     commands["spawn"] = (string path, CommandContext context)
     {
         // set pid [spawn f $x]
+        // spawn f | foreach x { ... }
+        // range 5 | spawn g | foreach y { ... }
+
         auto commandName = context.pop!string;
         Items arguments = context.items;
 
@@ -577,48 +584,67 @@ static this()
         auto pipeline = new Pipeline([command]);
         auto subprogram = new SubProgram([pipeline]);
         auto process = new Process(context.escopo, subprogram);
-        context.escopo.scheduler.add(process);
 
-        context.push(new Pid(process));
+        // Piping:
+        if (context.stream is null)
+        {
+            process.input = new ProcessIORange(context.escopo, commandName ~ ":in");
+            debug {writeln("process.input: ", context.escopo);}
+        }
+        else
+        {
+            process.input = context.stream;
+        }
+        // Important: it's not the current process, but the new one, here:
+        process.output = new ProcessIORange(process, commandName ~ ":out");
+
+        auto pid = context.escopo.scheduler.add(process);
+
+        context.push(pid);
+
+        // Piping out:
+        context.stream = process.output;
 
         context.exitCode = ExitCode.CommandSuccess;
         return context;
     };
     commands["send"] = (string path, CommandContext context)
     {
-        // send $pid "any ListItem"
-        auto pid = context.pop!Pid;
-        auto message = context.pop();
-
-        pid.send(message);
-
-        context.exitCode = ExitCode.CommandSuccess;
-        return context;
-    };
-    commands["receive"] = (string path, CommandContext context)
-    {
-        // receive.wait | foreach msg { ... }
-        auto rootProcess = context.escopo.getRoot();
-        debug {
-            stderr.writeln(
-                "process ", context.escopo.index,
-                " has root ", rootProcess.index
-            );
-            stderr.writeln(
-                "receiving in ", rootProcess.index,
-                " : ", rootProcess.msgbox
-            );
-        }
-        while(rootProcess.msgbox.empty)
+        if (context.size > 2)
         {
-            // TODO: put rootProcess in Receive state
-            rootProcess.scheduler.yield();
+            auto msg = "`send` expect only two arguments";
+            return context.error(msg, ErrorCode.InvalidArgument, "");
         }
-        context.stream = new MsgboxRange(rootProcess);
+        Pid pid = cast(Pid)context.pop();
+        auto value = context.pop();
+
+        // If we have the Pid, the input *is* a ProcessIORange.
+        auto input = cast(ProcessIORange)pid.process.input;
+        input.write(value);
+
         context.exitCode = ExitCode.CommandSuccess;
         return context;
     };
 
+    // ---------------------------------------------
+    // Piping
+    commands["read"] = (string path, CommandContext context)
+    {
+        context.stream = context.escopo.input;
+        context.exitCode = ExitCode.CommandSuccess;
+        return context;
+    };
+    commands["write"] = (string path, CommandContext context)
+    {
+        if (context.size > 1)
+        {
+            auto msg = "`write` expect only one argument";
+            return context.error(msg, ErrorCode.InvalidArgument, "");
+        }
+        context.escopo.output.write(context.pop());
+        context.exitCode = ExitCode.CommandSuccess;
+        return context;
+    };
     // ---------------------------------------------
     // Errors
     commands["error"] = (string path, CommandContext context)

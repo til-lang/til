@@ -77,11 +77,11 @@ class SimpleList : BaseList
         return context;
     }
 
-    override ListItem extract(Items arguments)
+    override CommandContext extract(CommandContext context)
     {
-        if (arguments.length == 0) return this;
+        if (context.size == 0) return context.push(this);
 
-        auto firstArgument = arguments[0];
+        auto firstArgument = context.pop();
         // by indexes:
         // <(1 2 3 4 5) (0 2 4)> → (1 3 5)
         switch(firstArgument.type)
@@ -89,14 +89,23 @@ class SimpleList : BaseList
             case ObjectType.Integer:
                 // by range:
                 // <(1 2 3 4 5) 0 2> → (1 2)
-                if (arguments.length == 2 && arguments[1].type == ObjectType.Integer)
+                if (context.size == 1)
                 {
+                    auto nextArg = context.pop();
+                    if (nextArg.type == ObjectType.Integer)
+                    {
+                        context.push(new SimpleList(
+                            items[firstArgument.toInt..nextArg.toInt]
+                        ));
+                        return context;
+                    }
                 }
                 // by index:
                 // <(1 2 3) 0> → 1  (not inside any list)
-                else if (arguments.length == 1)
+                else if (context.size == 0)
                 {
-                    return items[firstArgument.toInt];
+                    context.push(items[firstArgument.toInt]);
+                    return context;
                 }
                 break;
             case ObjectType.Name:
@@ -104,9 +113,11 @@ class SimpleList : BaseList
                 switch(str)
                 {
                     case "head":
-                        return items[0];
+                        context.push(items[0]);
+                        return context;
                     case "tail":
-                        return new SimpleList(items[1..$]);
+                        context.push(new SimpleList(items[1..$]));
+                        return context;
                     default:
                         break;
                 }
@@ -116,10 +127,7 @@ class SimpleList : BaseList
         }
 
         // else...
-        throw new Exception(
-            "Extraction not implemented in SimpleList for ("
-            ~ to!string(arguments.map!(x => to!string(x)).join(" "))
-            ~ ")"
-        );
+        auto msg = "Extraction not implemented in SimpleList";
+        return context.error(msg, ErrorCode.InvalidArgument, "");
     }
 }
