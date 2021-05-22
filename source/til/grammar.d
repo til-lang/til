@@ -389,6 +389,9 @@ class Parser
                 // Add the '$' in front of current part:
                 token ~= consumeChar();
 
+                bool enclosed = (currentChar == '{');
+                if (enclosed) consumeChar();
+
                 while ((currentChar >= 'a' && currentChar <= 'z')
                         || (currentChar >= '0' && currentChar <= '9')
                         || currentChar == '.' || currentChar == '_')
@@ -398,6 +401,11 @@ class Parser
 
                 if (token.length > 1)
                 {
+                    if (enclosed)
+                    {
+                        assert(currentChar == '}');
+                        consumeChar();
+                    }
                     parts ~= cast(string)token;
                 }
                 else
