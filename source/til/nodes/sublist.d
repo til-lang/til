@@ -11,6 +11,7 @@ class SubList : BaseList
     {
         super();
         this.subprogram = subprogram;
+        this.commandPrefix = "sublist";
     }
 
     // -----------------------------

@@ -34,67 +34,72 @@ static this()
 {
     // ---------------------------------------------
     // Variables
-    commands["set"] = (string path, CommandContext context)
+    commands["name.set"] = (string path, CommandContext context)
     {
         string[] names;
 
         if (context.size < 2)
         {
-            auto msg = "`set` must receive at least two arguments.";
+            auto msg = "`name.set` must receive at least two arguments.";
             return context.error(msg, ErrorCode.InvalidArgument, "");
         }
 
-        auto firstArgument = context.pop();
+        auto key = context.pop!string;
+        context.escopo[key] = context.items;
 
-        if (firstArgument.type == ObjectType.List)
+        context.exitCode = ExitCode.CommandSuccess;
+        return context;
+    };
+    commands["list.set"] = (string path, CommandContext context)
+    {
+        string[] names;
+
+        if (context.size != 2)
         {
-            auto secondArgument = context.pop();
-            if (secondArgument.type != ObjectType.List)
-            {
-                auto msg = "You can only use destructuring `set` with two SimpleLists";
-                return context.error(msg, ErrorCode.InvalidArgument, "");
-            }
-
-            auto l1 = cast(SimpleList)firstArgument;
-            names = l1.items.map!(x => to!string(x)).array;
-
-            Items values;
-
-            auto l2 = cast(SimpleList)secondArgument;
-            context = l2.forceEvaluate(context);
-            auto l3 = context.pop!SimpleList;
-            values = l3.items;
-
-            if (values.length < names.length)
-            {
-                auto msg = "Insuficient number of items in the second list";
-                return context.error(msg, ErrorCode.InvalidArgument, "");
-            }
-
-            string lastName;
-            foreach(name; names)
-            {
-                auto nextValue = values.front;
-                if (!values.empty) values.popFront();
-
-                context.escopo[name] = nextValue;
-                lastName = name;
-            }
-            while(!values.empty)
-            {
-                // Everything else goes to the last name:
-                context.escopo[lastName] = context.escopo[lastName] ~ values.front;
-                values.popFront();
-            }
+            auto msg = "`list.set` must receive two arguments.";
+            return context.error(msg, ErrorCode.InvalidArgument, "");
         }
-        else if (firstArgument.type != ObjectType.Name
-                 && firstArgument.type != ObjectType.String)
+
+        auto l1 = context.pop!SimpleList;
+        auto l2 = context.pop!SimpleList;
+
+        // TODO : it seem right, but we should test
+        // if the cast won't change the type or
+        // anything like that (I believe it
+        // makes no sense, actually,
+        // but...)
+        if (l2.type != ObjectType.List)
         {
-            context = firstArgument.set(context);
+            auto msg = "You can only use `list.set` with two SimpleLists";
+            return context.error(msg, ErrorCode.InvalidArgument, "");
         }
-        else
+
+        names = l1.items.map!(x => to!string(x)).array;
+
+        Items values;
+        context = l2.forceEvaluate(context);
+        values = l2.items;
+
+        if (values.length < names.length)
         {
-            context.escopo[to!string(firstArgument)] = context.items;
+            auto msg = "Insuficient number of items in the second list";
+            return context.error(msg, ErrorCode.InvalidArgument, "");
+        }
+
+        string lastName;
+        foreach(name; names)
+        {
+            auto nextValue = values.front;
+            if (!values.empty) values.popFront();
+
+            context.escopo[name] = nextValue;
+            lastName = name;
+        }
+        while(!values.empty)
+        {
+            // Everything else goes to the last name:
+            context.escopo[lastName] = context.escopo[lastName] ~ values.front;
+            values.popFront();
         }
 
         context.exitCode = ExitCode.CommandSuccess;
@@ -115,6 +120,18 @@ static this()
             context.escopo.variables.remove(to!string(firstArgument));
         }
 
+        context.exitCode = ExitCode.CommandSuccess;
+        return context;
+    };
+
+    // ---------------------------------------------
+    // IntegerAtom
+    commands["int.incr"] = (string path, CommandContext context)
+    {
+        // TODO: check parameters count
+        auto integer = context.pop!IntegerAtom;
+        integer.value++;
+        context.push(integer);
         context.exitCode = ExitCode.CommandSuccess;
         return context;
     };
@@ -437,6 +454,7 @@ static this()
                     else
                     {
                         // Comparison
+                        // TODO: use `operate` "=="
                         string value = to!string(variable);
                         if (value == to!string(item))
                         {
@@ -522,6 +540,7 @@ static this()
     commands["uplevel"] = (string path, CommandContext context)
     {
         /*
+        uplevel set parent_value x
         */
         auto parentScope = context.escopo.parent;
         if (parentScope is null)

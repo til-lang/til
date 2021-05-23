@@ -15,6 +15,7 @@ class Pid : ListItem
     this(Process process)
     {
         this.process = process;
+        this.commandPrefix = "pid";
     }
 
     override CommandContext extract(CommandContext context)

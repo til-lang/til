@@ -57,4 +57,5 @@ enum ObjectType
     Float,
     Integer,
     Boolean,
+    Other,
 }

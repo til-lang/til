@@ -9,9 +9,11 @@ class Dict : ListItem
 
     this()
     {
+        this.commandPrefix = "dict";
     }
     this(ListItem[string] values)
     {
+        this();
         this.values = values;
     }
 

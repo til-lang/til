@@ -34,6 +34,7 @@ class Erro : ListItem
         this.message = message;
         this.code = code;
         this.classe = classe;
+        this.commandPrefix = "error";
     }
 
     // Conversions:

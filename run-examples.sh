@@ -20,7 +20,10 @@ for file in examples/*.til;do
         continue
     fi
     if ! ./til.$version $file;then
-        echo "$file : ERROR"
-        break
+        code=$?
+        echo "$file : ERROR $code"
+        exit $code
     fi
 done
+
+echo -e "\nSUCCESS"

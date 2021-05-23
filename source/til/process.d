@@ -372,13 +372,9 @@ class Process
             // name actually exists inside it:
             // (Important: do NOT call this method recursively!)
             handler = (name in this.program.commands);
-            if (handler is null)
-            {
-                throw new Exception("Command not found: " ~ name);
-            }
-            return *handler;
+            if (handler !is null) return *handler;
         }
-        throw new Exception("Command not found: " ~ name);
+        return null;
     }
 
     // Execution

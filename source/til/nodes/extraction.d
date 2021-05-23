@@ -9,6 +9,7 @@ class Extraction : BaseList
     {
         super();
         this.items = items;
+        this.commandPrefix = "extraction";
     }
 
     override string toString()

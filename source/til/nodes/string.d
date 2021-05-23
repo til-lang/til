@@ -17,6 +17,7 @@ class String : ListItem
     {
         this.repr = s;
         this.type = ObjectType.String;
+        this.commandPrefix = "string";
     }
 
     // Conversions:

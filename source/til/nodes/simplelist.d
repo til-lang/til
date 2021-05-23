@@ -16,6 +16,7 @@ class SimpleList : BaseList
     {
         super();
         this.items = items;
+        this.commandPrefix = "list";
     }
 
     // -----------------------------

@@ -54,6 +54,10 @@ class Command
             stderr.writeln(" Running Command ", this, " ", this.arguments);
             stderr.writeln("  context: ", context);
         }
+
+        // evaluate arguments and set proper context.size:
+        context = this.evaluateArguments(context);
+
         if (this.handler is null)
         {
             debug {
@@ -63,15 +67,31 @@ class Command
             this.handler = context.escopo.getCommand(this.name);
             if (this.handler is null)
             {
-                return context.error(
-                    "Command not found", ErrorCode.CommandNotFound, "internal"
-                );
+                debug {stderr.writeln(">> handler is null. context.size: ", context.size);}
+                if (context.size > 0)
+                {
+                    auto arg1 = context.peek();
+                    debug {stderr.writeln(">> ", arg1.type, ".commandPrefix:", arg1.commandPrefix);}
+                    if (arg1.commandPrefix.length > 0)
+                    {
+                        string prefixedName = arg1.commandPrefix ~ "." ~ this.name;
+                        debug {stderr.writeln(">> TRYING ", prefixedName);}
+                        this.handler = context.escopo.getCommand(prefixedName);
+                    }
+                }
+
+                if (this.handler is null)
+                {
+                    return context.error(
+                        "Command " ~ this.name ~ " not found",
+                        ErrorCode.CommandNotFound,
+                        "internal"
+                    );
+                }
             }
             debug {stderr.writeln("getCommand ", this.name, " = OK");}
         }
 
-        // evaluate arguments and set proper context.size:
-        context = this.evaluateArguments(context);
 
         return this.runHandler(context, this.handler);
     }
