@@ -225,17 +225,17 @@ class Parser
     {
         push("command");
         NameAtom commandName = cast(NameAtom)consumeAtom();
-        // TODO: validate the name, maybe?
         ListItem[] arguments;
 
         // That is: if the command HAS any argument:
         while (currentChar == SPACE)
         {
             consumeSpace();
-            if (currentChar == PIPE)
+            if (currentChar.among('}', ']', ')', '>', PIPE))
             {
                 break;
             }
+
             arguments ~= consumeListItem();
 
             if (currentChar == EOL)
@@ -573,7 +573,7 @@ class Parser
 
                     debug {
                         stderr.writeln(
-                            "new IntegerAtom: ", s, " * ", multiplier
+                            "new IntegerAtom: <", s, "> * ", multiplier
                         );
                     }
                     return new IntegerAtom(to!long(s) * multiplier);
