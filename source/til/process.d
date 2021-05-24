@@ -325,6 +325,7 @@ class Process
         Let's try to autoimport!
         */
         bool success = {
+            // std.io.out → std.io
             string modulePath = to!string(name.split(".")[0..$-1].join("."));
 
             // -------------------------
@@ -346,8 +347,29 @@ class Process
             // = std.math as math
             if (program.importModule("std." ~ name, name)) return true;
 
-            // -------------------------
-            // 2- From shared libraries:
+            return false;
+        }();
+
+        if (success) {
+            // We imported the module, but we're not sure if this
+            // name actually exists inside it:
+            // (Important: do NOT call this method recursively!)
+            handler = (name in this.program.commands);
+            if (handler !is null)
+            {
+                this.program.commands[name] = *handler;
+                return *handler;
+            }
+        }
+        return null;
+    }
+
+    CommandHandler getCommandFromSharedLibraries(string name)
+    {
+        CommandHandler* handler;
+
+        bool success = {
+            string modulePath = to!string(name.split(".")[0..$-1].join("."));
             // std.io.out
             // = std.io
             if (program.importModuleFromSharedLibrary(modulePath)) return true;
@@ -366,13 +388,16 @@ class Process
 
             return false;
         }();
-
         if (success) {
             // We imported the module, but we're not sure if this
             // name actually exists inside it:
             // (Important: do NOT call this method recursively!)
             handler = (name in this.program.commands);
-            if (handler !is null) return *handler;
+            if (handler !is null)
+            {
+                this.program.commands[name] = *handler;
+                return *handler;
+            }
         }
         return null;
     }

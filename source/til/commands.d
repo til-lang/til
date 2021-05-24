@@ -126,11 +126,25 @@ static this()
 
     // ---------------------------------------------
     // IntegerAtom
+    // XXX: `incr` and `decr` do NOT conform to Tcl "equivalents"!
     commands["int.incr"] = (string path, CommandContext context)
     {
         // TODO: check parameters count
         auto integer = context.pop!IntegerAtom;
+
+        // TODO: check for overflow
         integer.value++;
+        context.push(integer);
+        context.exitCode = ExitCode.CommandSuccess;
+        return context;
+    };
+    commands["int.decr"] = (string path, CommandContext context)
+    {
+        // TODO: check parameters count
+        auto integer = context.pop!IntegerAtom;
+
+        // TODO: check for underflow
+        integer.value--;
         context.push(integer);
         context.exitCode = ExitCode.CommandSuccess;
         return context;

@@ -60,34 +60,57 @@ class Command
 
         if (this.handler is null)
         {
+            auto escopo = context.escopo;
+
             debug {
                 stderr.writeln("getCommand ", this.name);
-                stderr.writeln(" process:", context.escopo);
+                stderr.writeln(" process:", escopo);
             }
-            this.handler = context.escopo.getCommand(this.name);
-            if (this.handler is null)
-            {
-                debug {stderr.writeln(">> handler is null. context.size: ", context.size);}
-                if (context.size > 0)
-                {
-                    auto arg1 = context.peek();
-                    debug {stderr.writeln(">> ", arg1.type, ".commandPrefix:", arg1.commandPrefix);}
-                    if (arg1.commandPrefix.length > 0)
-                    {
-                        string prefixedName = arg1.commandPrefix ~ "." ~ this.name;
-                        debug {stderr.writeln(">> TRYING ", prefixedName);}
-                        this.handler = context.escopo.getCommand(prefixedName);
-                    }
-                }
+            string prefixedName;
 
-                if (this.handler is null)
-                {
-                    return context.error(
-                        "Command " ~ this.name ~ " not found",
-                        ErrorCode.CommandNotFound,
-                        "internal"
+            if (context.size > 0)
+            {
+                auto arg1 = context.peek();
+                debug {
+                    stderr.writeln(
+                        ">> ", arg1.type,
+                        ".commandPrefix:", arg1.commandPrefix
                     );
                 }
+                if (arg1.commandPrefix.length > 0)
+                {
+                    prefixedName = arg1.commandPrefix ~ "." ~ this.name;
+                    debug {stderr.writeln(">> TRYING ", prefixedName);}
+                    this.handler = escopo.getCommand(prefixedName);
+                }
+            }
+
+            if (this.handler is null)
+            {
+                this.handler = escopo.getCommand(this.name);
+            }
+
+            if (this.handler is null && prefixedName.length)
+            {
+                this.handler = escopo.getCommandFromSharedLibraries(
+                    prefixedName
+                );
+            }
+
+            if (this.handler is null)
+            {
+                this.handler = escopo.getCommandFromSharedLibraries(
+                    this.name
+                );
+            }
+
+            if (this.handler is null)
+            {
+                return context.error(
+                    "Command " ~ this.name ~ " not found",
+                    ErrorCode.CommandNotFound,
+                    "internal"
+                );
             }
             debug {stderr.writeln("getCommand ", this.name, " = OK");}
         }
