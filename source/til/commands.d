@@ -105,20 +105,13 @@ static this()
         context.exitCode = ExitCode.CommandSuccess;
         return context;
     };
-    commands["unset"] = (string path, CommandContext context)
+    commands["name.unset"] = (string path, CommandContext context)
     {
         string[] names;
 
         auto firstArgument = context.pop();
 
-        if (firstArgument.type != ObjectType.Name)
-        {
-            context = firstArgument.unset(context);
-        }
-        else
-        {
-            context.escopo.variables.remove(to!string(firstArgument));
-        }
+        context.escopo.variables.remove(to!string(firstArgument));
 
         context.exitCode = ExitCode.CommandSuccess;
         return context;

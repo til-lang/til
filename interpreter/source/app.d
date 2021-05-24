@@ -48,6 +48,7 @@ int main(string[] args)
     mixin(importModule("std.io"));
     mixin(importModule("std.lists"));
     mixin(importModule("std.math"));
+    mixin(importModule("std.queue"));
     mixin(importModule("std.range"));
     mixin(importModule("std.sharedlib"));
 

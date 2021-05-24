@@ -18,6 +18,8 @@ enum ErrorCode
     InvalidArgument,
     InvalidSyntax,
     SemanticError,
+    Empty,
+    Full,
 }
 
 

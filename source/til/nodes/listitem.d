@@ -18,20 +18,6 @@ class ListItem
             "operate (" ~ operator ~ ") not implemented in " ~ info.toString()
         );
     }
-    CommandContext set(CommandContext context)
-    {
-        auto info = typeid(this);
-        throw new Exception(
-            "set not implemented in " ~ info.toString()
-        );
-    }
-    CommandContext unset(CommandContext context)
-    {
-        auto info = typeid(this);
-        throw new Exception(
-            "unset not implemented in " ~ info.toString()
-        );
-    }
 
     // Operators:
     template opUnary(string operator)

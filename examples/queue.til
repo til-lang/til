@@ -1,0 +1,22 @@
+set q [queue]
+push $q alfa
+push $q beta
+push $q gama
+
+range 0 2 | foreach i {
+    io.out [pop $q]
+}
+
+proc error.handler (e) {
+    io.out "Error: " <$e message>
+    return 0
+}
+
+set q [queue 2]
+push.no_wait $q alfa
+push.no_wait $q beta
+push.no_wait $q gama
+
+range 0 2 | foreach i {
+    io.out [pop.no_wait $q]
+}
