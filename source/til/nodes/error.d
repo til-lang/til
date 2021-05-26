@@ -61,9 +61,11 @@ class Erro : ListItem
         switch(arg)
         {
             case "code":
-                return context.push(new IntegerAtom(code));
+                return context.push(code);
             case "process id":
-                return context.push(new IntegerAtom(process.index));
+                return context.push(process.index);
+            case "message":
+                return context.push(message);
             default:
                 auto msg = "Invalid argument to Error extraction";
                 return context.error(msg, ErrorCode.InvalidArgument, "");
