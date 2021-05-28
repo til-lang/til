@@ -1,9 +1,58 @@
 module libs.std.queue;
 
 import til.nodes;
+import til.ranges;
 
 
 CommandHandler[string] commands;
+
+
+class NoWaitQueueRange : Range
+{
+    Queue queue;
+    CommandContext context;
+    this(Queue queue, CommandContext context)
+    {
+        this.queue = queue;
+        this.context = context;
+    }
+
+    override bool empty()
+    {
+        return queue.isEmpty();
+    }
+    // Not happy with how these two methods
+    // ended up being implemented...
+    override ListItem front()
+    {
+        return queue.pop();
+    }
+    override void popFront()
+    {
+        // queue.pop();
+    }
+    override string toString()
+    {
+        return "QueueRange";
+    }
+}
+
+
+class WaitQueueRange : NoWaitQueueRange
+{
+    this(Queue queue, CommandContext context)
+    {
+        super(queue, context);
+    }
+    override bool empty()
+    {
+        while (queue.isEmpty)
+        {
+            context.yield();
+        }
+        return queue.isEmpty();
+    }
+}
 
 
 static this()
@@ -128,6 +177,20 @@ static this()
             queue.push(item);
         }
 
+        context.exitCode = ExitCode.CommandSuccess;
+        return context;
+    };
+    commands["receive"] = (string path, CommandContext context)
+    {
+        auto queue = context.pop!Queue;
+        context.stream = new WaitQueueRange(queue, context);
+        context.exitCode = ExitCode.CommandSuccess;
+        return context;
+    };
+    commands["receive.no_wait"] = (string path, CommandContext context)
+    {
+        auto queue = context.pop!Queue;
+        context.stream = new NoWaitQueueRange(queue, context);
         context.exitCode = ExitCode.CommandSuccess;
         return context;
     };

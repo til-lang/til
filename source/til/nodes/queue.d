@@ -45,6 +45,10 @@ class Queue : ListItem
         return values.length == 0;
     }
 
+    ListItem front()
+    {
+        return values.front;
+    }
     void push(ListItem item)
     {
         if (values.length >= size)
