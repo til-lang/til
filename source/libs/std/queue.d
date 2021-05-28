@@ -98,4 +98,37 @@ static this()
         context.exitCode = ExitCode.CommandSuccess;
         return context;
     };
+    commands["send"] = (string path, CommandContext context)
+    {
+        auto queue = context.pop!Queue;
+
+        foreach (item; context.stream)
+        {
+            while (queue.isFull)
+            {
+                context.yield();
+            }
+            queue.push(item);
+        }
+
+        context.exitCode = ExitCode.CommandSuccess;
+        return context;
+    };
+    commands["send.no_wait"] = (string path, CommandContext context)
+    {
+        auto queue = context.pop!Queue;
+
+        foreach (item; context.stream)
+        {
+            if (queue.isFull)
+            {
+                auto msg = "queue is full";
+                return context.error(msg, ErrorCode.Full, "");
+            }
+            queue.push(item);
+        }
+
+        context.exitCode = ExitCode.CommandSuccess;
+        return context;
+    };
 }

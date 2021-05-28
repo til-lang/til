@@ -1,0 +1,6 @@
+set q [queue]
+
+range 1 | send $q
+
+io.out [pop $q] "should be 0"
+io.out [pop $q] "should be 1"
