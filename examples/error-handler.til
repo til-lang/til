@@ -3,11 +3,11 @@ proc e () {
 }
 
 proc error.handler (x) {
-    io.out "error.handler called."
-    io.out "  received: $x"
-    io.out "  IGNORING IT!"
+    print "error.handler called."
+    print "  received: $x"
+    print "  IGNORING IT!"
 }
 
-io.out "Calling procedure `e`..."
+print "Calling procedure `e`..."
 e
-io.out "Procedure `e` was called."
+print "Procedure `e` was called."

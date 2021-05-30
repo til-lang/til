@@ -4,11 +4,11 @@ set result [
         if ($x >= 5) {
             continue
         }
-        io.out $x
+        print $x
         set r $x
     }
-    io.out "end"
+    print "end"
     return $r
 ]
 
-io.out "Result: $result"
+print "Result: $result"

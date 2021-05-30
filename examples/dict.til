@@ -1,27 +1,27 @@
 # Creation
 set d [dict (x 11) (y 22) (z 33)]
-io.out "d: $d"
-io.out <$d x> <$d y> <$d z>
+print "d: $d"
+print <$d x> <$d y> <$d z>
 
 # Set new keys
 set $d (a 1) (b 2)
 set $d (b 2)
 set $d (c 3)
-io.out "a b c: " <$d a> <$d b> <$d c>
+print "a b c: " <$d a> <$d b> <$d c>
 
 # Set new keys with "dynamic set"
 set $d (a 11) (b 22)
 set $d (b 22)
 set $d (c 33)
-io.out "a b c: " <$d a> <$d b> <$d c>
+print "a b c: " <$d a> <$d b> <$d c>
 
 # Multi-dimensional dicts:
 set $d (a b c 123)
-io.out "a.b.c: " <$d a b c>
+print "a.b.c: " <$d a b c>
 unset $d (a b c)
 
 set $d (a b c 123)
-io.out "a.b.c (with simple `set`): " <$d a b c>
+print "a.b.c (with simple `set`): " <$d a b c>
 
 set map [
     dict (a a 1) (a b 2) (a c 3)
@@ -31,6 +31,6 @@ set map [
 
 range (a b c) | foreach x {
     range (a b c) | foreach y {
-        io.out "$x $y: " <$map $x $y>
+        print "$x $y: " <$map $x $y>
     }
 }

@@ -1,32 +1,32 @@
 range 5 | foreach (x) {
-    io.out $x
+    print $x
 }
-io.out "---"
+print "---"
 
 range 10 23 3 | foreach (x) {
-    io.out $x
+    print $x
 }
-io.out "---"
+print "---"
 
 range 100 123 3 | foreach (x) {
-    io.out $x
+    print $x
 }
-io.out "---"
+print "---"
 
 range 3 | foreach (x) {
-    io.out "range 3: $x"
+    print "range 3: $x"
 }
-io.out "---"
+print "---"
 
 range 3 5 | foreach (x) {
-    io.out "range 3 5: $x"
+    print "range 3 5: $x"
 }
-io.out "---"
+print "---"
 
 range 5 15 4 | foreach (x) {
-    io.out "range 5 15 4: $x"
+    print "range 5 15 4: $x"
 }
-io.out "---"
+print "---"
 
 # This should throw and Exception:
 # range 5

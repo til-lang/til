@@ -6,7 +6,7 @@ public import std.array : join;
 public import std.conv : to;
 
 public import til.exceptions;
-// import til.ranges;
+public import til.ranges;
 
 public import til.context;
 public import til.process;
@@ -20,9 +20,7 @@ public import til.nodes.execlist;
 public import til.nodes.sublist;
 
 public import til.nodes.error;
-public import til.nodes.dict;
 public import til.nodes.pid;
-public import til.nodes.queue;
 
 public import til.nodes.subprogram;
 public import til.nodes.pipeline;
@@ -50,6 +48,8 @@ enum ObjectType
 {
     Undefined,
     List,
+    SubProgram,
+    Dict,
     String,
     Name,
     InputName,
@@ -59,4 +59,6 @@ enum ObjectType
     Integer,
     Boolean,
     Other,
+    Numerical,
+    Vector,
 }

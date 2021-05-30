@@ -9,7 +9,7 @@ import til.nodes;
 class ListItem
 {
     ObjectType type;
-    string commandPrefix;
+    CommandHandler[string] commands;
 
     ListItem operate(string operator, ListItem rhs, bool reversed)
     {

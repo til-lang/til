@@ -1,6 +1,6 @@
 proc hello (origin) {
-    io.out "Hello, World! -- $origin"
+    print "Hello, World! -- $origin"
 }
 
-io.out "Inclusion is execution!"
+print "Inclusion is execution!"
 hello "include_2"

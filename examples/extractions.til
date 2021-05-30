@@ -2,5 +2,5 @@ set str "abcdefghijk"
 set x 2048
 set list (1 2 3 4 5)
 
-io.out "By index: " <$list 0>
-io.out "head/tail: " <$list head> <$list tail>
+print "By index: " <$list 0>
+print "head/tail: " <$list head> <$list tail>

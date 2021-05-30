@@ -2,5 +2,5 @@ math [
     set a 1
     set b 2
     set c 3
-    lists.eval ($a + $b * $c)
+    eval ($a + $b * $c)
 ]

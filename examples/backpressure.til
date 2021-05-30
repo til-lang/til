@@ -1,15 +1,15 @@
 proc p (name) {
-    io.out "p $name START"
+    print "p $name START"
     read | foreach msg {
-        io.out " Procedure $name received message: $msg"
+        print " Procedure $name received message: $msg"
     }
-    io.out "p $name END"
+    print "p $name END"
 }
 
 set p1 [spawn p "alfa"]
 
 range 128 | foreach x {
-    io.out "Sending message-$x to p1"
+    print "Sending message-$x to p1"
     send $p1 "message-$x"
 }
-io.out "Main program: END"
+print "Main program: END"

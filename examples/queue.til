@@ -4,11 +4,11 @@ push $q beta
 push $q gama
 
 range 0 2 | foreach i {
-    io.out [pop $q]
+    print [pop $q]
 }
 
 proc error.handler (e) {
-    io.out "Error: " <$e message>
+    print "Error: " <$e message>
     return 0
 }
 
@@ -18,5 +18,5 @@ push.no_wait $q beta
 push.no_wait $q gama
 
 range 0 2 | foreach i {
-    io.out [pop.no_wait $q]
+    print [pop.no_wait $q]
 }

@@ -1,11 +1,9 @@
-import std.io as io
-
 proc f (x y z) {
-    io.out "x is $x"
+    print "x is $x"
     set x [g $x]
-    io.out "g(x) becomes $x"
-    io.out "y is $y"
-    io.out "z is $z"
+    print "g(x) becomes $x"
+    print "y is $y"
+    print "z is $z"
     return $x $y $z
 }
 
@@ -13,11 +11,11 @@ proc g (a) {
     return ">$a<"
 }
 
-io.out [g "blebs"]
-io.out [f 100 200 300]
+print [g "blebs"]
+print [f 100 200 300]
 
 # x : >1< 2 3 >4<
 set result [f 1 2 3] [g 4]
 
-io.out "Expected: >1< 2 3 >4<"
-io.out $result
+print "Expected: >1< 2 3 >4<"
+print $result

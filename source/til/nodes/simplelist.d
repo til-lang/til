@@ -1,7 +1,12 @@
 module til.nodes.simplelist;
 
+import std.array : array;
+import std.range : empty, front, popFront;
+
 import til.nodes;
 
+
+CommandHandler[string] simpleListCommands;
 
 class SimpleList : BaseList
 {
@@ -16,7 +21,7 @@ class SimpleList : BaseList
     {
         super();
         this.items = items;
-        this.commandPrefix = "list";
+        this.commands = simpleListCommands;
     }
 
     // -----------------------------

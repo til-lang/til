@@ -1,11 +1,8 @@
-import std.io as std
-import std.range as range
-
 set value 1
-std.out "value is $value"
+print "value is $value"
 
 range (10 20 30) | foreach x {
     set value $x
 }
 
-std.out " and now value is $value"
+print " and now value is $value"

@@ -1,11 +1,11 @@
 module libs.std.queue;
 
+import std.range : front, popFront;
+
 import til.nodes;
 import til.ranges;
 
-
-CommandHandler[string] commands;
-
+CommandHandler[string] queueCommands;
 
 class NoWaitQueueRange : Range
 {
@@ -21,15 +21,13 @@ class NoWaitQueueRange : Range
     {
         return queue.isEmpty();
     }
-    // Not happy with how these two methods
-    // ended up being implemented...
     override ListItem front()
     {
-        return queue.pop();
+        return queue.front;
     }
     override void popFront()
     {
-        // queue.pop();
+        queue.pop();
     }
     override string toString()
     {
@@ -55,9 +53,82 @@ class WaitQueueRange : NoWaitQueueRange
 }
 
 
-static this()
+class Queue : ListItem
 {
-    commands[null] = (string path, CommandContext context)
+    ulong size;
+    ListItem[] values;
+
+    this(ulong size)
+    {
+        this.size = size;
+        this.commands = queueCommands;
+    }
+
+    /*
+    // Copied directly from Dict...
+    override CommandContext extract(CommandContext context)
+    {
+        auto arguments = context.items!string;
+        string key = to!string(arguments.join("."));
+        context.push(this[key]);
+        return context;
+    }
+    */
+
+    // ------------------
+    // Conversions
+    override string toString()
+    {
+        string s = "queue " ~ to!string(size);
+        s ~= " (" ~ to!string(values.length) ~ ")";
+        return s;
+    }
+
+    bool isFull()
+    {
+        return values.length >= size;
+    }
+    bool isEmpty()
+    {
+        return values.length == 0;
+    }
+
+    ListItem front()
+    {
+        return values.front;
+    }
+    void push(ListItem item)
+    {
+        if (values.length >= size)
+        {
+            throw new Exception("Queue is full");
+        }
+        values ~= item;
+    }
+    ListItem pop()
+    {
+        if (values.length == 0)
+        {
+            throw new Exception("Queue is empty");
+        }
+        auto value = values.front;
+        values.popFront();
+        return value;
+    }
+
+    // ------------------
+    // Operators
+    ListItem opIndex(ulong k)
+    {
+        // TODO: check boundaries;
+        return values[k];
+    }
+}
+
+
+CommandHandler[string] getCommands()
+{
+    queueCommands[null] = (string path, CommandContext context)
     {
         ulong size = 64;
         if (context.size > 0)
@@ -71,7 +142,7 @@ static this()
         context.exitCode = ExitCode.CommandSuccess;
         return context;
     };
-    commands["push"] = (string path, CommandContext context)
+    queueCommands["push"] = (string path, CommandContext context)
     {
         auto queue = context.pop!Queue;
 
@@ -87,7 +158,7 @@ static this()
         context.exitCode = ExitCode.CommandSuccess;
         return context;
     };
-    commands["push.no_wait"] = (string path, CommandContext context)
+    queueCommands["push.no_wait"] = (string path, CommandContext context)
     {
         auto queue = context.pop!Queue;
 
@@ -104,7 +175,7 @@ static this()
         context.exitCode = ExitCode.CommandSuccess;
         return context;
     };
-    commands["pop"] = (string path, CommandContext context)
+    queueCommands["pop"] = (string path, CommandContext context)
     {
         auto queue = context.pop!Queue;
         long howMany = 1;
@@ -125,7 +196,7 @@ static this()
         context.exitCode = ExitCode.CommandSuccess;
         return context;
     };
-    commands["pop.no_wait"] = (string path, CommandContext context)
+    queueCommands["pop.no_wait"] = (string path, CommandContext context)
     {
         auto queue = context.pop!Queue;
         long howMany = 1;
@@ -147,7 +218,7 @@ static this()
         context.exitCode = ExitCode.CommandSuccess;
         return context;
     };
-    commands["send"] = (string path, CommandContext context)
+    queueCommands["send"] = (string path, CommandContext context)
     {
         auto queue = context.pop!Queue;
 
@@ -163,7 +234,7 @@ static this()
         context.exitCode = ExitCode.CommandSuccess;
         return context;
     };
-    commands["send.no_wait"] = (string path, CommandContext context)
+    queueCommands["send.no_wait"] = (string path, CommandContext context)
     {
         auto queue = context.pop!Queue;
 
@@ -180,18 +251,20 @@ static this()
         context.exitCode = ExitCode.CommandSuccess;
         return context;
     };
-    commands["receive"] = (string path, CommandContext context)
+    queueCommands["receive"] = (string path, CommandContext context)
     {
         auto queue = context.pop!Queue;
         context.stream = new WaitQueueRange(queue, context);
         context.exitCode = ExitCode.CommandSuccess;
         return context;
     };
-    commands["receive.no_wait"] = (string path, CommandContext context)
+    queueCommands["receive.no_wait"] = (string path, CommandContext context)
     {
         auto queue = context.pop!Queue;
         context.stream = new NoWaitQueueRange(queue, context);
         context.exitCode = ExitCode.CommandSuccess;
         return context;
     };
+
+    return queueCommands;
 }

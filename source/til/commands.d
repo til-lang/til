@@ -4,6 +4,7 @@ import std.algorithm.iteration : map, joiner;
 import std.array;
 import std.conv : to;
 import std.file : read;
+import std.stdio;
 
 import til.grammar;
 
@@ -14,10 +15,6 @@ import til.nodes;
 import til.procedures;
 import til.ranges;
 
-debug
-{
-    import std.stdio;
-}
 
 CommandHandler[string] commands;
 
@@ -32,117 +29,6 @@ SubProgram parse(string code)
 // Commands:
 static this()
 {
-    // ---------------------------------------------
-    // Variables
-    commands["name.set"] = (string path, CommandContext context)
-    {
-        string[] names;
-
-        if (context.size < 2)
-        {
-            auto msg = "`name.set` must receive at least two arguments.";
-            return context.error(msg, ErrorCode.InvalidArgument, "");
-        }
-
-        auto key = context.pop!string;
-        context.escopo[key] = context.items;
-
-        context.exitCode = ExitCode.CommandSuccess;
-        return context;
-    };
-    commands["list.set"] = (string path, CommandContext context)
-    {
-        string[] names;
-
-        if (context.size != 2)
-        {
-            auto msg = "`list.set` must receive two arguments.";
-            return context.error(msg, ErrorCode.InvalidArgument, "");
-        }
-
-        auto l1 = context.pop!SimpleList;
-        auto l2 = context.pop!SimpleList;
-
-        // TODO : it seem right, but we should test
-        // if the cast won't change the type or
-        // anything like that (I believe it
-        // makes no sense, actually,
-        // but...)
-        if (l2.type != ObjectType.List)
-        {
-            auto msg = "You can only use `list.set` with two SimpleLists";
-            return context.error(msg, ErrorCode.InvalidArgument, "");
-        }
-
-        names = l1.items.map!(x => to!string(x)).array;
-
-        Items values;
-        context = l2.forceEvaluate(context);
-        values = l2.items;
-
-        if (values.length < names.length)
-        {
-            auto msg = "Insuficient number of items in the second list";
-            return context.error(msg, ErrorCode.InvalidArgument, "");
-        }
-
-        string lastName;
-        foreach(name; names)
-        {
-            auto nextValue = values.front;
-            if (!values.empty) values.popFront();
-
-            context.escopo[name] = nextValue;
-            lastName = name;
-        }
-        while(!values.empty)
-        {
-            // Everything else goes to the last name:
-            context.escopo[lastName] = context.escopo[lastName] ~ values.front;
-            values.popFront();
-        }
-
-        context.exitCode = ExitCode.CommandSuccess;
-        return context;
-    };
-    commands["name.unset"] = (string path, CommandContext context)
-    {
-        string[] names;
-
-        auto firstArgument = context.pop();
-
-        context.escopo.variables.remove(to!string(firstArgument));
-
-        context.exitCode = ExitCode.CommandSuccess;
-        return context;
-    };
-
-    // ---------------------------------------------
-    // IntegerAtom
-    // XXX: `incr` and `decr` do NOT conform to Tcl "equivalents"!
-    commands["int.incr"] = (string path, CommandContext context)
-    {
-        // TODO: check parameters count
-        auto integer = context.pop!IntegerAtom;
-
-        // TODO: check for overflow
-        integer.value++;
-        context.push(integer);
-        context.exitCode = ExitCode.CommandSuccess;
-        return context;
-    };
-    commands["int.decr"] = (string path, CommandContext context)
-    {
-        // TODO: check parameters count
-        auto integer = context.pop!IntegerAtom;
-
-        // TODO: check for underflow
-        integer.value--;
-        context.push(integer);
-        context.exitCode = ExitCode.CommandSuccess;
-        return context;
-    };
-
     // ---------------------------------------------
     // Modules / includes
     commands["include"] = (string path, CommandContext context)
@@ -306,7 +192,9 @@ static this()
 
         uint index = 0;
         debug {stderr.writeln("foreach context.stream: ", context.stream);}
-        foreach(item; context.stream)
+
+        auto stream = context.stream;
+        foreach(item; stream)
         {
             debug {stderr.writeln("foreach item: ", item);}
             loopScope[argName] = item;
@@ -316,6 +204,13 @@ static this()
 
             if (context.exitCode == ExitCode.Break)
             {
+                /*
+                We pop the front because we assume
+                the loop scope already did
+                whatever it was going to
+                do with the value.
+                */
+                stream.popFront();
                 break;
             }
             else if (context.exitCode == ExitCode.Continue)
@@ -636,6 +531,27 @@ static this()
     };
 
     // ---------------------------------------------
+    // Printing:
+    commands["print"] = (string path, CommandContext context)
+    {
+        while(context.size > 1) stdout.write(context.pop!string, " ");
+        stdout.write(context.pop!string);
+        stdout.writeln();
+
+        context.exitCode = ExitCode.CommandSuccess;
+        return context;
+    };
+    commands["print.error"] = (string path, CommandContext context)
+    {
+        while(context.size > 1) stderr.write(context.pop!string, " ");
+        stderr.write(context.pop!string);
+        stderr.writeln();
+
+        context.exitCode = ExitCode.CommandSuccess;
+        return context;
+    };
+
+    // ---------------------------------------------
     // Piping
     commands["read"] = (string path, CommandContext context)
     {
@@ -682,4 +598,307 @@ static this()
 
         return context.error(message, code, classe);
     };
+
+    /*
+    We can't really use module constructors inside
+    til.nodes.* because then your're triggering
+    cyclic dependencies all around, so we
+    implement each builtin type here.
+
+    "Built-in type" == anything that the parser is able to instantiate
+    */
+
+    // ---------------------------------------------
+    // Atoms:
+    // XXX: `incr` and `decr` do NOT conform to Tcl "equivalents"!
+    integerCommands["incr"] = (string path, CommandContext context)
+    {
+        // TODO: check parameters count
+        auto integer = context.pop!IntegerAtom;
+
+        // TODO: check for overflow
+        integer.value++;
+        context.push(integer);
+        context.exitCode = ExitCode.CommandSuccess;
+        return context;
+    };
+    integerCommands["decr"] = (string path, CommandContext context)
+    {
+        // TODO: check parameters count
+        auto integer = context.pop!IntegerAtom;
+
+        // TODO: check for underflow
+        integer.value--;
+        context.push(integer);
+        context.exitCode = ExitCode.CommandSuccess;
+        return context;
+    };
+    integerCommands["range"] = (string path, CommandContext context)
+    {
+        /*
+           range 10       # [zero, 10]
+           range 10 20    # [10, 20]
+           range 10 14 2  # 10 12 14
+        */
+        auto start = context.pop!long;
+        long limit = 0;
+        if (context.size)
+        {
+            limit = context.pop!long;
+        }
+        else
+        {
+            // zero to...
+            limit = start;
+            start = 0;
+        }
+        if (limit <= start)
+        {
+            auto msg = "Invalid range";
+            return context.error(msg, ErrorCode.InvalidArgument, "");
+        }
+
+        long step = 1;
+        if (context.size)
+        {
+            step = context.pop!long;
+        }
+
+        class IntegerRange : InfiniteRange
+        {
+            long start = 0;
+            long limit = 0;
+            long step = 1;
+            long current = 0;
+
+            this(long limit)
+            {
+                this.limit = limit;
+            }
+            this(long start, long limit)
+            {
+                this(limit);
+                this.current = start;
+                this.start = start;
+            }
+            this(long start, long limit, long step)
+            {
+                this(start, limit);
+                this.step = step;
+            }
+
+            override string toString()
+            {
+                return
+                    "range("
+                    ~ to!string(start)
+                    ~ ","
+                    ~ to!string(limit)
+                    ~ ")";
+            }
+
+            override void popFront()
+            {
+                current += step;
+            }
+            override ListItem front()
+            {
+                return new IntegerAtom(current);
+            }
+            override bool empty()
+            {
+                return (current > limit);
+            }
+        }
+
+        auto range = new IntegerRange(start, limit, step);
+        context.stream = range;
+        context.exitCode = ExitCode.CommandSuccess;
+        return context;
+    };
+
+    nameCommands["set"] = (string path, CommandContext context)
+    {
+        string[] names;
+
+        if (context.size < 2)
+        {
+            auto msg = "`name.set` must receive at least two arguments.";
+            return context.error(msg, ErrorCode.InvalidArgument, "");
+        }
+
+        auto key = context.pop!string;
+        context.escopo[key] = context.items;
+
+        context.exitCode = ExitCode.CommandSuccess;
+        return context;
+    };
+    nameCommands["unset"] = (string path, CommandContext context)
+    {
+        string[] names;
+
+        auto firstArgument = context.pop();
+
+        context.escopo.variables.remove(to!string(firstArgument));
+
+        context.exitCode = ExitCode.CommandSuccess;
+        return context;
+    };
+
+    // ---------------------------------------
+    // SimpleLists:
+    simpleListCommands[null] = (string path, CommandContext context)
+    {
+        context.exitCode = ExitCode.CommandSuccess;
+        return context.push(new SimpleList(context.items));
+    };
+    simpleListCommands["set"] = (string path, CommandContext context)
+    {
+        string[] names;
+
+        if (context.size != 2)
+        {
+            auto msg = "`list.set` must receive two arguments.";
+            return context.error(msg, ErrorCode.InvalidArgument, "");
+        }
+
+        auto l1 = context.pop!SimpleList;
+        auto l2 = context.pop!SimpleList;
+
+        // TODO : it seem right, but we should test
+        // if the cast won't change the type or
+        // anything like that (I believe it
+        // makes no sense, actually,
+        // but...)
+        if (l2.type != ObjectType.List)
+        {
+            auto msg = "You can only use `list.set` with two SimpleLists";
+            return context.error(msg, ErrorCode.InvalidArgument, "");
+        }
+
+        names = l1.items.map!(x => to!string(x)).array;
+
+        Items values;
+        context = l2.forceEvaluate(context);
+        values = l2.items;
+
+        if (values.length < names.length)
+        {
+            auto msg = "Insuficient number of items in the second list";
+            return context.error(msg, ErrorCode.InvalidArgument, "");
+        }
+
+        string lastName;
+        foreach(name; names)
+        {
+            auto nextValue = values.front;
+            if (!values.empty) values.popFront();
+
+            context.escopo[name] = nextValue;
+            lastName = name;
+        }
+        while(!values.empty)
+        {
+            // Everything else goes to the last name:
+            context.escopo[lastName] = context.escopo[lastName] ~ values.front;
+            values.popFront();
+        }
+
+        context.exitCode = ExitCode.CommandSuccess;
+        return context;
+    };
+    simpleListCommands["eval"] = (string path, CommandContext context)
+    {
+        // Expect a SimpleList:
+        auto list = context.pop();
+
+        // Force evaluation:
+        auto newContext = list.evaluate(context, true);
+
+        newContext.exitCode = ExitCode.CommandSuccess;
+        return newContext;
+    };
+    simpleListCommands["range"] = (string path, CommandContext context)
+    {
+        /*
+        range (1 2 3 4 5)
+        */
+        class ItemsRange : Range
+        {
+            Items list;
+            int currentIndex = 0;
+            ulong _length;
+
+            this(Items list)
+            {
+                this.list = list;
+                this._length = list.length;
+            }
+
+            override bool empty()
+            {
+                return (this.currentIndex >= this._length);
+            }
+            override ListItem front()
+            {
+                return this.list[this.currentIndex];
+            }
+            override void popFront()
+            {
+                this.currentIndex++;
+            }
+        }
+
+        SimpleList list = context.pop!SimpleList;
+        context.stream = new ItemsRange(list.items);
+        context.exitCode = ExitCode.CommandSuccess;
+        return context;
+    };
+    simpleListCommands["math"] = (string path, CommandContext context)
+    {
+        import til.math;
+
+        auto list = cast(SimpleList)context.pop();
+        context.run(&list.forceEvaluate);
+
+        auto newContext = int_run(context);
+        if (newContext.size != 1)
+        {
+            auto msg = "math.run: error. Should return 1 item.\n"
+                       ~ to!string(newContext.escopo)
+                       ~ " returned " ~ to!string(newContext.size);
+            return context.error(msg, ErrorCode.InternalError, "til.internal");
+        }
+
+        // int_run pushes a new list, but we don't want that.
+        auto resultList = cast(SimpleList)context.pop();
+        foreach(item; resultList.items)
+        {
+            context.push(item);
+        }
+        context.exitCode = ExitCode.CommandSuccess;
+        return context;
+    };
+
+    // ---------------------------------------
+    // Pids:
+    pidCommands["send"] = (string path, CommandContext context)
+    {
+        if (context.size > 2)
+        {
+            auto msg = "`send` expect only two arguments";
+            return context.error(msg, ErrorCode.InvalidArgument, "");
+        }
+        Pid pid = cast(Pid)context.pop();
+        auto value = context.pop();
+
+        // If we *have* the Pid, the input *is* a ProcessIORange.
+        auto input = cast(ProcessIORange)pid.process.input;
+        input.write(value);
+
+        context.exitCode = ExitCode.CommandSuccess;
+        return context;
+    };
+
+    // ---------------------------------------
 }

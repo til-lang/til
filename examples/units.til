@@ -2,14 +2,14 @@ set x 2G
 set y 200M
 set z 200K
 
-io.out "$x + $y + $z"
-io.out [math ($x + $y + $z)]
+print "$x + $y + $z"
+print [math ($x + $y + $z)]
 
 set x 2Gi
 set y 200Mi
 set z 200Ki
 
-io.out "$x + $y + $z"
-io.out [math ($x + $y + $z)]
+print "$x + $y + $z"
+print [math ($x + $y + $z)]
 
-io.out "END"
+print "END"

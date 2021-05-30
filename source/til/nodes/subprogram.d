@@ -23,9 +23,9 @@ class SubProgram
             this.globalCommands[key] = value;
         }
     }
-    void addModule(string key, CommandHandler[string] commands)
+    void addModule(string prefix, CommandHandler[string] commands)
     {
-        availableModules[key] = commands;
+        availableModules[prefix] = commands;
     }
 
     override string toString()

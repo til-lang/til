@@ -1,5 +1,5 @@
 set a 1
 set b 2
 
-io.out "a b = $a $b"
-io.out "a_b = ${a}_${b}"
+print "a b = $a $b"
+print "a_b = ${a}_${b}"

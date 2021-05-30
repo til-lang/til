@@ -3,4 +3,4 @@ proc f (x y z) {
 }
 
 set result [f 1 2 3]
-io.out "result: $result"
+print "result: $result"

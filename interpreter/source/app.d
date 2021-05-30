@@ -8,6 +8,9 @@ import til.grammar;
 import til.nodes;
 import til.scheduler;
 
+debug
+{
+}
 
 int main(string[] args)
 {
@@ -26,30 +29,41 @@ int main(string[] args)
     }
 
     sw.stop();
-    stderr.writeln("Code was loaded and parsed in ", sw.peek.total!"msecs", " miliseconds");
+    debug
+    {
+        stderr.writeln(
+            "Code was loaded and parsed in ",
+            sw.peek.total!"msecs", " miliseconds"
+        );
+    }
 
     SubProgram program;
     sw.start();
     program = parser.run();
     sw.stop();
-    stderr.writeln("Semantic analysis took ", sw.peek.total!"msecs", " miliseconds");
+    debug
+    {
+        stderr.writeln(
+            "Semantic analysis took ",
+            sw.peek.total!"msecs", " miliseconds"
+        );
+    }
 
     program.registerGlobalCommands(commands);
 
     string importModule(string path)
     {
         string result = "import libs." ~ path ~ ";";
-        result ~= "program.addModule(\"" ~ path ~ "\", libs." ~ path ~ ".commands);";
+        result ~= "program.addModule(";
+        result ~= "\"" ~ path ~ "\", ";
+        result ~= "libs." ~ path ~ ".getCommands()";
+        result ~= ");";
         return result;
     }
 
-    // "Third-party" modules:
+    // "Standard library" (or something like that):
     mixin(importModule("std.dict"));
-    mixin(importModule("std.io"));
-    mixin(importModule("std.lists"));
-    mixin(importModule("std.math"));
     mixin(importModule("std.queue"));
-    mixin(importModule("std.range"));
     mixin(importModule("std.sharedlib"));
 
     sw.start();
@@ -78,6 +92,12 @@ int main(string[] args)
         }
     }
     sw.stop();
-    stderr.writeln("Program was run in ", sw.peek.total!"msecs", " miliseconds");
+    debug
+    {
+        stderr.writeln(
+            "Program was run in ",
+            sw.peek.total!"msecs", " miliseconds"
+        );
+    }
     return returnCode;
 }

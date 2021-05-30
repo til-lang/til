@@ -1,6 +1,6 @@
 proc printer () {
     read | foreach line {
-        io.out "> $line"
+        print "> $line"
     }
 }
 

@@ -2,6 +2,6 @@ proc e () {
     error "Test error"
 }
 
-io.out "Calling procedure `e`..."
+print "Calling procedure `e`..."
 e
-io.out "Procedure `e` was called."
+print "Procedure `e` was called."

@@ -1,6 +1,4 @@
-import std.io as io
-
 set first_name "Cléber"
 set last_name "Zavadniak"
 set name "$first_name $last_name"
-io.out $name
+print $name

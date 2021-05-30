@@ -7,6 +7,9 @@ debug
     import std.stdio;
 }
 
+CommandHandler[string] integerCommands;
+CommandHandler[string] nameCommands;
+
 
 class Atom : ListItem
 {
@@ -20,7 +23,7 @@ class NameAtom : Atom
     {
         this.type = ObjectType.Name;
         this.value = s;
-        this.commandPrefix = "name";
+        this.commands = nameCommands;
     }
 
     // Utilities and operators:
@@ -43,7 +46,6 @@ class InputNameAtom : NameAtom
     {
         this.type = ObjectType.InputName;
         super(s);
-        this.commandPrefix = "name";
     }
 
     override CommandContext evaluate(CommandContext context)
@@ -91,7 +93,7 @@ class IntegerAtom : Atom
     {
         this.value = value;
         this.type = ObjectType.Integer;
-        this.commandPrefix = "int";
+        this.commands = integerCommands;
     }
     IntegerAtom opUnary(string operator)
     {
@@ -196,7 +198,6 @@ class FloatAtom : Atom
     {
         this.value = value;
         this.type = ObjectType.Float;
-        this.commandPrefix = "float";
     }
     override bool toBool()
     {
@@ -269,7 +270,6 @@ class BooleanAtom : Atom
     {
         this.value = value;
         this.type = ObjectType.Boolean;
-        this.commandPrefix = "boolean";
     }
     override bool toBool()
     {
@@ -297,7 +297,6 @@ class OperatorAtom : Atom
     {
         value = s;
         this.type = ObjectType.Operator;
-        this.commandPrefix = "operator";
     }
 
     // Utilities and operators:

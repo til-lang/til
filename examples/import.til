@@ -1,5 +1,4 @@
-import std.io as io
-import std.io
+import std.dict as x
 
-io.out "Hello, world!"
-std.io.out "Hello again!"
+set d [x (a 1)]
+print "a is " <$d a>

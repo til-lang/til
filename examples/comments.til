@@ -2,4 +2,4 @@
   # 2- interfere with
 # 3- anything, really.
 
-io.out "END"
+print "END"

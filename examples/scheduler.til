@@ -1,12 +1,12 @@
 proc p1 (name n) {
-    io.out "Running p1 $name $n"
+    print "Running p1 $name $n"
     range $n | foreach x {
-        io.out "$name: $x"
+        print "$name: $x"
     }
 }
 
 
 range 20 40 4 | foreach x {
-    io.out "SPAWN $x"
+    print "SPAWN $x"
     set "p$x" [spawn p1 "p$x" $x]
 }

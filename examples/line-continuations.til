@@ -1,5 +1,5 @@
 range 0
-    . 2 | foreach x { io.out $x }
+    . 2 | foreach x { print $x }
 
 range 3 5
-    | foreach x { io.out $x }
+    | foreach x { print $x }

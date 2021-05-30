@@ -1,4 +1,2 @@
-io.out "Auto-import without 'std.' prefix is working."
-io.out [std.math.run (1 + 2 * 3)]
-io.out "Auto-import with prefix is working, too!"
-math.run (2 + 3 * 4)
+set d [dict]
+print "Auto-import without 'std.' prefix is working."

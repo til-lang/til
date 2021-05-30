@@ -8,6 +8,9 @@ debug
 }
 
 
+CommandHandler[string] stringCommands;
+
+
 // A string without substitutions:
 class String : ListItem
 {
@@ -17,7 +20,7 @@ class String : ListItem
     {
         this.repr = s;
         this.type = ObjectType.String;
-        this.commandPrefix = "string";
+        this.commands = stringCommands;
     }
 
     // Conversions:

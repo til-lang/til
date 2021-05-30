@@ -1,19 +1,19 @@
-io.out "START"
-io.out "Expected: 2 'Correct'."
+print "START"
+print "Expected: 2 'Correct'."
 
 set a 1
 set b 2
 
 if ($a > $b + 3) {
-    io.out "Wrong! [1]"
+    print "Wrong! [1]"
 } else {
-    io.out "Correct. [1]"
+    print "Correct. [1]"
 }
 
 if ($a + 1 >= $b) {
-    io.out "Correct. [2]"
+    print "Correct. [2]"
 } else {
-    io.out "Wrong! [2]"
+    print "Wrong! [2]"
 }
 
-io.out "END"
+print "END"

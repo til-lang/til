@@ -105,6 +105,7 @@ class Scheduler
 
     void yield()
     {
+        if (fibers.length == 1) return;
         debug {stderr.writeln(" FIBER YIELD ");}
         Fiber.yield();
     }

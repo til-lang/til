@@ -3,8 +3,8 @@ set result [
         if ($x >= 5) {
             break "Last item was $x"
         }
-        io.out $x
+        print $x
     }
 ]
 
-io.out "Result: $result"
+print "Result: $result"

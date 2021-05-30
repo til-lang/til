@@ -12,7 +12,6 @@ import til.nodes;
 import til.procedures;
 
 
-CommandHandler[string] commands;
 void*[string] sharedLibraries;
 
 
@@ -42,8 +41,10 @@ void lhUnload(string libraryName)
 
 // ---------------------------------
 // Commands:
-static this()
+CommandHandler[string] getCommands()
 {
+    CommandHandler[string] commands;
+
     CommandContext callAlias(string path, CommandContext context)
     {
         // h.call "hello"
@@ -156,4 +157,6 @@ static this()
         context.exitCode = ExitCode.CommandSuccess;
         return context;
     };
+
+    return commands;
 }

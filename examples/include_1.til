@@ -1,6 +1,6 @@
-io.out "Including a file..."
+print "Including a file..."
 
 include "examples/include_2.til"
 
 hello "include_1"
-io.out "END"
+print "END"

@@ -2,27 +2,27 @@ set offset 10
 range 0 10 | transform x {
         return $x [math ($x + $offset)]
     } | case (>x 10) {
-        io.out "$x + $offset is ten"
+        print "$x + $offset is ten"
     } | case (>x 11) {
-        io.out "$x + $offset is eleven"
+        print "$x + $offset is eleven"
     } | case (>x >y) {
-        io.out "$x + $offset is $y"
+        print "$x + $offset is $y"
         break
     } | case (>x >y) {
-        io.out "$x + 10 is $y"
-        io.out "BUT THIS MESSAGE SHOULD NOT BE DISPLAYED!"
+        print "$x + 10 is $y"
+        print "BUT THIS MESSAGE SHOULD NOT BE DISPLAYED!"
     }
 
 range 100 105 | case (>x) {
-        io.out "$x"
+        print "$x"
     }
 
 range (x y z) | case (x) {
-        io.out "xis"
+        print "xis"
     } | case (y) {
-        io.out "ipsolon"
+        print "ipsolon"
     } | case (z) {
-        io.out "zee"
+        print "zee"
     } | case (>x) {
-        io.out " that is, $x"
+        print " that is, $x"
     }

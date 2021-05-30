@@ -1,4 +1,2 @@
-import std.io as io
-
 set x 123
-io.out $x
+print $x

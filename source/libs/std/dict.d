@@ -2,13 +2,67 @@ module libs.std.dict;
 
 import til.nodes;
 
+private CommandHandler[string] dictCommands;
 
-CommandHandler[string] commands;
 
-
-static this()
+class Dict : ListItem
 {
-    commands[null] = (string path, CommandContext context)
+    ListItem[string] values;
+
+    this()
+    {
+        this.type = ObjectType.Dict;
+        this.commands = dictCommands;
+    }
+    this(ListItem[string] values)
+    {
+        this();
+        this.values = values;
+    }
+
+    override CommandContext extract(CommandContext context)
+    {
+        auto arguments = context.items!string;
+        string key = to!string(arguments.join("."));
+        context.push(this[key]);
+        return context;
+    }
+
+    // ------------------
+    // Conversions
+    override string toString()
+    {
+        string s = "dict ";
+        foreach(key, value; values)
+        {
+            s ~= key ~ "=" ~ to!string(value) ~ " ";
+        }
+        return s;
+    }
+
+    // ------------------
+    // Operators
+    ListItem opIndex(string k)
+    {
+        auto v = values.get(k, null);
+        if (v is null)
+        {
+            throw new Exception("key " ~ k ~ " not found");
+        }
+        return v;
+    }
+    void opIndexAssign(ListItem v, string k)
+    {
+        values[k] = v;
+    }
+}
+
+
+CommandHandler[string] getCommands()
+{
+    // ---------------------------------------
+    // The commands:
+    dictCommands[null] = (string path, CommandContext context)
     {
         auto dict = new Dict();
 
@@ -25,7 +79,7 @@ static this()
         context.exitCode = ExitCode.CommandSuccess;
         return context;
     };
-    commands["set"] = (string path, CommandContext context)
+    dictCommands["set"] = (string path, CommandContext context)
     {
         auto dict = context.pop!Dict;
 
@@ -41,7 +95,7 @@ static this()
         context.exitCode = ExitCode.CommandSuccess;
         return context;
     };
-    commands["unset"] = (string path, CommandContext context)
+    dictCommands["unset"] = (string path, CommandContext context)
     {
         auto dict = context.pop!Dict;
 
@@ -69,4 +123,6 @@ static this()
         context.exitCode = ExitCode.CommandSuccess;
         return context;
     };
+
+    return dictCommands;
 }

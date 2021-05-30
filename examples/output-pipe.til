@@ -1,5 +1,5 @@
 proc generator (x) {
-    io.out "generator started"
+    print "generator started"
 
     range $x | foreach i {
         write "i=$i"
@@ -7,6 +7,6 @@ proc generator (x) {
 }
 
 spawn generator 4 | foreach i {
-    io.out $i
+    print $i
 }
 

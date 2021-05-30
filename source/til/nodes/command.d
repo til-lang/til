@@ -73,28 +73,20 @@ class Command
                 auto arg1 = context.peek();
                 debug {
                     stderr.writeln(
-                        ">> ", arg1.type,
-                        ".commandPrefix:", arg1.commandPrefix
+                        "Searching for ", this.name, " in ", arg1.type,
+                        "\n", arg1.commands
                     );
                 }
-                if (arg1.commandPrefix.length > 0)
+                CommandHandler* handler = this.name in arg1.commands;
+                if (handler !is null)
                 {
-                    prefixedName = arg1.commandPrefix ~ "." ~ this.name;
-                    debug {stderr.writeln(">> TRYING ", prefixedName);}
-                    this.handler = escopo.getCommand(prefixedName);
+                    this.handler = *handler;
                 }
             }
 
             if (this.handler is null)
             {
                 this.handler = escopo.getCommand(this.name);
-            }
-
-            if (this.handler is null && prefixedName.length)
-            {
-                this.handler = escopo.getCommandFromSharedLibraries(
-                    prefixedName
-                );
             }
 
             if (this.handler is null)
@@ -114,7 +106,6 @@ class Command
             }
             debug {stderr.writeln("getCommand ", this.name, " = OK");}
         }
-
 
         return this.runHandler(context, this.handler);
     }

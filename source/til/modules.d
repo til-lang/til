@@ -70,7 +70,9 @@ bool importModuleFromSharedLibrary(SubProgram program, string modulePath)
 {
     return importModuleFromSharedLibrary(program, modulePath, modulePath);
 }
-bool importModuleFromSharedLibrary(SubProgram program, string modulePath, string prefix)
+bool importModuleFromSharedLibrary(
+    SubProgram program, string modulePath, string prefix
+)
 {
     CommandHandler[string] source;
 
@@ -90,7 +92,9 @@ bool importModuleFromSharedLibrary(SubProgram program, string modulePath, string
 }
 
 // Import commands from a .so:
-CommandHandler[string] importFromSharedLibrary(string libraryPath, string moduleAlias)
+CommandHandler[string] importFromSharedLibrary(
+    string libraryPath, string moduleAlias
+)
 {
     // We don't want users informing the library preffix and suffix:
     libraryPath = "libtil_" ~ libraryPath ~ ".so";
@@ -120,7 +124,9 @@ CommandHandler[string] importFromSharedLibrary(string libraryPath, string module
             }
 
             // Get the commands from inside the shared object:
-            auto getCommands = cast(CommandHandler[string] function())dlsym(lh, "getCommands");
+            auto getCommands = cast(CommandHandler[string] function())dlsym(
+                lh, "getCommands"
+            );
             const char* error = dlerror();
             if (error)
             {
@@ -135,7 +141,9 @@ CommandHandler[string] importFromSharedLibrary(string libraryPath, string module
 };
 
 
-void importNamesFrom(SubProgram program, CommandHandler[string] source, string prefix)
+void importNamesFrom(
+    SubProgram program, CommandHandler[string] source, string prefix
+)
 {
     foreach(name, command; source)
     {

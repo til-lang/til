@@ -9,13 +9,16 @@ debug
     import std.stdio;
 }
 
+CommandHandler[string] pidCommands;
+
+
 class Pid : ListItem
 {
     Process process = null;
     this(Process process)
     {
         this.process = process;
-        this.commandPrefix = "pid";
+        this.commands = pidCommands;
     }
 
     override CommandContext extract(CommandContext context)
