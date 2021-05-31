@@ -123,8 +123,7 @@ class Process
         {
             this.input = parent.input;
             this.output = parent.output;
-            this.stack = parent.stack[];
-            this.stackPointer = parent.stackPointer;
+
             this.program = parent.program;
             this.typesCommands = parent.typesCommands.dup;
         }
