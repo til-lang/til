@@ -1,4 +1,4 @@
-module libs.std.sharedlib;
+module til.sharedlibs;
 
 import core.sys.posix.dlfcn;
 import std.algorithm.iteration : map, joiner;
@@ -41,10 +41,8 @@ void lhUnload(string libraryName)
 
 // ---------------------------------
 // Commands:
-CommandHandler[string] getCommands()
+void loadCommands(CommandHandlerMap commands)
 {
-    CommandHandler[string] commands;
-
     CommandContext callAlias(string path, CommandContext context)
     {
         // h.call "hello"
@@ -117,8 +115,8 @@ CommandHandler[string] getCommands()
         /*
         Now we make "cmdName.call" available to the user
         */
-        context.escopo.program.commands[cmdName ~ ".call"] = &callAlias;
-        context.escopo.program.commands[cmdName ~ ".unload"] = &unloadAlias;
+        context.escopo.commands[cmdName ~ ".call"] = &callAlias;
+        context.escopo.commands[cmdName ~ ".unload"] = &unloadAlias;
 
         context.exitCode = ExitCode.CommandSuccess;
         return context;
@@ -157,6 +155,4 @@ CommandHandler[string] getCommands()
         context.exitCode = ExitCode.CommandSuccess;
         return context;
     };
-
-    return commands;
 }

@@ -85,6 +85,9 @@ class ProcessIORange : Range
 }
 
 
+CommandHandlerMap[string] typesCommands;
+
+
 class Process
 {
     SubProgram program;
@@ -95,6 +98,7 @@ class Process
     ListItem[64] stack;
     ulong stackPointer = 0;
     Items[string] variables;
+    CommandHandlerMap commands;
 
     // PIDs
     static uint counter = 0;
@@ -106,6 +110,9 @@ class Process
     // Piping
     Range input = null;
     ProcessIORange output = null;
+
+    // Types and their "methods"
+    CommandHandlerMap[string] typesCommands;
 
     this(Process parent)
     {
@@ -119,6 +126,13 @@ class Process
             this.stack = parent.stack[];
             this.stackPointer = parent.stackPointer;
             this.program = parent.program;
+            this.typesCommands = parent.typesCommands.dup;
+        }
+        else
+        {
+            // Load built-in typesCommands:
+            // XXX : is this the right place for `.dup`?
+            this.typesCommands = typesCommands;
         }
     }
     this(Process parent, SubProgram program)
@@ -266,7 +280,7 @@ class Process
         }
 
         s ~= "COMMANDS:\n";
-        foreach(name; program.commands.byKey)
+        foreach(name; commands.byKey)
         {
             s ~= " " ~ name ~ " ";
         }
@@ -276,10 +290,6 @@ class Process
 
     // Commands
     CommandHandler getCommand(string name)
-    {
-        return this.getCommand(name, true);
-    }
-    CommandHandler getCommand(string name, bool tryGlobal)
     {
         /*
         This codebase is not much inclined to
@@ -293,37 +303,21 @@ class Process
         CommandHandler* handler;
 
         // Local command:
-        handler = (name in this.program.commands);
+        handler = (name in commands);
         if (handler !is null) return *handler;
-
-        // Global command:
-        if (tryGlobal)
-        {
-            handler = (name in this.program.globalCommands);
-            if (handler !is null)
-            {
-                // Save in "cache":
-                this.program.commands[name] = *handler;
-                return *handler;
-            }
-        }
 
         // Parent:
         if (this.parent !is null)
         {
-            auto h = parent.getCommand(name, false);
+            auto h = parent.getCommand(name);
             if (h !is null)
             {
-                this.program.commands[name] = h;
+                commands[name] = h;
                 return h;
             }
         }
 
-        /*
-        name: std.math.run
-        Prefix: std.math
-        Let's try to autoimport!
-        */
+        // AUTO-IMPORT:
         bool success = {
             // std.io.out → std.io
             string modulePath = to!string(name.split(".")[0..$-1].join("."));
@@ -333,19 +327,19 @@ class Process
 
             // std.io.out
             // = std.io
-            if (program.importModule(modulePath)) return true;
+            if (this.importModule(modulePath)) return true;
 
             // io.out
             // = std.io as io
-            if (program.importModule("std." ~ modulePath, modulePath)) return true;
+            if (this.importModule("std." ~ modulePath, modulePath)) return true;
 
             // std.math
             // = std.math
-            if (program.importModule(name, name)) return true;
+            if (this.importModule(name, name)) return true;
 
             // math
             // = std.math as math
-            if (program.importModule("std." ~ name, name)) return true;
+            if (this.importModule("std." ~ name, name)) return true;
 
             return false;
         }();
@@ -354,48 +348,10 @@ class Process
             // We imported the module, but we're not sure if this
             // name actually exists inside it:
             // (Important: do NOT call this method recursively!)
-            handler = (name in this.program.commands);
+            handler = (name in commands);
             if (handler !is null)
             {
-                this.program.commands[name] = *handler;
-                return *handler;
-            }
-        }
-        return null;
-    }
-
-    CommandHandler getCommandFromSharedLibraries(string name)
-    {
-        CommandHandler* handler;
-
-        bool success = {
-            string modulePath = to!string(name.split(".")[0..$-1].join("."));
-            // std.io.out
-            // = std.io
-            if (program.importModuleFromSharedLibrary(modulePath)) return true;
-
-            // io.out
-            // = std.io as io
-            if (program.importModuleFromSharedLibrary("std." ~ modulePath, modulePath)) return true;
-
-            // std.math
-            // = std.math
-            if (program.importModuleFromSharedLibrary(name, name)) return true;
-
-            // math
-            // = std.math as math
-            if (program.importModuleFromSharedLibrary("std." ~ name, name)) return true;
-
-            return false;
-        }();
-        if (success) {
-            // We imported the module, but we're not sure if this
-            // name actually exists inside it:
-            // (Important: do NOT call this method recursively!)
-            handler = (name in this.program.commands);
-            if (handler !is null)
-            {
-                this.program.commands[name] = *handler;
+                commands[name] = *handler;
                 return *handler;
             }
         }
@@ -448,7 +404,7 @@ class Process
                     2- Or, if it doesn't exist, return `context`
                        as we would already do.
                     */
-                    CommandHandler* errorHandler = ("error.handler" in subprogram.commands);
+                    CommandHandler* errorHandler = ("error.handler" in commands);
                     if (errorHandler !is null)
                     {
                         debug {

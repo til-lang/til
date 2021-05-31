@@ -12,11 +12,13 @@ import til.exceptions;
 import til.logic;
 import til.modules;
 import til.nodes;
+import til.process : typesCommands;
 import til.procedures;
 import til.ranges;
+import til.sharedlibs;
 
 
-CommandHandler[string] commands;
+CommandHandlerMap commands;
 
 
 SubProgram parse(string code)
@@ -31,7 +33,7 @@ static this()
 {
     // ---------------------------------------------
     // Modules / includes
-    commands["include"] = (string path, CommandContext context)
+    stringCommands["include"] = (string path, CommandContext context)
     {
         import std.stdio;
         import std.file;
@@ -55,7 +57,7 @@ static this()
         return context;
     };
 
-    commands["import"] = (string path, CommandContext context)
+    nameCommands["import"] = (string path, CommandContext context)
     {
         // import std.io as x
         auto modulePath = context.pop!string;
@@ -74,25 +76,19 @@ static this()
             newName = context.pop!string;
         }
 
-        auto program = context.escopo.program;
-        if (!program.importModule(modulePath, newName))
+        if (!context.escopo.importModule(modulePath, newName))
         {
-            if (!program.importModuleFromSharedLibrary(modulePath, newName))
-            {
-                auto msg = "Module not found: " ~ modulePath;
-                return context.error(msg, ErrorCode.InvalidArgument, "");
-            }
+            auto msg = "Module not found: " ~ modulePath;
+            return context.error(msg, ErrorCode.InvalidArgument, "");
         }
 
-        // import std.io as io
-        // "io.out" = command
         context.exitCode = ExitCode.CommandSuccess;
         return context;
     };
 
     // ---------------------------------------------
     // Flow control
-    commands["if"] = (string path, CommandContext context)
+    simpleListCommands["if"] = (string path, CommandContext context)
     {
         context = ()
         {
@@ -165,7 +161,7 @@ static this()
         return context;
     };
 
-    commands["foreach"] = (string path, CommandContext context)
+    nameCommands["foreach"] = (string path, CommandContext context)
     {
         auto argName = context.pop!string;
         auto argBody = context.pop!SubList;
@@ -303,7 +299,7 @@ static this()
         context.stream = newStream;
         return context;
     };
-    commands["case"] = (string path, CommandContext context)
+    simpleListCommands["case"] = (string path, CommandContext context)
     {
         /*
         | case (>name "txt") { io.out "$name is a plain text file" }
@@ -405,7 +401,7 @@ static this()
 
     // ---------------------------------------------
     // Procedures-related
-    commands["proc"] = (string path, CommandContext context)
+    nameCommands["proc"] = (string path, CommandContext context)
     {
         // proc name (parameters) {body}
 
@@ -425,7 +421,7 @@ static this()
         }
 
         // Make the procedure available:
-        context.escopo.program.commands[name] = &closure;
+        context.escopo.commands[name] = &closure;
 
         context.exitCode = ExitCode.CommandSuccess;
         return context;
@@ -492,7 +488,7 @@ static this()
 
     // ---------------------------------------------
     // Scheduler-related:
-    commands["spawn"] = (string path, CommandContext context)
+    nameCommands["spawn"] = (string path, CommandContext context)
     {
         // set pid [spawn f $x]
         // spawn f | foreach x { ... }
@@ -597,6 +593,43 @@ static this()
         }
 
         return context.error(message, code, classe);
+    };
+
+    // ---------------------------------------
+    // Dict:
+    commands["dict"] = (string path, CommandContext context)
+    {
+        auto dict = new Dict();
+
+        foreach(argument; context.items)
+        {
+            SimpleList l = cast(SimpleList)argument;
+            ListItem value = l.items.back;
+            l.items.popBack();
+            string key = to!string(l.items.map!(x => to!string(x)).join("."));
+            dict[key] = value;
+        }
+        context.push(dict);
+
+        context.exitCode = ExitCode.CommandSuccess;
+        return context;
+    };
+
+    // ---------------------------------------
+    // Queue:
+    commands["queue"] = (string path, CommandContext context)
+    {
+        ulong size = 64;
+        if (context.size > 0)
+        {
+            size = context.pop!ulong;
+        }
+        auto queue = new Queue(size);
+
+        context.push(queue);
+
+        context.exitCode = ExitCode.CommandSuccess;
+        return context;
     };
 
     /*
@@ -717,6 +750,7 @@ static this()
         return context;
     };
 
+    // Names:
     nameCommands["set"] = (string path, CommandContext context)
     {
         string[] names;
@@ -747,8 +781,12 @@ static this()
 
     // ---------------------------------------
     // SimpleLists:
-    simpleListCommands[null] = (string path, CommandContext context)
+    commands["list"] = (string path, CommandContext context)
     {
+        /*
+        set l [list 1 2 3 4]
+        # l = (1 2 3 4)
+        */
         context.exitCode = ExitCode.CommandSuccess;
         return context.push(new SimpleList(context.items));
     };
@@ -901,4 +939,188 @@ static this()
     };
 
     // ---------------------------------------
+    // Dicts:
+    dictCommands["set"] = (string path, CommandContext context)
+    {
+        auto dict = context.pop!Dict;
+
+        foreach(argument; context.items)
+        {
+            SimpleList l = cast(SimpleList)argument;
+            ListItem value = l.items.back;
+            l.items.popBack();
+            string key = to!string(l.items.map!(x => to!string(x)).join("."));
+            dict[key] = value;
+        }
+
+        context.exitCode = ExitCode.CommandSuccess;
+        return context;
+    };
+    dictCommands["unset"] = (string path, CommandContext context)
+    {
+        auto dict = context.pop!Dict;
+
+        foreach (argument; context.items)
+        {
+            string key;
+            if (argument.type == ObjectType.List)
+            {
+                auto list = cast(SimpleList)argument;
+                auto keysContext = list.evaluate(context.next());
+                auto evaluatedList = cast(SimpleList)keysContext.pop();
+                auto parts = evaluatedList.items;
+
+                key = to!string(
+                    parts.map!(x => to!string(x)).join(".")
+                );
+            }
+            else
+            {
+                key = to!string(argument);
+            }
+            dict.values.remove(key);
+        }
+
+        context.exitCode = ExitCode.CommandSuccess;
+        return context;
+    };
+
+    // ---------------------------------------
+    // Queues:
+    queueCommands["push"] = (string path, CommandContext context)
+    {
+        auto queue = context.pop!Queue;
+
+        foreach(argument; context.items)
+        {
+            while (queue.isFull)
+            {
+                context.yield();
+            }
+            queue.push(argument);
+        }
+
+        context.exitCode = ExitCode.CommandSuccess;
+        return context;
+    };
+    queueCommands["push.no_wait"] = (string path, CommandContext context)
+    {
+        auto queue = context.pop!Queue;
+
+        foreach(argument; context.items)
+        {
+            if (queue.isFull)
+            {
+                auto msg = "queue is full";
+                return context.error(msg, ErrorCode.Full, "");
+            }
+            queue.push(argument);
+        }
+
+        context.exitCode = ExitCode.CommandSuccess;
+        return context;
+    };
+    queueCommands["pop"] = (string path, CommandContext context)
+    {
+        auto queue = context.pop!Queue;
+        long howMany = 1;
+        if (context.size > 0)
+        {
+            auto integer = context.pop!IntegerAtom;
+            howMany = integer.value;
+        }
+        foreach(idx; 0..howMany)
+        {
+            while (queue.isEmpty)
+            {
+                context.yield();
+            }
+            context.push(queue.pop());
+        }
+
+        context.exitCode = ExitCode.CommandSuccess;
+        return context;
+    };
+    queueCommands["pop.no_wait"] = (string path, CommandContext context)
+    {
+        auto queue = context.pop!Queue;
+        long howMany = 1;
+        if (context.size > 0)
+        {
+            auto integer = context.pop!IntegerAtom;
+            howMany = integer.value;
+        }
+        foreach(idx; 0..howMany)
+        {
+            if (queue.isEmpty)
+            {
+                auto msg = "queue is empty";
+                return context.error(msg, ErrorCode.Empty, "");
+            }
+            context.push(queue.pop());
+        }
+
+        context.exitCode = ExitCode.CommandSuccess;
+        return context;
+    };
+    queueCommands["send"] = (string path, CommandContext context)
+    {
+        auto queue = context.pop!Queue;
+
+        foreach (item; context.stream)
+        {
+            while (queue.isFull)
+            {
+                context.yield();
+            }
+            queue.push(item);
+        }
+
+        context.exitCode = ExitCode.CommandSuccess;
+        return context;
+    };
+    queueCommands["send.no_wait"] = (string path, CommandContext context)
+    {
+        auto queue = context.pop!Queue;
+
+        foreach (item; context.stream)
+        {
+            if (queue.isFull)
+            {
+                auto msg = "queue is full";
+                return context.error(msg, ErrorCode.Full, "");
+            }
+            queue.push(item);
+        }
+
+        context.exitCode = ExitCode.CommandSuccess;
+        return context;
+    };
+    queueCommands["receive"] = (string path, CommandContext context)
+    {
+        auto queue = context.pop!Queue;
+        context.stream = new WaitQueueRange(queue, context);
+        context.exitCode = ExitCode.CommandSuccess;
+        return context;
+    };
+    queueCommands["receive.no_wait"] = (string path, CommandContext context)
+    {
+        auto queue = context.pop!Queue;
+        context.stream = new NoWaitQueueRange(queue, context);
+        context.exitCode = ExitCode.CommandSuccess;
+        return context;
+    };
+
+    // ---------------------------------------
+    // Shared libraries:
+    til.sharedlibs.loadCommands(commands);
+
+    // Types commands:
+    typesCommands["integer"] = integerCommands;
+    typesCommands["name"] = nameCommands;
+    typesCommands["string"] = stringCommands;
+    typesCommands["list"] = simpleListCommands;
+    typesCommands["pid"] = pidCommands;
+    typesCommands["dict"] = dictCommands;
+    typesCommands["queue"] = queueCommands;
 }

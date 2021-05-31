@@ -19,6 +19,9 @@ public import til.nodes.simplelist;
 public import til.nodes.execlist;
 public import til.nodes.sublist;
 
+public import til.nodes.dict;
+public import til.nodes.queue;
+
 public import til.nodes.error;
 public import til.nodes.pid;
 
@@ -28,10 +31,11 @@ public import til.nodes.command;
 public import til.nodes.string;
 public import til.nodes.atom;
 
+alias Item = ListItem;
 alias Items = ListItem[];
 alias Cmd = string;
 alias CommandHandler = CommandContext delegate(Cmd, CommandContext);
-
+alias CommandHandlerMap = CommandHandler[string];
 
 enum ExitCode
 {
@@ -47,6 +51,8 @@ enum ExitCode
 enum ObjectType
 {
     Undefined,
+    Other,
+    None,  // XXX : Reserved?
     List,
     SubProgram,
     Dict,
@@ -58,7 +64,6 @@ enum ObjectType
     Float,
     Integer,
     Boolean,
-    Other,
     Numerical,
     Vector,
 }

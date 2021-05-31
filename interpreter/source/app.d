@@ -49,25 +49,11 @@ int main(string[] args)
         );
     }
 
-    program.registerGlobalCommands(commands);
-
-    string importModule(string path)
-    {
-        string result = "import libs." ~ path ~ ";";
-        result ~= "program.addModule(";
-        result ~= "\"" ~ path ~ "\", ";
-        result ~= "libs." ~ path ~ ".getCommands()";
-        result ~= ");";
-        return result;
-    }
-
-    // "Standard library" (or something like that):
-    mixin(importModule("std.dict"));
-    mixin(importModule("std.queue"));
-    mixin(importModule("std.sharedlib"));
+    auto process = new Process(null, program);
+    process.commands = commands;
 
     sw.start();
-    auto scheduler = new Scheduler(new Process(null, program));
+    auto scheduler = new Scheduler(process);
     scheduler.run();
 
     // Print everything remaining in the stack:

@@ -11,7 +11,6 @@ class Command
 {
     string name;
     Items arguments;
-    CommandHandler handler = null;
 
     this(string name, Items arguments)
     {
@@ -48,6 +47,42 @@ class Command
         return context;
     }
 
+    CommandHandler getHandler(Process escopo, ListItem arg1)
+    {
+        CommandHandler *handler;
+
+        debug {
+            stderr.writeln("getCommand ", name);
+            stderr.writeln(" process:", escopo);
+        }
+
+        if (arg1 !is null)
+        {
+            debug {
+                stderr.writeln(
+                    "Searching for ", name, " in ", arg1.type,
+                    "\n", arg1.commands
+                );
+            }
+            handler = (name in arg1.commands);
+            if (handler !is null) return *handler;
+        }
+
+        auto h = escopo.getCommand(name);
+        if (h !is null && arg1 !is null)
+        {
+            /*
+            This is not exactly a "cache", because
+            any import could simply overwrite
+            this value: thus, we don't need
+            to worry a bit about
+            eviction. :)
+            */
+            arg1.commands[name] = h;
+        }
+        return h;
+    }
+
     CommandContext run(CommandContext context)
     {
         debug {
@@ -58,56 +93,22 @@ class Command
         // evaluate arguments and set proper context.size:
         context = this.evaluateArguments(context);
 
-        if (this.handler is null)
+        ListItem arg1 = null;
+        if (context.size)
         {
-            auto escopo = context.escopo;
-
-            debug {
-                stderr.writeln("getCommand ", this.name);
-                stderr.writeln(" process:", escopo);
-            }
-            string prefixedName;
-
-            if (context.size > 0)
-            {
-                auto arg1 = context.peek();
-                debug {
-                    stderr.writeln(
-                        "Searching for ", this.name, " in ", arg1.type,
-                        "\n", arg1.commands
-                    );
-                }
-                CommandHandler* handler = this.name in arg1.commands;
-                if (handler !is null)
-                {
-                    this.handler = *handler;
-                }
-            }
-
-            if (this.handler is null)
-            {
-                this.handler = escopo.getCommand(this.name);
-            }
-
-            if (this.handler is null)
-            {
-                this.handler = escopo.getCommandFromSharedLibraries(
-                    this.name
-                );
-            }
-
-            if (this.handler is null)
-            {
-                return context.error(
-                    "Command " ~ this.name ~ " not found",
-                    ErrorCode.CommandNotFound,
-                    "internal"
-                );
-            }
-            debug {stderr.writeln("getCommand ", this.name, " = OK");}
+            arg1 = context.peek();
+        }
+        auto handler = getHandler(context.escopo, arg1);
+        if (handler is null)
+        {
+            return context.error(
+                "Command " ~ this.name ~ " not found",
+                ErrorCode.CommandNotFound,
+                "internal"
+            );
         }
 
-        return this.runHandler(context, this.handler);
+        return this.runHandler(context, handler);
     }
     CommandContext runHandler(CommandContext context, CommandHandler handler)
     {

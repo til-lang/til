@@ -35,49 +35,16 @@ static this()
 }
 
 
-bool importModule(SubProgram program, string modulePath)
+bool importModule(Process escopo, string modulePath)
 {
-    return importModule(program, modulePath, modulePath);
+    return importModule(escopo, modulePath, modulePath);
 }
-bool importModule(SubProgram program, string modulePath, string prefix)
-{
-    CommandHandler[string] source;
-
-    // 0- cache:
-    auto cachedSource = (modulePath in sourcesCache);
-    if (cachedSource !is null)
-    {
-        program.importNamesFrom(*cachedSource, prefix);
-        return true;
-    }
-
-    // 1- builtin modules:
-    source = program.availableModules.get(modulePath, null);
-
-    // 2- from shared libraries:
-    if (source is null)
-    {
-        return false;
-    }
-
-    // Save on cache:
-    program.importNamesFrom(source, prefix);
-    sourcesCache[modulePath] = source;
-    return true;
-}
-
-bool importModuleFromSharedLibrary(SubProgram program, string modulePath)
-{
-    return importModuleFromSharedLibrary(program, modulePath, modulePath);
-}
-bool importModuleFromSharedLibrary(
-    SubProgram program, string modulePath, string prefix
-)
+bool importModule(Process escopo, string modulePath, string prefix)
 {
     CommandHandler[string] source;
 
     try {
-        source = importFromSharedLibrary(modulePath, prefix);
+        source = importFromSharedLibrary(escopo, modulePath, prefix);
     }
     catch(Exception ex)
     {
@@ -86,14 +53,14 @@ bool importModuleFromSharedLibrary(
     }
 
     // Save on cache:
-    program.importNamesFrom(source, prefix);
+    escopo.importNamesFrom(source, prefix);
     sourcesCache[modulePath] = source;
     return true;
 }
 
 // Import commands from a .so:
 CommandHandler[string] importFromSharedLibrary(
-    string libraryPath, string moduleAlias
+    Process escopo, string libraryPath, string moduleAlias
 )
 {
     // We don't want users informing the library preffix and suffix:
@@ -124,7 +91,7 @@ CommandHandler[string] importFromSharedLibrary(
             }
 
             // Get the commands from inside the shared object:
-            auto getCommands = cast(CommandHandler[string] function())dlsym(
+            auto getCommands = cast(CommandHandlerMap function(Process))dlsym(
                 lh, "getCommands"
             );
             const char* error = dlerror();
@@ -132,7 +99,7 @@ CommandHandler[string] importFromSharedLibrary(
             {
                 throw new Exception("dlsym error: " ~ to!string(error));
             }
-            auto libraryCommands = getCommands();
+            auto libraryCommands = getCommands(escopo);
 
             return libraryCommands;
         }
@@ -142,7 +109,7 @@ CommandHandler[string] importFromSharedLibrary(
 
 
 void importNamesFrom(
-    SubProgram program, CommandHandler[string] source, string prefix
+    Process escopo, CommandHandlerMap source, string prefix
 )
 {
     foreach(name, command; source)
@@ -156,6 +123,6 @@ void importNamesFrom(
         {
             cmdPath = prefix ~ "." ~ name;
         }
-        program.commands[cmdPath] = command;
+        escopo.commands[cmdPath] = command;
     }
 }

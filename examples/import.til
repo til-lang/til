@@ -1,4 +1,0 @@
-import std.dict as x
-
-set d [x (a 1)]
-print "a is " <$d a>
