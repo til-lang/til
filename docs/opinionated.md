@@ -4,9 +4,6 @@
 
 ## One space only
 
-**MARKED TO CHANGE** - Thanks,
-[samatman](https://news.ycombinator.com/item?id=27170371).
-
 The number of spaces does count. Not counting indentation, it should
 always be **one**.
 
@@ -14,6 +11,10 @@ always be **one**.
 io.out "Starting"  #  1 space = ok
 exec   ls /        #  Why? WHY WOULD YOU DO THAT???
 ```
+
+See [this post][1] to know more.
+
+[1]: https://cleber.solutions/241/why-im-keeping-significant-whitespaces-in-til/
 
 ## No tabs
 
