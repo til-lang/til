@@ -1,6 +1,6 @@
 import std.datetime.stopwatch;
 import std.file;
-import std.stdio : stderr, stdin, write, writeln;
+import std.stdio;
 
 import til.commands;
 import til.exceptions;
@@ -8,8 +8,47 @@ import til.grammar;
 import til.nodes;
 import til.scheduler;
 
-debug
+
+class FileInputRange : Range
 {
+    File inputFile;
+
+    this(File inputFile)
+    {
+        this.inputFile = inputFile;
+    }
+
+    override bool empty()
+    {
+        // How to inform an error? Calling the scope error.handler?
+        // context.push(new IntegerAtom(status.status));
+        return inputFile.eof;
+    }
+    override ListItem front()
+    {
+        // XXX : what about non-\n line terminator systems?
+        return new String(inputFile.readln());
+    }
+    override void popFront()
+    {
+    }
+}
+
+class FileOutputRange : ProcessIORange
+{
+    File outputFile;
+
+    this(Process process, string name, File inputFile)
+    {
+        super(process, name);
+        this.outputFile = outputFile;
+    }
+
+    override void write(ListItem item)
+    {
+        // outputFile.write(to!string(item));
+        stdout.write(to!string(item));
+    }
 }
 
 int main(string[] args)
@@ -57,6 +96,8 @@ int main(string[] args)
 
     auto process = new Process(null, program);
     process.commands = commands;
+    process.input = new FileInputRange(stdin);
+    process.output = new FileOutputRange(process, "output", stdout);
 
     debug {sw.start();}
     auto scheduler = new Scheduler(process);

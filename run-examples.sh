@@ -19,7 +19,7 @@ for file in examples/*.til;do
         echo "Skipping $file"
         continue
     fi
-    if ! ./til.$version $file;then
+    if ! echo "some input, just in case" | ./til.$version $file;then
         code=$?
         echo "$file : ERROR $code"
         exit $code
