@@ -20,5 +20,7 @@ subPackage {
 subPackage {
     name "hellomodule"
     sourcePaths "modules/hello"
+    dependency "til" version="~>0.2.0"
     targetType "dynamicLibrary"
+    dflags "-link-defaultlib-shared"
 }

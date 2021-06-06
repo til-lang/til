@@ -3,9 +3,9 @@ import std.stdio : writeln;
 import til.nodes;
 
 
-extern (C) CommandHandler[string] getCommands()
+extern (C) CommandHandlerMap getCommands(Process escopo)
 {
-    CommandHandler[string] commands;
+    CommandHandlerMap commands;
 
     commands["print"] = (string path, CommandContext context)
     {

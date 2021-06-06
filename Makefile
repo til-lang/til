@@ -12,11 +12,8 @@ profile:
 		source/*/*/*.d \
 		-of=til.profile
 
-hello.o:
-	dmd -c hello.d -fPIC
-
-hello-lib: hello.o
-	dmd -oflibhello.so hello.o -shared -defaultlib=libphobos2.so
-
-hellomodule:
+libtil_hellomodule.so: modules/hello/hellomodule.d
 	dub build :hellomodule -b release --compiler=ldc2
+
+test: libtil_hellomodule.so
+	./run-examples.sh

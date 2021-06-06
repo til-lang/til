@@ -8,7 +8,7 @@ else
     version=$1
 fi
 
-export LD_LIBRARY_PATH=$PWD
+export TIL_PATH=$PWD
 
 for file in examples/*.til;do
     echo "=== $file ==="

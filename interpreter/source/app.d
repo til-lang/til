@@ -15,8 +15,12 @@ debug
 int main(string[] args)
 {
     Parser parser;
-    auto sw = StopWatch(AutoStart.no);
-    sw.start();
+
+    debug
+    {
+        auto sw = StopWatch(AutoStart.no);
+        sw.start();
+    }
 
     auto filename = args[1];
     if (filename == "-")
@@ -28,9 +32,9 @@ int main(string[] args)
         parser = new Parser(to!string(read(filename)));
     }
 
-    sw.stop();
     debug
     {
+        sw.stop();
         stderr.writeln(
             "Code was loaded and parsed in ",
             sw.peek.total!"msecs", " miliseconds"
@@ -38,11 +42,13 @@ int main(string[] args)
     }
 
     SubProgram program;
-    sw.start();
+    debug {sw.start();}
+
     program = parser.run();
-    sw.stop();
+
     debug
     {
+        sw.stop();
         stderr.writeln(
             "Semantic analysis took ",
             sw.peek.total!"msecs", " miliseconds"
@@ -52,7 +58,7 @@ int main(string[] args)
     auto process = new Process(null, program);
     process.commands = commands;
 
-    sw.start();
+    debug {sw.start();}
     auto scheduler = new Scheduler(process);
     scheduler.run();
 
@@ -77,9 +83,9 @@ int main(string[] args)
             }
         }
     }
-    sw.stop();
     debug
     {
+        sw.stop();
         stderr.writeln(
             "Program was run in ",
             sw.peek.total!"msecs", " miliseconds"
