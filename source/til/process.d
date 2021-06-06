@@ -321,8 +321,11 @@ class Process
             // std.io.out → std.io
             string modulePath = to!string(name.split(".")[0..$-1].join("."));
 
-            // -------------------------
-            // 1- From builtin sources:
+            // std.math
+            // = std.math
+            // exec
+            // = exec
+            if (this.importModule(name, name)) return true;
 
             // std.io.out
             // = std.io
@@ -331,10 +334,6 @@ class Process
             // io.out
             // = std.io as io
             if (this.importModule("std." ~ modulePath, modulePath)) return true;
-
-            // std.math
-            // = std.math
-            if (this.importModule(name, name)) return true;
 
             // math
             // = std.math as math

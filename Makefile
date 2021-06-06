@@ -1,9 +1,9 @@
 release:
-	dub build -b release :run
+	dub build -b release :run --compiler=ldc2
 	mv dist/til til.release
 
 debug:
-	dub build -b debug :run
+	dub build -b debug :run --compiler=ldc2
 	mv dist/til til.debug
 
 profile:
@@ -19,4 +19,4 @@ hello-lib: hello.o
 	dmd -oflibhello.so hello.o -shared -defaultlib=libphobos2.so
 
 hellomodule:
-	dub build :hellomodule -b release
+	dub build :hellomodule -b release --compiler=ldc2

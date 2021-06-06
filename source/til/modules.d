@@ -81,11 +81,16 @@ CommandHandler[string] importFromSharedLibrary(
 
             auto libraryPathZ = dirEntry.toStringz;
 
+            // Clean up any old error messages:
+            dlerror();
+
             // lh = "library handler"
             void* lh = dlopen(libraryPathZ, RTLD_LAZY);
-            if (!lh)
+
+            auto error = dlerror();
+            if (error !is null)
             {
-                lastError = cast(char *)dlerror();
+                lastError = cast(char *)error;
                 debug {stderr.writeln(" dlerror: ", lastError);}
                 continue;
             }
@@ -94,8 +99,9 @@ CommandHandler[string] importFromSharedLibrary(
             auto getCommands = cast(CommandHandlerMap function(Process))dlsym(
                 lh, "getCommands"
             );
-            const char* error = dlerror();
-            if (error)
+
+            error = dlerror();
+            if (error !is null)
             {
                 throw new Exception("dlsym error: " ~ to!string(error));
             }
