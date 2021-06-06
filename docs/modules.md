@@ -2,7 +2,7 @@
 
 In order to write your own module you must have, installed in your system:
 
-* The DMD compiler, v2.095.0 or higer;
+* The LDC2 compiler, version 1.26.0 or higher;
 * Dub, the D package manager.
 
 ## Real world example
@@ -28,7 +28,8 @@ description "Your module description"
 authors "Your Name"
 
 targetType "dynamicLibrary"
-dependency "til" version="<til-last-version>"
+dependency "til" version="~>0.2.0"
+dflags "-link-defaultlib-shared"
 ```
 
 Note that it´s very important that **your module name be prefixed with
@@ -46,9 +47,9 @@ import std.stdio;
 import til.nodes;
 
 
-extern (C) CommandHandler[string] getCommands()
+extern (C) CommandHandlerMap getCommands(Process escopo)
 {
-    CommandHandler[string] commands;
+    CommandHandlerMap commands;
 
     commands["test"] = (string path, CommandContext context)
     {
