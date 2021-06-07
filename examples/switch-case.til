@@ -1,14 +1,14 @@
 set offset 10
 range 0 10 | transform x {
         return $x [math ($x + $offset)]
-    } | case (>x 10) {
-        print "$x + $offset is ten"
-    } | case (>x 11) {
-        print "$x + $offset is eleven"
-    } | case (>x >y) {
-        print "$x + $offset is $y"
+    } | case (>alfa 10) {
+        print "$alfa + $offset is ten"
+    } case (>beta 11) {
+        print "$beta + $offset is eleven"
+    } case (>gama >y) {
+        print "$gama + $offset is $y"
         break
-    } | case (>x >y) {
+    } case (>x >y) {
         print "$x + 10 is $y"
         print "BUT THIS MESSAGE SHOULD NOT BE DISPLAYED!"
     }
@@ -17,12 +17,12 @@ range 100 105 | case (>x) {
         print "$x"
     }
 
-range (x y z) | case (x) {
+range (x y z other) | case (x) {
         print "xis"
-    } | case (y) {
+    } case (y) {
         print "ipsolon"
-    } | case (z) {
+    } case (z) {
         print "zee"
-    } | case (>x) {
+    } case (>x) {
         print " that is, $x"
     }

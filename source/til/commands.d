@@ -302,59 +302,80 @@ static this()
     simpleListCommands["case"] = (string path, CommandContext context)
     {
         /*
-        | case (>name "txt") { io.out "$name is a plain text file" }
+        | case (>name "txt") {
+            print "$name is a plain text file"
+        } case (>name "md") {
+            print "$name is a MarkDown file"
+        }
         */
-        class CaseRange : InfiniteRange
+        auto stream = context.stream;
+
+        // Put a "case" string just to be coherent with
+        // subsequent ones:
+        context.push("case");
+
+        // Collect all "cases":
+        struct caseCondition
         {
-            Range origin;
-            SubList body;
-            Process escopo;
             Items variables;
-            ListItem currentFront;
+            SubList body;
+        }
+        caseCondition[] caseConditions;
 
-            this(Range origin, Items variables, SubList body, Process escopo)
+        while(context.size)
+        {
+            auto caseWord = context.pop!string;
+            if (caseWord != "case")
             {
-                this.origin = origin;
-                this.variables = variables;
-                this.body = body;
-                this.escopo = escopo;
+                auto msg = "Malformed `case` command: " ~ caseWord;
+                return context.error(msg, ErrorCode.InvalidSyntax, "");
             }
+            auto argNames = context.pop!SimpleList;
+            caseConditions ~= caseCondition(
+                argNames.items, context.pop!SubList
+            );
+        }
 
-            override bool empty()
+        foreach (streamItem; stream)
+        {
+            debug {stderr.writeln("case streamItem:", streamItem.type, "/", streamItem);}
+
+            Items currentItems;
+            if (streamItem.type == ObjectType.List)
             {
-                return origin.empty;
+                // TODO: This cast is returning null!!!
+                currentItems = (cast(SimpleList)streamItem).items;
             }
-            override ListItem front()
+            else
             {
-                auto originalFront = origin.front;
+                currentItems = [streamItem];
+            }
+            debug {stderr.writeln("currentItems:", currentItems);}
 
-                SimpleList list;
-                if (originalFront.type == ObjectType.List)
-                {
-                    list = cast(SimpleList)originalFront;
-                }
-                else
-                {
-                    list = new SimpleList([originalFront]);
-                }
-
+            foreach (condition; caseConditions)
+            {
                 int matched = 0;
-                foreach(index, item; list.items)
+                foreach(index, item; currentItems)
                 {
+                    debug {stderr.writeln("case item:", item.type, "/", item);}
                     // case (>name, "txt")
-                    auto variable = variables[index];
+                    auto variable = condition.variables[index];
+                    debug {
+                        stderr.writeln(
+                            "case variable:", variable.type, "/", variable
+                        );
+                    }
                     if (variable.type == ObjectType.InputName)
                     {
                         // Assignment
-                        escopo[to!string(variable)] = item;
+                        context.escopo[to!string(variable)] = item;
                         matched++;
                     }
                     else
                     {
                         // Comparison
-                        // TODO: use `operate` "=="
-                        string value = to!string(variable);
-                        if (value == to!string(item))
+                        BooleanAtom result = cast(BooleanAtom)variable.operate("==", item, false);
+                        if (result.toBool == true)
                         {
                             matched++;
                         }
@@ -365,37 +386,28 @@ static this()
                     }
                 }
 
-                if (matched == variables.length)
+                if (matched == condition.variables.length)
                 {
-                    context = escopo.run(body.subprogram);
-                    if (context.exitCode == ExitCode.Break)
+                    context = context.escopo.run(condition.body.subprogram);
+                    switch(context.exitCode)
                     {
-                        // An empty SimpleList won't match with anything:
-                        return new SimpleList([]);
+                        case ExitCode.Break:
+                            context.exitCode = ExitCode.CommandSuccess;
+                            return context;
+                        case ExitCode.ReturnSuccess:
+                            return context;
+                        default:
+                            break;
                     }
+                    break;
                 }
-                return originalFront;
-            }
-
-
-            override void popFront()
-            {
-                origin.popFront();
-            }
-            override string toString()
-            {
-                return "CaseRange";
             }
         }
 
-        auto argNames = context.pop!SimpleList;
-        auto variables = argNames.items;
-        auto body = context.pop!SubList;
-
-        auto newStream = new CaseRange(context.stream, variables, body, context.escopo);
-        context.stream = newStream;
-
-        context.exitCode = ExitCode.CommandSuccess;
+        if (context.exitCode != ExitCode.Failure)
+        {
+            context.exitCode = ExitCode.CommandSuccess;
+        }
         return context;
     };
 

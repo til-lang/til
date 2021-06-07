@@ -133,7 +133,9 @@ class SimpleList : BaseList
         }
 
         // else...
-        auto msg = "Extraction not implemented in SimpleList";
+        auto msg = "Extraction of "
+                   ~ to!string(firstArgument.type)
+                   ~ " not implemented in SimpleList";
         return context.error(msg, ErrorCode.InvalidArgument, "");
     }
 }

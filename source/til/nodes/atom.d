@@ -38,14 +38,25 @@ class NameAtom : Atom
         context.exitCode = ExitCode.Proceed;
         return context;
     }
+
+    override ListItem operate(string operator, ListItem rhs, bool reversed)
+    {
+        switch(operator)
+        {
+            case "==":
+                return new BooleanAtom(to!string(this) == to!string(rhs));
+            default:
+                return super.operate(operator, rhs, reversed);
+        }
+    }
 }
 
 class InputNameAtom : NameAtom
 {
     this(string s)
     {
-        this.type = ObjectType.InputName;
         super(s);
+        this.type = ObjectType.InputName;
     }
 
     override CommandContext evaluate(CommandContext context)
@@ -127,65 +138,59 @@ class IntegerAtom : Atom
         if (rhs.type == ObjectType.Integer)
         {
             auto t2 = cast(IntegerAtom)rhs;
-            long result = {
-                final switch(operator)
-                {
-                    // Logic:
-                    case "==":
-                        return this.value == t2.value;
-                    case ">":
-                        return this.value > t2.value;
-                    case ">=":
-                        return this.value >= t2.value;
-                    case "<":
-                        return this.value < t2.value;
-                    case "<=":
-                        return this.value <= t2.value;
+            final switch(operator)
+            {
+                // Logic:
+                case "==":
+                    return new BooleanAtom(this.value == t2.value);
+                case ">":
+                    return new BooleanAtom(this.value > t2.value);
+                case ">=":
+                    return new BooleanAtom(this.value >= t2.value);
+                case "<":
+                    return new BooleanAtom(this.value < t2.value);
+                case "<=":
+                    return new BooleanAtom(this.value <= t2.value);
 
-                    // Math:
-                    case "+":
-                        return this.value + t2.value;
-                    case "-":
-                        return this.value - t2.value;
-                    case "*":
-                        return this.value * t2.value;
-                    case "/":
-                        return this.value / t2.value;
-                }
-            }();
-            return new IntegerAtom(result);
+                // Math:
+                case "+":
+                    return new IntegerAtom(this.value + t2.value);
+                case "-":
+                    return new IntegerAtom(this.value - t2.value);
+                case "*":
+                    return new IntegerAtom(this.value * t2.value);
+                case "/":
+                    return new IntegerAtom(this.value / t2.value);
+            }
         }
         else if (rhs.type == ObjectType.Float)
         {
             auto t2 = cast(FloatAtom)rhs;
             debug {stderr.writeln(this.value, " ", operator, " ", t2.value);}
-            float result = {
-                final switch(operator)
-                {
-                    // Logic:
-                    case "==":
-                        return this.value == t2.value;
-                    case ">":
-                        return this.value > t2.value;
-                    case ">=":
-                        return this.value >= t2.value;
-                    case "<":
-                        return this.value < t2.value;
-                    case "<=":
-                        return this.value <= t2.value;
+            final switch(operator)
+            {
+                // Logic:
+                case "==":
+                    return new BooleanAtom(this.value == t2.value);
+                case ">":
+                    return new BooleanAtom(this.value > t2.value);
+                case ">=":
+                    return new BooleanAtom(this.value >= t2.value);
+                case "<":
+                    return new BooleanAtom(this.value < t2.value);
+                case "<=":
+                    return new BooleanAtom(this.value <= t2.value);
 
-                    // Math:
-                    case "+":
-                        return this.value + t2.value;
-                    case "-":
-                        return this.value - t2.value;
-                    case "*":
-                        return this.value * t2.value;
-                    case "/":
-                        return this.value / t2.value;
-                }
-            }();
-            return new FloatAtom(result);
+                // Math:
+                case "+":
+                    return new FloatAtom(this.value + t2.value);
+                case "-":
+                    return new FloatAtom(this.value - t2.value);
+                case "*":
+                    return new FloatAtom(this.value * t2.value);
+                case "/":
+                    return new FloatAtom(this.value / t2.value);
+            }
         }
         return null;
     }
@@ -245,20 +250,20 @@ class FloatAtom : Atom
             return null;
         }
 
-        float result = {
+        ListItem result = {
             final switch(operator)
             {
                 case "+":
-                    return this.value + t2.value;
+                    return new FloatAtom(this.value + t2.value);
                 case "-":
-                    return this.value - t2.value;
+                    return new FloatAtom(this.value - t2.value);
                 case "*":
-                    return this.value * t2.value;
+                    return new FloatAtom(this.value * t2.value);
                 case "/":
-                    return this.value / t2.value;
+                    return new FloatAtom(this.value / t2.value);
             }
         }();
-        return new FloatAtom(result);
+        return result;
     }
 }
 
