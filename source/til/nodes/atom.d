@@ -137,7 +137,9 @@ class IntegerAtom : Atom
 
         if (rhs.type == ObjectType.Integer)
         {
-            auto t2 = cast(IntegerAtom)rhs;
+            auto t2 = cast(IntegerAtom) rhs;
+            debug {stderr.writeln(" > ", this, " ", operator, " ", t2);}
+            debug {stderr.writeln(" > ", this.value, " ", operator, " ", t2.value);}
             final switch(operator)
             {
                 // Logic:

@@ -4,17 +4,16 @@ authors "Cléber Zavadniak"
 copyright "Copyright © 2021, Cléber Zavadniak"
 license "zlib"
 
-targetType "library"
+targetType "dynamicLibrary"
 targetPath "dist"
 
 subPackage {
     name "run"
     sourcePaths "interpreter/source"
-    sourcePaths "source"
     targetType "executable"
     targetPath "dist"
     targetName "til"
-    dflags "-link-defaultlib-shared"
+    dflags "-link-defaultlib-shared" "-L-L$LIBTIL_PATH" "-L-ltil"
 }
 
 subPackage {
@@ -22,5 +21,5 @@ subPackage {
     sourcePaths "modules/hello"
     dependency "til" version="~>0.2.0"
     targetType "dynamicLibrary"
-    dflags "-link-defaultlib-shared"
+    dflags "-link-defaultlib-shared" "-L-L$LIBTIL_PATH" "-L-ltil"
 }

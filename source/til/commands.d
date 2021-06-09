@@ -338,16 +338,34 @@ static this()
 
         foreach (streamItem; stream)
         {
-            debug {stderr.writeln("case streamItem:", streamItem.type, "/", streamItem);}
+            debug {
+                stderr.writeln(
+                    "case streamItem:", streamItem.type, "/", streamItem,
+                    "/", typeid(streamItem)
+                );
+            }
 
             Items currentItems;
             if (streamItem.type == ObjectType.List)
             {
-                // TODO: This cast is returning null!!!
-                currentItems = (cast(SimpleList)streamItem).items;
+                // currentItems = streamItem.items;
+                auto list = cast(SimpleList)streamItem;
+                if (list !is null)
+                {
+                    currentItems = list.items;
+                }
+                else
+                {
+                    throw new Exception(
+                        "Cannot cast "
+                        ~ to!string(typeid(streamItem))
+                        ~ " to SimpleList"
+                    );
+                }
             }
             else
             {
+                debug {stderr.writeln(streamItem.type, " != ", ObjectType.List); }
                 currentItems = [streamItem];
             }
             debug {stderr.writeln("currentItems:", currentItems);}
@@ -374,7 +392,7 @@ static this()
                     else
                     {
                         // Comparison
-                        BooleanAtom result = cast(BooleanAtom)variable.operate("==", item, false);
+                        ListItem result = variable.operate("==", item, false);
                         if (result.toBool == true)
                         {
                             matched++;
@@ -814,6 +832,8 @@ static this()
 
         auto l1 = context.pop!SimpleList;
         auto l2 = context.pop!SimpleList;
+
+        debug {stderr.write("l1, l2: ", l1, " , ", l2);}
 
         // TODO : it seem right, but we should test
         // if the cast won't change the type or

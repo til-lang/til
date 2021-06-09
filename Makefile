@@ -1,3 +1,9 @@
+lib:
+	dub build -b release --compiler=ldc2
+
+lib-debug:
+	dub build -b debug --compiler=ldc2
+
 release:
 	dub build -b release :run --compiler=ldc2
 	mv dist/til til.release
