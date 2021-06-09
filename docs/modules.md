@@ -27,14 +27,18 @@ name "til_teste"
 description "Your module description"
 authors "Your Name"
 
+dependency "til" version="~>0.3.0"
 targetType "dynamicLibrary"
-dependency "til" version="~>0.2.0"
-dflags "-link-defaultlib-shared"
+dflags "-L-L$LIBTIL_PATH" "-L-ltil"
 ```
 
 Note that it´s very important that **your module name be prefixed with
 `til_`**. The end result should be a file in the format
 `libtil_<your_module_name>.so`.
+
+Also, note that you must set an environment variable called `LIBTIL_PATH`,
+that is the path where the `libtil.so` library you're going to use is
+located.
 
 ## Your module code
 
@@ -77,11 +81,12 @@ Process, all internal "types" (Atom, String, Dict and so on) and even
 Simply ask Dub to build your package:
 
 ```bash
-$ dub build
+$ dub build --compiler=ldc2
 ```
 
 After building it, there should be a file named `libtil_teste.so` in your
 project directory.
+
 
 ## Test file
 
