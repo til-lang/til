@@ -52,26 +52,24 @@ after that.
 ### Variables values and printing
 
 ```tcl
-import std.io as io
-
 set s "Hello, World!"
-io.out $s
+print $s
 ```
 
-The snippet above will print `Hello, World!` using the `std.io` builtin
-package. Til has the concept of **Atoms**, so in `set s "Hello, World!"`
-we have 2 Atoms (`set` and `s`) and 1 String (`"Hello, World!"`). And in
-`io.out $s` we have, again, 2 Atoms (`io.out` and `$s`), being the second
-one a Substitution Atom, that is, an Atom that, when **evaluated**,
-returns the value stored in the current context with name `s`.
+The snippet above will print `Hello, World!`. Til has the concept of
+**Atoms**, so in `set s "Hello, World!"` we have 2 Atoms (`set` and `s`)
+and 1 String (`"Hello, World!"`). And in `print $s` we have, again,
+2 Atoms (`print` and `$s`), being the second one a Substitution Atom, that
+is, an Atom that, when **evaluated**, returns the value stored in the
+current context with name `s`.
 
-### ExecLists, auto-import, Math and String substitutions
+### ExecLists, Math and String substitutions
 
 ```tcl
 set a 11
 set b 22
 set result [math ($a + $b)]
-io.out "The result is $result"
+print "The result is $result"
 ```
 
 The snippet above will print `The result is 33`. The first new concept is
@@ -84,46 +82,7 @@ that is, the SubProgram is executed before the command (in this case,
 last argument of the `set` command, becoming `set result 33`.
 
 
-But where `math` came from? Well, it´s not a builtin command of the
-language (although the language **has** some builtin commands), but,
-instead, is a **module** whose complete name is `std.math`. When Til
-interpreter faces an unknown command name it tries to import a proper
-module automatically, so you don´t need to clog every program header with
-a lot of `import` statements.
-
-
-And, besides that, **a module can be called as a command**. `std.math`,
-for instance, implements a `run` command, but also can be called simply as
-`std.math` (or `math` if you´re using it as an alias). That´s because lots
-of modules have a very, very, common usage to the point where forcing
-developers to always use a "qualified name" feels simply wrong. And
-boring.
-
-An interesting example is the `std.dict` module. It´s main purpose is
-inevitably going to be to **create new dictionaries** ("dict" in the
-Python sense: it´s like an "associative array" in D or an "object" in
-Javascript). So that would feel boring to always call `dict.create`, like
-in:
-
-```tcl
-import std.dict as dict
-set d1 [dict.create (a "alfa") (b "beta") (c "gama")]
-set d2 [dict.create (alfa 1) (beta 2) (gama 3)]
-```
-
-It´s much easier to simply write:
-
-```tcl
-set d1 [dict (a "alfa") (b "beta") (c "gama")]
-set d2 [dict (alfa 1) (beta 2) (gama 3)]
-```
-
-**That´s the case for `std.math` module**: you don´t have to call
-`math.run` every time, because that´s the main purpose of the module, so
-simply calling `math` will do.
-
-
-And, the last item in this session is **string substitution**. It works as
+The last item in this session is **string substitution**. It works as
 expected, really: you can reference values inside a string using the `$`
 sign.
 
@@ -149,7 +108,7 @@ In Til there´s the concept of **Extractions**:
 
 ```tcl
 set d [dict (alfa 11) (beta 22) (gama 33)]
-io.out "alfa is " <$d alfa>
+print "alfa is " <$d alfa>
 # Output: alfa is 11
 ```
 
@@ -158,15 +117,15 @@ can retrieve elements from a list easily:
 
 ```tcl
 set lista (a b c d e)
-io.out "Second element is " <$lista 1>
+print "Second element is " <$lista 1>
 # a
-io.out "Fourth and fifth elements are " <$lista 3 5>
+print "Fourth and fifth elements are " <$lista 3 5>
 # (d e)
-io.out "First element is " <$lista head>
+print "First element is " <$lista head>
 # a
-io.out "Tail is " <$lista tail>
+print "Tail is " <$lista tail>
 # (b c d e)
-io.out "Even-indexed elements are " <$lista (0 2 4)>
+print "Even-indexed elements are " <$lista (0 2 4)>
 # (a c e)
 ```
 
@@ -241,7 +200,7 @@ prints the current number from a range of some integer numbers:
 
 ```tcl
 range 3 | foreach x {
-    io.out $x
+    print $x
 }
 
 # The expected output is:
@@ -304,7 +263,7 @@ proc ping (target) {
 
 proc pong () {
     receive | foreach msg {
-        io.out "Received $msg"
+        print "Received $msg"
         break
     }
 }
@@ -375,14 +334,14 @@ proc throw_error () {
 }
 
 proc error.handler (x) {
-    io.out "error.handler called."
-    io.out "  received: $x"
-    io.out "  IGNORING IT!"
+    print "error.handler called."
+    print "  received: $x"
+    print "  IGNORING IT!"
 }
 
-io.out "Calling procedure `throw_error`..."
+print "Calling procedure `throw_error`..."
 throw_error
-io.out "Procedure `throw_error` was called and the error was handled."
+print "Procedure `throw_error` was called and the error was handled."
 ```
 
 ## And more
