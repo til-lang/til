@@ -6,7 +6,7 @@ proc p (name) {
     print "p $name END"
 }
 
-set p1 [spawn p "alfa"]
+set p1 [p "alfa" &]
 
 range 128 | foreach x {
     print "Sending message-$x to p1"

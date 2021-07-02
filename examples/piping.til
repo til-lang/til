@@ -6,6 +6,6 @@ proc prefixer (prefix) {
     }
 }
 
-range ("Angela" "Bob" "Carla" "David") | spawn prefixer "The name is" | foreach phrase {
+range ("Angela" "Bob" "Carla" "David") | prefixer "The name is" & | foreach phrase {
     print $phrase
 }

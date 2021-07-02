@@ -20,6 +20,7 @@ const EOL = '\n';
 const SPACE = ' ';
 const TAB = '\t';
 const PIPE = '|';
+const BACKGROUND = '&';
 
 
 // Integers units:
@@ -226,14 +227,23 @@ class Parser
         push("command");
         NameAtom commandName = cast(NameAtom)consumeAtom();
         ListItem[] arguments;
+        bool inBackground = false;
 
         // That is: if the command HAS any argument:
         while (currentChar == SPACE)
         {
             consumeSpace();
+            debug {stderr.writeln("after space: ", currentChar);}
             if (currentChar.among('}', ']', ')', '>', PIPE))
             {
                 break;
+            }
+            else if (currentChar == BACKGROUND)
+            {
+                inBackground = true;
+                debug {stderr.writeln("IN BACKGROUND!");}
+                consumeChar();
+                continue;
             }
 
             arguments ~= consumeListItem();
@@ -258,7 +268,7 @@ class Parser
             }
         }
         pop();
-        return new Command(commandName.toString(), arguments);
+        return new Command(commandName.toString(), arguments, inBackground);
     }
 
     ListItem consumeListItem()

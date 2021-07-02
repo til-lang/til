@@ -11,11 +11,18 @@ class Command
 {
     string name;
     Items arguments;
+    bool inBackground;
 
     this(string name, Items arguments)
     {
         this.name = name;
         this.arguments = arguments;
+        this.inBackground = false;
+    }
+    this(string name, Items arguments, bool inBackground)
+    {
+        this(name, arguments);
+        this.inBackground = inBackground;
     }
 
     override string toString()
@@ -90,6 +97,11 @@ class Command
             stderr.writeln("  context: ", context);
         }
 
+        if (inBackground)
+        {
+            return runInBackground(context);
+        }
+
         // evaluate arguments and set proper context.size:
         context = this.evaluateArguments(context);
 
@@ -132,5 +144,44 @@ class Command
             );
         }
         return newContext;
+    }
+
+    CommandContext runInBackground(CommandContext context)
+    {
+        debug {stderr.writeln(" IN BACKGROUND: ", this);}
+
+        // We MUST evaluate arguments before spawning:
+        context = this.evaluateArguments(context);
+        auto newArguments = context.items;
+
+        // Run in other process - in FOREGROUND!
+        auto newCommand = new Command(name, newArguments, false);
+
+        auto pipeline = new Pipeline([newCommand]);
+        auto subprogram = new SubProgram([pipeline]);
+        auto process = new Process(context.escopo, subprogram);
+
+        // Piping:
+        if (context.stream is null)
+        {
+            process.input = new ProcessIORange(context.escopo, name ~ ":in");
+            debug {stderr.writeln("process.input: ", context.escopo);}
+        }
+        else
+        {
+            process.input = context.stream;
+        }
+        // Important: it's not the current process, but the new one, here:
+        process.output = new ProcessIORange(process, name ~ ":out");
+
+        auto pid = context.escopo.scheduler.add(process);
+
+        context.push(pid);
+
+        // Piping out:
+        context.stream = process.output;
+
+        context.exitCode = ExitCode.CommandSuccess;
+        return context;
     }
 }

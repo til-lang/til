@@ -99,7 +99,6 @@ static this()
 
                 debug {stderr.writeln("context before conditions evaluation:", context);}
                 conditions.forceEvaluate(context);
-                // auto resultContext = boolean(context.next(1));
                 context.run(&boolean, 1);
 
                 auto isConditionTrue = context.pop!bool;
@@ -502,7 +501,7 @@ static this()
 
         // 2- create a new context, with the parent
         //    scope as the context.escopo
-        auto newContext = context.next;
+        auto newContext = context.next();
         newContext.escopo = parentScope;
         newContext.size = context.size;
 
@@ -536,7 +535,7 @@ static this()
         if (context.stream is null)
         {
             process.input = new ProcessIORange(context.escopo, commandName ~ ":in");
-            debug {writeln("process.input: ", context.escopo);}
+            debug {stderr.writeln("process.input: ", context.escopo);}
         }
         else
         {
@@ -593,6 +592,34 @@ static this()
             return context.error(msg, ErrorCode.InvalidArgument, "");
         }
         context.escopo.output.write(context.pop());
+        context.exitCode = ExitCode.CommandSuccess;
+        return context;
+    };
+    // ---------------------------------------------
+    // Time
+    commands["sleep"] = (string path, CommandContext context)
+    {
+        /*
+        XXX : is there any advantage in importing
+        it here instead of the top???
+        */ 
+        import std.datetime.stopwatch;
+
+        auto ms = context.pop!long;
+
+        auto sw = StopWatch(AutoStart.yes);
+        while(true)
+        {
+            auto passed = sw.peek.total!"msecs";
+            if (passed >= ms)
+            {
+                break;
+            }
+            else
+            {
+                context.yield();
+            }
+        }
         context.exitCode = ExitCode.CommandSuccess;
         return context;
     };
