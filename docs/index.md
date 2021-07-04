@@ -333,8 +333,8 @@ proc throw_error () {
     error "Test error"
 }
 
-proc error.handler (x) {
-    print "error.handler called."
+proc on.error (x) {
+    print "on.error:"
     print "  received: $x"
     print "  IGNORING IT!"
 }

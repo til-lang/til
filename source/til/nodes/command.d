@@ -47,6 +47,19 @@ class Command
                 stderr.writeln("    in context ", context);
             }
             context = argument.evaluate(context.next);
+
+            /*
+            But what if this argument is an ExecList and
+            while evaluating it returned an Error???
+            */
+            if (context.exitCode == ExitCode.Failure)
+            {
+                /*
+                Well, we quit imediately:
+                */
+                return context;
+            }
+
             realArgumentsCounter += context.size;
         }
         context.size = cast(int)realArgumentsCounter;
@@ -97,13 +110,18 @@ class Command
             stderr.writeln("  context: ", context);
         }
 
+        // evaluate arguments and set proper context.size:
+        context = this.evaluateArguments(context);
+
+        if (context.exitCode == ExitCode.Failure)
+        {
+            return context;
+        }
+
         if (inBackground)
         {
             return runInBackground(context);
         }
-
-        // evaluate arguments and set proper context.size:
-        context = this.evaluateArguments(context);
 
         ListItem arg1 = null;
         if (context.size)
@@ -150,8 +168,7 @@ class Command
     {
         debug {stderr.writeln(" IN BACKGROUND: ", this);}
 
-        // We MUST evaluate arguments before spawning:
-        context = this.evaluateArguments(context);
+        // original arguments were already evaluated at this point.
         auto newArguments = context.items;
 
         // Run in other process - in FOREGROUND!

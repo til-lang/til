@@ -22,6 +22,15 @@ class ExecList : BaseList
 
     override CommandContext evaluate(CommandContext context)
     {
-        return context.escopo.run(this.subprogram, context);
+        /*
+        We must run in a sub-Escopo because of how `on.error`
+        procedures are called. Besides, we don't want
+        SubProgram names messing up with the caller
+        context names, anyway.
+        */
+        auto escopo = new Process(context.escopo);
+        return escopo.run(this.subprogram, context);
+
+        // return context.escopo.run(this.subprogram, context);
     }
 }

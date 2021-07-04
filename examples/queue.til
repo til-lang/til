@@ -7,7 +7,7 @@ range 0 2 | foreach i {
     print [pop $q]
 }
 
-proc error.handler (e) {
+proc on.error (e) {
     print "Error: " <$e message>
     return 0
 }

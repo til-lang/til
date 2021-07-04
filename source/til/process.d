@@ -397,19 +397,19 @@ class Process
                 case ExitCode.Failure:
                     /*
                     Error handling:
-                    1- Call **local** procedure `error.handler`, if
+                    1- Call **local** procedure `on.error`, if
                        it exists and analyse ITS exitCode.
                     2- Or, if it doesn't exist, return `context`
                        as we would already do.
                     */
-                    CommandHandler* errorHandler = ("error.handler" in commands);
+                    CommandHandler* errorHandler = ("on.error" in commands);
                     if (errorHandler !is null)
                     {
                         debug {
-                            stderr.writeln("Calling error.handler");
+                            stderr.writeln("Calling on.error");
                             stderr.writeln(" context: ", context);
                         }
-                        context = (*errorHandler)("error.handler", context);
+                        context = (*errorHandler)("on.error", context);
                         /*
                         errorHandler can simply "rethrow"
                         the Error or even return a new

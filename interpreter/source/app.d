@@ -20,7 +20,7 @@ class FileInputRange : Range
 
     override bool empty()
     {
-        // How to inform an error? Calling the scope error.handler?
+        // How to inform an error? Calling the scope on.error?
         // context.push(new IntegerAtom(status.status));
         return inputFile.eof;
     }

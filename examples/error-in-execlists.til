@@ -1,0 +1,13 @@
+proc error_test () {
+    proc on.error (e) {
+        print "on.error: $e"
+        set msg <$e message>
+        print " message: $msg"
+        return
+    }
+
+    set x [invalidcommand 1 2 3]
+    print <$x invalidextraction>
+}
+
+error_test
