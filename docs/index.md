@@ -1,3 +1,7 @@
+[Blog](posts) | [Examples](https://github.com/til-lang/til/tree/master/examples)
+
+---
+
 ## A command language on top of D
 
 Til is a **command language**, like [Tcl](https://www.tcl.tk/), built
