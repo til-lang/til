@@ -1,6 +1,11 @@
-math [
+print [math [
     set a 1
     set b 2
     set c 3
     eval ($a + $b * $c)
-]
+]]
+
+set x 10
+set y 20
+set terms ($x + $y)
+print [math $terms]
