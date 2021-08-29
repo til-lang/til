@@ -53,7 +53,9 @@ enum ObjectType
     Undefined,
     Other,
     None,  // XXX : Reserved?
-    List,
+    SimpleList,
+    ExecList,
+    SubList,
     SubProgram,
     Dict,
     String,

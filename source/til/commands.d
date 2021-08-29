@@ -109,6 +109,9 @@ static this()
                 // if (x == 0) {...}
                 if (isConditionTrue)
                 {
+                    // Get rid of eventual "else":
+                    context.items();
+                    // Run body:
                     return context.escopo.run(thenBody.subprogram);
                 }
                 // no else:
@@ -345,7 +348,7 @@ static this()
             }
 
             Items currentItems;
-            if (streamItem.type == ObjectType.List)
+            if (streamItem.type == ObjectType.SimpleList)
             {
                 // currentItems = streamItem.items;
                 auto list = cast(SimpleList)streamItem;
@@ -364,7 +367,7 @@ static this()
             }
             else
             {
-                debug {stderr.writeln(streamItem.type, " != ", ObjectType.List); }
+                debug {stderr.writeln(streamItem.type, " != ", ObjectType.SimpleList); }
                 currentItems = [streamItem];
             }
             debug {stderr.writeln("currentItems:", currentItems);}
@@ -867,7 +870,7 @@ static this()
         // anything like that (I believe it
         // makes no sense, actually,
         // but...)
-        if (l2.type != ObjectType.List)
+        if (l2.type != ObjectType.SimpleList)
         {
             auto msg = "You can only use `list.set` with two SimpleLists";
             return context.error(msg, ErrorCode.InvalidArgument, "");
@@ -1022,7 +1025,7 @@ static this()
         foreach (argument; context.items)
         {
             string key;
-            if (argument.type == ObjectType.List)
+            if (argument.type == ObjectType.SimpleList)
             {
                 auto list = cast(SimpleList)argument;
                 auto keysContext = list.evaluate(context.next());

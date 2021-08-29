@@ -18,7 +18,6 @@ class BaseList : ListItem
     this(Items items)
     {
         this.items = items;
-        this.type = ObjectType.List;
     }
 
     // Operators:

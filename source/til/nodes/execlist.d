@@ -11,6 +11,7 @@ class ExecList : BaseList
     {
         super();
         this.subprogram = subprogram;
+        this.type = ObjectType.ExecList;
     }
 
     // Utilities and operators:

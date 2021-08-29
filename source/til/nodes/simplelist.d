@@ -12,9 +12,8 @@ class SimpleList : BaseList
 {
     /*
        A SimpleList contains only ONE List inside it.
-       Its primary use is for passing parameters
-       for `if`, for instance, like
-       if ($x > 10) {...}
+       Its primary use is for passing parameters,
+       like `if ($x > 10) {...}`.
     */
 
     this(Items items)
@@ -22,6 +21,7 @@ class SimpleList : BaseList
         super();
         this.items = items;
         this.commands = simpleListCommands;
+        this.type = ObjectType.SimpleList;
     }
 
     // -----------------------------

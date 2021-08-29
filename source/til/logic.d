@@ -100,7 +100,7 @@ CommandContext pureBoolean(CommandContext context)
                 continue;
             }
         }
-        else if (item.type == ObjectType.List)
+        else if (item.type == ObjectType.SimpleList)
         {
             SimpleList l = cast(SimpleList)item;
             auto listContext = l.evaluate(context, true);

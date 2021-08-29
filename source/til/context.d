@@ -153,6 +153,22 @@ struct CommandContext
             return this;
         }
     }
+    CommandContext ret(ListItem item)
+    {
+        push(item);
+        exitCode = ExitCode.CommandSuccess;
+        return this;
+    }
+    CommandContext ret(Items items)
+    {
+        foreach(item; items)
+        {
+            push(item);
+        }
+        exitCode = ExitCode.CommandSuccess;
+        return this;
+    }
+
     template items(T)
     {
         T[] items()
