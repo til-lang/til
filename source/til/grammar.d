@@ -66,7 +66,21 @@ class Parser
     SubProgram run()
     {
         push("program");
-        auto sp = consumeSubProgram();
+        SubProgram sp;
+        try
+        {
+            sp = consumeSubProgram();
+        }
+        catch(Exception ex)
+        {
+            throw new Exception(
+                "Error at line " ~
+                to!string(line) ~
+                ", column " ~
+                to!string(col) ~
+                ": " ~ to!string(ex)
+            );
+        }
         pop();
         return sp;
     }
