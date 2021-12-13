@@ -1,3 +1,5 @@
+print "START"
+
 range 5 | foreach x {
     print $x
 }
@@ -28,5 +30,8 @@ range 5 15 4 | foreach x {
 }
 print "---"
 
-# This should throw and Exception:
-# range 5
+set r [range 3]
+push $r | foreach x {
+    print $x
+}
+print "END"

@@ -3,55 +3,8 @@ module til.nodes.queue;
 import std.range : front, popFront;
 
 import til.nodes;
-import til.ranges;
 
 CommandHandler[string] queueCommands;
-
-class NoWaitQueueRange : Range
-{
-    Queue queue;
-    CommandContext context;
-    this(Queue queue, CommandContext context)
-    {
-        this.queue = queue;
-        this.context = context;
-    }
-
-    override bool empty()
-    {
-        return queue.isEmpty();
-    }
-    override ListItem front()
-    {
-        return queue.front;
-    }
-    override void popFront()
-    {
-        queue.pop();
-    }
-    override string toString()
-    {
-        return "QueueRange";
-    }
-}
-
-
-class WaitQueueRange : NoWaitQueueRange
-{
-    this(Queue queue, CommandContext context)
-    {
-        super(queue, context);
-    }
-    override bool empty()
-    {
-        while (queue.isEmpty)
-        {
-            context.yield();
-        }
-        return queue.isEmpty();
-    }
-}
-
 
 class Queue : ListItem
 {
@@ -114,6 +67,22 @@ class Queue : ListItem
         auto value = values.front;
         values.popFront();
         return value;
+    }
+
+    // Acting as an Iterator:
+    override CommandContext next(CommandContext context)
+    {
+        // Queue.next is "no_wait".
+        if (isEmpty)
+        {
+            context.exitCode = ExitCode.Break;
+        }
+        else
+        {
+            context.push(pop());
+            context.exitCode = ExitCode.Continue;
+        }
+        return context;
     }
 
     // ------------------

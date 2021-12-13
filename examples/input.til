@@ -1,3 +1,7 @@
 read | foreach line {
-    print "> $line"
+    print "[$line]"
+    break
+}
+read.no_wait | foreach line {
+    print "[$line]"
 }

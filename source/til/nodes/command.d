@@ -11,18 +11,11 @@ class Command
 {
     string name;
     Items arguments;
-    bool inBackground;
 
     this(string name, Items arguments)
     {
         this.name = name;
         this.arguments = arguments;
-        this.inBackground = false;
-    }
-    this(string name, Items arguments, bool inBackground)
-    {
-        this(name, arguments);
-        this.inBackground = inBackground;
     }
 
     override string toString()
@@ -67,29 +60,30 @@ class Command
         return context;
     }
 
-    CommandHandler getHandler(Process escopo, ListItem arg1)
+    CommandHandler getHandler(Process escopo, ListItem target)
     {
         CommandHandler *handler;
 
         debug {
-            stderr.writeln("getCommand ", name);
+            stderr.writeln("getCommand ", name, " target:", target);
             stderr.writeln(" process:", escopo);
         }
 
-        if (arg1 !is null)
+        if (target !is null)
         {
             debug {
                 stderr.writeln(
-                    "Searching for ", name, " in ", arg1.type,
-                    "\n", arg1.commands
+                    "Searching for ", name, " in ", target,
+                    " type:", target.type,
+                    "\n", target.commands
                 );
             }
-            handler = (name in arg1.commands);
+            handler = (name in target.commands);
             if (handler !is null) return *handler;
         }
 
         auto h = escopo.getCommand(name);
-        if (h !is null && arg1 !is null)
+        if (h !is null && target !is null)
         {
             /*
             This is not exactly a "cache", because
@@ -98,12 +92,12 @@ class Command
             to worry a bit about
             eviction. :)
             */
-            arg1.commands[name] = h;
+            target.commands[name] = h;
         }
         return h;
     }
 
-    CommandContext run(CommandContext context)
+    CommandContext run(CommandContext context, bool hasInput=false)
     {
         debug {
             stderr.writeln(" Running Command ", this, " ", this.arguments);
@@ -112,23 +106,39 @@ class Command
 
         // evaluate arguments and set proper context.size:
         context = this.evaluateArguments(context);
-
         if (context.exitCode == ExitCode.Failure)
         {
             return context;
         }
 
-        if (inBackground)
+        if (hasInput)
         {
-            return runInBackground(context);
+            debug {stderr.writeln("    HAS INPUT");}
+            // Consider the input, that is,
+            // the last "argument" for
+            // the command:
+            context.size++;
+            context.hasInput = true;
         }
+        debug {stderr.writeln("    context.size: ", context.size);}
 
-        ListItem arg1 = null;
+        // The target is always the first argument:
+        Item target = null;
         if (context.size)
         {
-            arg1 = context.peek();
+            target = context.peek();
         }
-        auto handler = getHandler(context.escopo, arg1);
+
+        debug {
+            stderr.writeln("  target: ", target);
+        }
+
+        // append $item $list
+        //        target
+        //
+        // range 10 | append $list
+        //  stream           target
+        auto handler = getHandler(context.escopo, target);
         if (handler is null)
         {
             return context.error(
@@ -138,9 +148,11 @@ class Command
             );
         }
 
-        return this.runHandler(context, handler);
+        return this.runHandler(context, handler, target);
     }
-    CommandContext runHandler(CommandContext context, CommandHandler handler)
+    CommandContext runHandler(
+        CommandContext context, CommandHandler handler, Item target
+    )
     {
         // Run the command:
         // We set the exitCode to Undefined as a flag
@@ -162,43 +174,5 @@ class Command
             );
         }
         return newContext;
-    }
-
-    CommandContext runInBackground(CommandContext context)
-    {
-        debug {stderr.writeln(" IN BACKGROUND: ", this);}
-
-        // original arguments were already evaluated at this point.
-        auto newArguments = context.items;
-
-        // Run in other process - in FOREGROUND!
-        auto newCommand = new Command(name, newArguments, false);
-
-        auto pipeline = new Pipeline([newCommand]);
-        auto subprogram = new SubProgram([pipeline]);
-        auto process = new Process(context.escopo, subprogram);
-
-        // Piping:
-        if (context.stream is null)
-        {
-            process.input = new ProcessIORange(context.escopo, name ~ ":in");
-            debug {stderr.writeln("process.input: ", context.escopo);}
-        }
-        else
-        {
-            process.input = context.stream;
-        }
-        // Important: it's not the current process, but the new one, here:
-        process.output = new ProcessIORange(process, name ~ ":out");
-
-        auto pid = context.escopo.scheduler.add(process);
-
-        context.push(pid);
-
-        // Piping out:
-        context.stream = process.output;
-
-        context.exitCode = ExitCode.CommandSuccess;
-        return context;
     }
 }

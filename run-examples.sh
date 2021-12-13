@@ -3,12 +3,18 @@
 # TODO: transcribe this script to Til, someday. :)
 
 if [[ $1 == "" ]];then
-    version=release
+    if [ -e "til.release"];then
+        version=release
+    else
+        version=debug
+    fi
 else
     version=$1
 fi
 
 export TIL_PATH=$PWD
+
+results=""
 
 for file in examples/*.til;do
     echo "=== $file ==="
@@ -21,9 +27,10 @@ for file in examples/*.til;do
     fi
     if ! echo "some input, just in case" | ./til.$version $file;then
         code=$?
-        echo "$file : ERROR $code"
-        exit $code
+        results="$results\n$file : \033[31mERROR $code\033[39m"
+    else
+        results="$results\n$file : \033[32mOK\033[39m"
     fi
 done
 
-echo -e "\nSUCCESS"
+echo -e "Results:$results"

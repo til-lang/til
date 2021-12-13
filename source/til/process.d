@@ -5,7 +5,6 @@ import std.container : DList;
 
 import til.nodes;
 import til.modules;
-import til.ranges;
 import til.scheduler;
 
 debug
@@ -20,68 +19,6 @@ enum ProcessState
     Receiving,
     Waiting,
     Finished,
-}
-
-
-class ProcessIORange : Range
-{
-    ListItem buffer;
-    Process process;
-    string name;
-
-    this(Process process, string name)
-    {
-        this.process = process;
-        this.name = name;
-    }
-
-    void write(ListItem item)
-    {
-        // While someone does not consume...
-        while (buffer !is null)
-        {
-            debug {
-                stderr.writeln(
-                    "writing ", item,
-                    ": ", name, ".buffer is not null: ",
-                    buffer,
-                    " process: ", process
-                );
-            }
-            this.process.yield();
-        }
-        buffer = item;
-    }
-
-    override bool empty()
-    {
-        while (process.state != ProcessState.Finished)
-        {
-            if (buffer !is null) return false;
-
-            // Give the process a change to terminate
-            // or send something to the pipe:
-            debug {
-                stderr.writeln(
-                    "empty: ", name, ".buffer is still null"
-                );
-            }
-            process.yield();
-        }
-        return (buffer is null);
-    }
-    override ListItem front()
-    {
-        return this.buffer;
-    }
-    override void popFront()
-    {
-        this.buffer = null;
-    }
-    override string toString()
-    {
-        return "ProcessIORange " ~ name;
-    }
 }
 
 
@@ -108,8 +45,8 @@ class Process
     Scheduler scheduler = null;
 
     // Piping
-    Range input = null;
-    ProcessIORange output = null;
+    Item input = null;
+    Item output = null;
 
     // Types and their "methods"
     CommandHandlerMap[string] typesCommands;
@@ -187,13 +124,18 @@ class Process
 
     }
 
-    ListItem peek()
+    ListItem peek(uint index=1)
     {
         /*
         Just LOOK at the first item, do
         not pop it off.
         */
-        return stack[stackPointer-1];
+        long pointer = stackPointer - index;
+        if (pointer < 0)
+        {
+            return null;
+        }
+        return stack[pointer];
     }
     ListItem pop()
     {
@@ -218,6 +160,13 @@ class Process
         stack[stackPointer++] = item;
     }
     template push(T : int)
+    {
+        void push(T x)
+        {
+            return push(new IntegerAtom(x));
+        }
+    }
+    template push(T : long)
     {
         void push(T x)
         {

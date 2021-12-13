@@ -1,13 +1,12 @@
-
 proc p (n) {
     print "p $n"
-    sleep 500
-    print $n
+    sleep 300
+    print "post sleep: $n"
 }
 
 print "START"
 range 1 5 | foreach x {
     print $x
-    p $x &
+    spawn p $x
 }
 print "END"

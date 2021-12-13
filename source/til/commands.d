@@ -14,7 +14,6 @@ import til.modules;
 import til.nodes;
 import til.process : typesCommands;
 import til.procedures;
-import til.ranges;
 import til.sharedlibs;
 
 
@@ -31,6 +30,15 @@ SubProgram parse(string code)
 // Commands:
 static this()
 {
+    // ---------------------------------------------
+    // Stack
+    commands["push"] = (string path, CommandContext context)
+    {
+        // Do nothing, the value is already on stack.
+        context.exitCode = ExitCode.CommandSuccess;
+        return context;
+    };
+
     // ---------------------------------------------
     // Modules / includes
     stringCommands["include"] = (string path, CommandContext context)
@@ -189,31 +197,33 @@ static this()
         }
 
         uint index = 0;
-        debug {stderr.writeln("foreach context.stream: ", context.stream);}
+        // TODO: check for lack of arguments!
+        auto target = context.pop();
+        debug {stderr.writeln("foreach target: ", target);}
 
-        auto stream = context.stream;
-        foreach(item; stream)
+        auto nextContext = context;
+        // Remember: `context` is going to change a lot from now on.
+        do
         {
+            debug {stderr.writeln(" calling ", target, ".next");}
+            nextContext = target.next(context);
+            debug {stderr.writeln("  next done ");}
+            if (nextContext.exitCode == ExitCode.Break)
+            {
+                break;
+            }
+            auto item = nextContext.pop();
+
             debug {stderr.writeln("foreach item: ", item);}
             loopScope[argName] = item;
 
             context = loopScope.run(argBody.subprogram);
             debug {stderr.writeln("foreach.subprogram.exitCode:", context.exitCode);}
+            debug {stderr.writeln("foreach.nextContext.exitCode:", nextContext.exitCode);}
 
             if (context.exitCode == ExitCode.Break)
             {
-                /*
-                We pop the front because we assume
-                the loop scope already did
-                whatever it was going to
-                do with the value.
-                */
-                stream.popFront();
                 break;
-            }
-            else if (context.exitCode == ExitCode.Continue)
-            {
-                continue;
             }
             else if (context.exitCode == ExitCode.ReturnSuccess)
             {
@@ -230,13 +240,8 @@ static this()
                 context.yield();
             }
         }
+        while(nextContext.exitCode == ExitCode.Continue);
 
-        /*
-        `foreach` is NOT a "sink", because you can simply
-        break the loop "in the middle" of a stream and
-        the rest can be passed to other command to
-        process.
-        */
         context.exitCode = ExitCode.CommandSuccess;
         return context;
     };
@@ -252,55 +257,87 @@ static this()
     };
 
     // ---------------------------------------------
-    // "switch/case"
     commands["transform"] = (string path, CommandContext context)
     {
-        class TransformRange : InfiniteRange
+        class Transformer : Item
         {
-            Range origin;
+            Item target;
             SubList body;
             Process escopo;
             string varName;
-            this(Range origin, string varName, SubList body, Process escopo)
+            bool empty;
+
+            this(Item target, string varName, SubList body, Process escopo)
             {
-                this.origin = origin;
+                this.target = target;
                 this.varName = varName;
                 this.body = body;
                 this.escopo = escopo;
             }
 
-            override bool empty()
+            override string toString()
             {
-                return origin.empty;
+                return "transform";
             }
-            override ListItem front()
+
+            override CommandContext next(CommandContext context)
             {
-                auto originalFront = origin.front;
-                escopo[varName] = originalFront;
+                auto targetContext = this.target.next(context);
+                if (targetContext.exitCode == ExitCode.Break)
+                {
+                    return targetContext;
+                }
+                else if (targetContext.exitCode != ExitCode.Continue)
+                {
+                    throw new Exception(
+                        to!string(this.target)
+                        ~ ".next returned "
+                        ~ to!string(targetContext.exitCode)
+                    );
+                }
+
+                escopo[varName] = targetContext.pop();
                 context = escopo.run(body.subprogram);
-                if (context.size > 1)
+
+                switch(context.exitCode)
                 {
-                    return new SimpleList(context.items);
+                    case ExitCode.ReturnSuccess:
+                    case ExitCode.CommandSuccess:
+                    case ExitCode.Proceed:
+                        context.exitCode = ExitCode.Continue;
+                        break;
+
+                    default:
+                        break;
                 }
-                else
-                {
-                    return context.pop();
-                }
-            }
-            override void popFront()
-            {
-                origin.popFront();
+                debug {stderr.writeln("transform.return.context.size:", context.size);}
+                return context;
             }
         }
 
+        if (context.size < 2)
+        {
+            auto msg = "`transform` expects two arguments";
+            return context.error(msg, ErrorCode.InvalidSyntax, "");
+        }
         auto varName = context.pop!string;
         auto body = context.pop!SubList;
 
-        auto newStream = new TransformRange(context.stream, varName, body, context.escopo);
+        if (context.size == 0)
+        {
+            auto msg = "no target to transform";
+            return context.error(msg, ErrorCode.InvalidSyntax, "");
+        }
+        auto target = context.pop();
+
+        auto iterator = new Transformer(
+            target, varName, body, context.escopo
+        );
+        context.push(iterator);
         context.exitCode = ExitCode.CommandSuccess;
-        context.stream = newStream;
         return context;
     };
+    // "switch/case"
     simpleListCommands["case"] = (string path, CommandContext context)
     {
         /*
@@ -310,7 +347,6 @@ static this()
             print "$name is a MarkDown file"
         }
         */
-        auto stream = context.stream;
 
         // Put a "case" string just to be coherent with
         // subsequent ones:
@@ -324,7 +360,7 @@ static this()
         }
         caseCondition[] caseConditions;
 
-        while(context.size)
+        while(context.size > 1)
         {
             auto caseWord = context.pop!string;
             if (caseWord != "case")
@@ -338,38 +374,49 @@ static this()
             );
         }
 
-        foreach (streamItem; stream)
+        // Last argument should be our target:
+        auto target = context.pop();
+
+        auto nextContext = context;
+        do
         {
-            debug {
-                stderr.writeln(
-                    "case streamItem:", streamItem.type, "/", streamItem,
-                    "/", typeid(streamItem)
-                );
+            nextContext = target.next(context);
+            if (nextContext.exitCode == ExitCode.Break)
+            {
+                break;
             }
 
-            Items currentItems;
-            if (streamItem.type == ObjectType.SimpleList)
-            {
-                // currentItems = streamItem.items;
-                auto list = cast(SimpleList)streamItem;
-                if (list !is null)
+            Items currentItems = {
+                auto item = nextContext.pop();
+                debug {
+                    stderr.writeln(
+                        "case :", item.type, "/", item,
+                        "/", typeid(item)
+                    );
+                }
+
+                if (item.type == ObjectType.SimpleList)
                 {
-                    currentItems = list.items;
+                    auto list = cast(SimpleList)item;
+                    if (list !is null)
+                    {
+                        return list.items;
+                    }
+                    else
+                    {
+                        throw new Exception(
+                            "Cannot cast "
+                            ~ to!string(typeid(item))
+                            ~ " to SimpleList"
+                        );
+                    }
                 }
                 else
                 {
-                    throw new Exception(
-                        "Cannot cast "
-                        ~ to!string(typeid(streamItem))
-                        ~ " to SimpleList"
-                    );
+                    debug {stderr.writeln(item.type, " != ", ObjectType.SimpleList); }
+                    return [item];
                 }
-            }
-            else
-            {
-                debug {stderr.writeln(streamItem.type, " != ", ObjectType.SimpleList); }
-                currentItems = [streamItem];
-            }
+            }();
             debug {stderr.writeln("currentItems:", currentItems);}
 
             foreach (condition; caseConditions)
@@ -423,6 +470,7 @@ static this()
                 }
             }
         }
+        while(nextContext.exitCode == ExitCode.Continue);
 
         if (context.exitCode != ExitCode.Failure)
         {
@@ -523,11 +571,23 @@ static this()
     nameCommands["spawn"] = (string path, CommandContext context)
     {
         // set pid [spawn f $x]
-        // spawn f | foreach x { ... }
+        // spawn f | read | foreach x { ... }
         // range 5 | spawn g | foreach y { ... }
+
+        if (context.size == 0)
+        {
+            auto msg = "`spawn` expect at least one argument";
+            return context.error(msg, ErrorCode.InvalidArgument, "");
+        }
 
         auto commandName = context.pop!string;
         Items arguments = context.items;
+        ListItem input = null;
+        if (context.hasInput)
+        {
+            input = arguments[$-1];
+            arguments.popBack();
+        }
 
         auto command = new Command(commandName, arguments);
         auto pipeline = new Pipeline([command]);
@@ -535,24 +595,21 @@ static this()
         auto process = new Process(context.escopo, subprogram);
 
         // Piping:
-        if (context.stream is null)
+        if (input !is null)
         {
-            process.input = new ProcessIORange(context.escopo, commandName ~ ":in");
-            debug {stderr.writeln("process.input: ", context.escopo);}
+            // receive $queue | spawn some_procedure
+            debug {stderr.writeln("New process input is: ", input);}
+            process.input = input;
         }
         else
         {
-            process.input = context.stream;
+            debug {stderr.writeln("New process input is a generic Queue");}
+            process.input = new Queue(64);
         }
-        // Important: it's not the current process, but the new one, here:
-        process.output = new ProcessIORange(process, commandName ~ ":out");
+        process.output = new Queue(64);
 
         auto pid = context.escopo.scheduler.add(process);
-
         context.push(pid);
-
-        // Piping out:
-        context.stream = process.output;
 
         context.exitCode = ExitCode.CommandSuccess;
         return context;
@@ -562,17 +619,17 @@ static this()
     // Printing:
     commands["print"] = (string path, CommandContext context)
     {
-        while(context.size > 1) stdout.write(context.pop!string, " ");
-        stdout.write(context.pop!string);
+        debug {stderr.writeln("print.context.size: ", context.size);}
+        while(context.size) stdout.write(context.pop!string);
         stdout.writeln();
 
         context.exitCode = ExitCode.CommandSuccess;
+        debug {stderr.writeln("print.quiting... ");}
         return context;
     };
     commands["print.error"] = (string path, CommandContext context)
     {
-        while(context.size > 1) stderr.write(context.pop!string, " ");
-        stderr.write(context.pop!string);
+        while(context.size) stderr.write(context.pop!string);
         stderr.writeln();
 
         context.exitCode = ExitCode.CommandSuccess;
@@ -583,7 +640,57 @@ static this()
     // Piping
     commands["read"] = (string path, CommandContext context)
     {
-        context.stream = context.escopo.input;
+        class ProcessInputIterator : Item
+        {
+            Item input;
+            this(Item input)
+            {
+                this.input = input;
+            }
+            override string toString()
+            {
+                return "ProcessInputIterator";
+            }
+            override CommandContext next(CommandContext context)
+            {
+                // Implement the "wait" part:
+                while (true)
+                {
+                    context = input.next(context);
+                    if (context.exitCode == ExitCode.Break)
+                    {
+                        // Give up control and try again later:
+                        context.yield();
+                        continue;
+                    }
+
+                    return context;
+                }
+            }
+        }
+
+        if (context.escopo.input is null)
+        {
+            auto msg = "`read`: process input is null";
+            return context.error(msg, ErrorCode.InvalidArgument, "");
+        }
+
+        debug {stderr.writeln("Creating a ProcessInputIterator based on ", context.escopo.input);}
+        auto iterator = new ProcessInputIterator(context.escopo.input);
+        context.push(iterator);
+
+        context.exitCode = ExitCode.CommandSuccess;
+        return context;
+    };
+    commands["read.no_wait"] = (string path, CommandContext context)
+    {
+        if (context.escopo.input is null)
+        {
+            auto msg = "`read.no_wait`: process input is null";
+            return context.error(msg, ErrorCode.InvalidArgument, "");
+        }
+        // Probably a Queue:
+        context.push(context.escopo.input);
         context.exitCode = ExitCode.CommandSuccess;
         return context;
     };
@@ -632,7 +739,6 @@ static this()
     {
         string classe = "";
         int code = -1;
-        // TODO: improve default message:
         string message = "An error ocurred";
 
         // "Full" call:
@@ -706,9 +812,13 @@ static this()
     // XXX: `incr` and `decr` do NOT conform to Tcl "equivalents"!
     integerCommands["incr"] = (string path, CommandContext context)
     {
-        // TODO: check parameters count
-        auto integer = context.pop!IntegerAtom;
+        if (context.size != 1)
+        {
+            auto msg = "`incr` expects one argument";
+            return context.error(msg, ErrorCode.InvalidArgument, "");
+        }
 
+        auto integer = context.pop!IntegerAtom;
         // TODO: check for overflow
         integer.value++;
         context.push(integer);
@@ -717,9 +827,13 @@ static this()
     };
     integerCommands["decr"] = (string path, CommandContext context)
     {
-        // TODO: check parameters count
-        auto integer = context.pop!IntegerAtom;
+        if (context.size != 1)
+        {
+            auto msg = "`decr` expects one argument";
+            return context.error(msg, ErrorCode.InvalidArgument, "");
+        }
 
+        auto integer = context.pop!IntegerAtom;
         // TODO: check for underflow
         integer.value--;
         context.push(integer);
@@ -757,7 +871,7 @@ static this()
             step = context.pop!long;
         }
 
-        class IntegerRange : InfiniteRange
+        class IntegerRange : Item
         {
             long start = 0;
             long limit = 0;
@@ -790,28 +904,34 @@ static this()
                     ~ ")";
             }
 
-            override void popFront()
+            override CommandContext next(CommandContext context)
             {
+                debug {stderr.writeln("range.next.current: ", current);}
+                long value = current;
+                if (value > limit)
+                {
+                    context.exitCode = ExitCode.Break;
+                }
+                else
+                {
+                    context.push(value);
+                    debug {stderr.writeln("range.push: ", value);}
+                    context.exitCode = ExitCode.Continue;
+                }
                 current += step;
-            }
-            override ListItem front()
-            {
-                return new IntegerAtom(current);
-            }
-            override bool empty()
-            {
-                return (current > limit);
+                return context;
             }
         }
 
+        debug {stderr.writeln("range: ", start, " ", limit, " ", step);}
         auto range = new IntegerRange(start, limit, step);
-        context.stream = range;
+        context.push(range);
         context.exitCode = ExitCode.CommandSuccess;
         return context;
     };
 
     // Names:
-    nameCommands["set"] = (string path, CommandContext context)
+    commands["set"] = (string path, CommandContext context)
     {
         string[] names;
 
@@ -865,11 +985,6 @@ static this()
 
         debug {stderr.write("l1, l2: ", l1, " , ", l2);}
 
-        // TODO : it seem right, but we should test
-        // if the cast won't change the type or
-        // anything like that (I believe it
-        // makes no sense, actually,
-        // but...)
         if (l2.type != ObjectType.SimpleList)
         {
             auto msg = "You can only use `list.set` with two SimpleLists";
@@ -923,7 +1038,7 @@ static this()
         /*
         range (1 2 3 4 5)
         */
-        class ItemsRange : Range
+        class ItemsRange : Item
         {
             Items list;
             int currentIndex = 0;
@@ -934,23 +1049,27 @@ static this()
                 this.list = list;
                 this._length = list.length;
             }
-
-            override bool empty()
+            override string toString()
             {
-                return (this.currentIndex >= this._length);
+                return "ItemsRange";
             }
-            override ListItem front()
+            override CommandContext next(CommandContext context)
             {
-                return this.list[this.currentIndex];
-            }
-            override void popFront()
-            {
-                this.currentIndex++;
+                if (this.currentIndex >= this._length)
+                {
+                    context.exitCode = ExitCode.Break;
+                }
+                else
+                {
+                    context.push(this.list[this.currentIndex++]);
+                    context.exitCode = ExitCode.Continue;
+                }
+                return context;
             }
         }
 
         SimpleList list = context.pop!SimpleList;
-        context.stream = new ItemsRange(list.items);
+        context.push(new ItemsRange(list.items));
         context.exitCode = ExitCode.CommandSuccess;
         return context;
     };
@@ -992,9 +1111,9 @@ static this()
         Pid pid = cast(Pid)context.pop();
         auto value = context.pop();
 
-        // If we *have* the Pid, the input *is* a ProcessIORange.
-        auto input = cast(ProcessIORange)pid.process.input;
-        input.write(value);
+        // Process input should be a Queue:
+        Queue input = cast(Queue)pid.process.input;
+        input.push(value);
 
         context.exitCode = ExitCode.CommandSuccess;
         return context;
@@ -1129,14 +1248,30 @@ static this()
     {
         auto queue = context.pop!Queue;
 
-        foreach (item; context.stream)
+        if (context.size == 0)
         {
+            auto msg = "no target to send from";
+            return context.error(msg, ErrorCode.InvalidArgument, "");
+        }
+        auto target = context.pop();
+
+        auto nextContext = context;
+        do
+        {
+            nextContext = target.next(context);
+            if (nextContext.exitCode == ExitCode.Break)
+            {
+                break;
+            }
+            auto item = nextContext.pop();
+
             while (queue.isFull)
             {
                 context.yield();
             }
             queue.push(item);
         }
+        while(nextContext.exitCode != ExitCode.Break);
 
         context.exitCode = ExitCode.CommandSuccess;
         return context;
@@ -1145,8 +1280,22 @@ static this()
     {
         auto queue = context.pop!Queue;
 
-        foreach (item; context.stream)
+        if (context.size == 0)
         {
+            auto msg = "no target to send from";
+            return context.error(msg, ErrorCode.InvalidArgument, "");
+        }
+        auto target = context.pop();
+
+        auto nextContext = context;
+        do
+        {
+            nextContext = target.next(context);
+            if (nextContext.exitCode == ExitCode.Break)
+            {
+                break;
+            }
+            auto item = nextContext.pop();
             if (queue.isFull)
             {
                 auto msg = "queue is full";
@@ -1154,21 +1303,85 @@ static this()
             }
             queue.push(item);
         }
+        while(nextContext.exitCode != ExitCode.Break);
 
         context.exitCode = ExitCode.CommandSuccess;
         return context;
     };
     queueCommands["receive"] = (string path, CommandContext context)
     {
+        if (context.size != 1)
+        {
+            auto msg = "`receive` expect one argument";
+            return context.error(msg, ErrorCode.InvalidArgument, "");
+        }
+
+        class QueueIterator : Item
+        {
+            Queue queue;
+            this(Queue queue)
+            {
+                this.queue = queue;
+            }
+            override string toString()
+            {
+                return "QueueIterator";
+            }
+            override CommandContext next(CommandContext context)
+            {
+                while (queue.isEmpty)
+                {
+                    context.yield();
+                }
+                auto item = queue.pop();
+                context.push(item);
+                context.exitCode = ExitCode.Continue;
+                return context;
+            }
+        }
+
         auto queue = context.pop!Queue;
-        context.stream = new WaitQueueRange(queue, context);
+        context.push(new QueueIterator(queue));
         context.exitCode = ExitCode.CommandSuccess;
         return context;
     };
     queueCommands["receive.no_wait"] = (string path, CommandContext context)
     {
+        if (context.size != 1)
+        {
+            auto msg = "`receive` expect one argument";
+            return context.error(msg, ErrorCode.InvalidArgument, "");
+        }
+
+        class QueueIteratorNoWait : Item
+        {
+            Queue queue;
+            this(Queue queue)
+            {
+                this.queue = queue;
+            }
+            override string toString()
+            {
+                return "QueueIteratorNoWait";
+            }
+            override CommandContext next(CommandContext context)
+            {
+                if (queue.isEmpty)
+                {
+                    context.exitCode = ExitCode.Break;
+                }
+                else
+                {
+                    context.exitCode = ExitCode.Continue;
+                    auto item = queue.pop();
+                    context.push(item);
+                }
+                return context;
+            }
+        }
+
         auto queue = context.pop!Queue;
-        context.stream = new NoWaitQueueRange(queue, context);
+        context.push(new QueueIteratorNoWait(queue));
         context.exitCode = ExitCode.CommandSuccess;
         return context;
     };

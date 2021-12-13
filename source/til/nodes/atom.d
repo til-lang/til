@@ -17,6 +17,8 @@ class Atom : ListItem
 
 class NameAtom : Atom
 {
+    // x
+
     string value;
 
     this(string s)
@@ -53,6 +55,9 @@ class NameAtom : Atom
 
 class InputNameAtom : NameAtom
 {
+    // >x
+    // TODO: get rid of this
+
     this(string s)
     {
         super(s);
@@ -69,6 +74,8 @@ class InputNameAtom : NameAtom
 
 class SubstAtom : NameAtom
 {
+    // $x
+
     this(string s)
     {
         super(s);
@@ -98,6 +105,8 @@ class SubstAtom : NameAtom
 
 class IntegerAtom : Atom
 {
+    // 10
+
     long value;
 
     this(long value)
@@ -200,6 +209,8 @@ class IntegerAtom : Atom
 
 class FloatAtom : Atom
 {
+    // 12.34
+
     float value;
     this(float value)
     {
@@ -252,26 +263,42 @@ class FloatAtom : Atom
             return null;
         }
 
-        ListItem result = {
-            final switch(operator)
-            {
-                case "+":
-                    return new FloatAtom(this.value + t2.value);
-                case "-":
-                    return new FloatAtom(this.value - t2.value);
-                case "*":
-                    return new FloatAtom(this.value * t2.value);
-                case "/":
-                    return new FloatAtom(this.value / t2.value);
-            }
-        }();
-        return result;
+        switch(operator)
+        {
+            // Logic:
+            case "==":
+                return new BooleanAtom(this.value == t2.value);
+            case ">":
+                return new BooleanAtom(this.value > t2.value);
+            case ">=":
+                return new BooleanAtom(this.value >= t2.value);
+            case "<":
+                return new BooleanAtom(this.value < t2.value);
+            case "<=":
+                return new BooleanAtom(this.value <= t2.value);
+
+            // Math:
+            case "+":
+                return new FloatAtom(this.value + t2.value);
+            case "-":
+                return new FloatAtom(this.value - t2.value);
+            case "*":
+                return new FloatAtom(this.value * t2.value);
+            case "/":
+                return new FloatAtom(this.value / t2.value);
+
+            default:
+                return null;
+        }
     }
 }
 
 
 class BooleanAtom : Atom
 {
+    // true
+    // false
+
     bool value;
     this(bool value)
     {
@@ -298,6 +325,8 @@ class BooleanAtom : Atom
 
 class OperatorAtom : Atom
 {
+    // +
+
     string value;
 
     this(string s)

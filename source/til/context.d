@@ -3,7 +3,6 @@ module til.context;
 import std.array;
 
 import til.nodes;
-import til.ranges;
 
 debug
 {
@@ -14,6 +13,7 @@ struct CommandContext
 {
     Process escopo;
     ExitCode exitCode = ExitCode.Proceed;
+    bool hasInput = false;
 
     /*
     Commands CAN pop beyond local zero, so
@@ -21,8 +21,6 @@ struct CommandContext
     an uint.
     */
     int size = 0;
-
-    Range stream = null;
 
     @disable this();
     this(Process escopo)
@@ -49,10 +47,6 @@ struct CommandContext
     CommandContext next(Process escopo, int argumentCount)
     {
         auto newContext = CommandContext(escopo, argumentCount);
-        // Pass along stream and any other data
-        // shared between commands int the
-        // pipeline:
-        newContext.stream = this.stream;
         return newContext;
     }
 
@@ -65,9 +59,9 @@ struct CommandContext
     }
 
     // Stack-related things:
-    ListItem peek()
+    ListItem peek(uint index=1)
     {
-        return escopo.peek();
+        return escopo.peek(index);
     }
     template pop(T : ListItem)
     {
@@ -200,8 +194,6 @@ struct CommandContext
     void assimilate(CommandContext other)
     {
         this.size += other.size;
-        // XXX : should we care about other.stream???
-        // I don't think so, but not sure...
     }
 
     // Scheduler-related things
@@ -232,7 +224,6 @@ struct CommandContext
         auto e = new Erro(escopo, message, code, classe);
         push(e);
         this.exitCode = ExitCode.Failure;
-        this.stream = null;
 
         /*
         Return this so we can simply write

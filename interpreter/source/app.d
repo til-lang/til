@@ -9,7 +9,7 @@ import til.nodes;
 import til.scheduler;
 
 
-class FileInputRange : Range
+class InterpreterInput : Item
 {
     File inputFile;
 
@@ -18,36 +18,46 @@ class FileInputRange : Range
         this.inputFile = inputFile;
     }
 
-    override bool empty()
+    override CommandContext next(CommandContext context)
     {
-        // How to inform an error? Calling the scope on.error?
-        // context.push(new IntegerAtom(status.status));
-        return inputFile.eof;
+        if (inputFile.eof)
+        {
+            context.exitCode = ExitCode.Break;
+        }
+        else
+        {
+            // XXX : what about non-\n line terminator systems?
+            context.push(new String(inputFile.readln()));
+            context.exitCode = ExitCode.Continue;
+        }
+        return context;
     }
-    override ListItem front()
+
+    override string toString()
     {
-        // XXX : what about non-\n line terminator systems?
-        return new String(inputFile.readln());
-    }
-    override void popFront()
-    {
+        return "InterpreterInput";
     }
 }
 
-class FileOutputRange : ProcessIORange
+class InterpreterOutput : Queue
 {
     File outputFile;
 
-    this(Process process, string name, File inputFile)
+    this(File outputFile)
     {
-        super(process, name);
+        super(0);
         this.outputFile = outputFile;
     }
 
-    override void write(ListItem item)
+    override void push(ListItem item)
     {
         // outputFile.write(to!string(item));
         stdout.write(to!string(item));
+    }
+
+    override string toString()
+    {
+        return "stdout";
     }
 }
 
@@ -96,8 +106,8 @@ int main(string[] args)
 
     auto process = new Process(null, program);
     process.commands = commands;
-    process.input = new FileInputRange(stdin);
-    process.output = new FileOutputRange(process, "output", stdout);
+    process.input = new InterpreterInput(stdin);
+    process.output = new InterpreterOutput(stdout);
 
     debug {sw.start();}
     auto scheduler = new Scheduler(process);
@@ -118,6 +128,7 @@ int main(string[] args)
         else
         {
             stderr.writeln("Success");
+            debug {stderr.writeln("  context.size:", fiber.context.size);}
             foreach(item; fiber.context.items)
             {
                 stderr.writeln(item);

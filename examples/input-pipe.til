@@ -1,5 +1,5 @@
 proc printer () {
-    read | foreach line {
+    read.no_wait | foreach line {
         print "> $line"
     }
 }

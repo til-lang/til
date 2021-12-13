@@ -63,6 +63,11 @@ class ListItem
             ~ thisInfo.toString() ~ " to string not implemented."
         );
     }
+    CommandContext next(CommandContext context)
+    {
+        context.exitCode = ExitCode.Break;
+        return context;
+    }
 
     // Extractions:
     CommandContext extract(CommandContext context)
@@ -73,6 +78,7 @@ class ListItem
             ~ info.toString()
         );
     }
+
 
     CommandContext evaluate(CommandContext context, bool force) {return this.evaluate(context);}
     CommandContext evaluate(CommandContext context) {context.push(this); return context;}
