@@ -1,5 +1,7 @@
 range 0 10 | transform x {
-        return [math ($x + 100)]
+        set value [math ($x + 100)]
+        print "$x -> $value"
+        return $value
     } | foreach y {
         print $y
     }

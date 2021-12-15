@@ -27,23 +27,23 @@ if ($a > $b || $a < $b && 1 > 2) {
 
 #       t         f          t
 if (($a < $b && 1 > 2) || $a < $b) {
-    print "Parentesis is okay"
+    print "Parenthesis is okay"
 } else {
-    print "Parentesis is WRONG"
+    print "Parenthesis is WRONG"
 }
 
 #        t          f            t           f          t
 if ((($a < $b && 55 > 57) || ($a < $b && (97 > 98 || 12 < 34)))) {
-    print "Lots of parentesis is okay"
+    print "Lots of parenthesis is okay"
 } else {
-    print "Lots of parentesis is WRONG"
+    print "Lots of parenthesis is WRONG"
 }
 
 #        t    f     f     f      t    f      t    f     f
 if ((($a < $b && 55 > 57) || ($a < $b && (97 < 98 && 12 > 34)))) {
-    print "Second lot of parentesis is WRONG"
+    print "Second lot of parenthesis is WRONG"
 } else {
-    print "Second lot of parentesis is okay"
+    print "Second lot of parenthesis is okay"
 }
 
 print "END"

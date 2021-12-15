@@ -1,14 +1,18 @@
 proc p (name) {
     print "p $name START"
     read | foreach msg {
+        print " Procedure $name received message: $msg (first foreach)"
+        break
+    }
+    read.no_wait | foreach msg {
         print " Procedure $name received message: $msg"
     }
     print "p $name END"
 }
 
-set p1 [p "alfa" &]
+set p1 [spawn p "alfa"]
 
-range 128 | foreach x {
+range 10 | foreach x {
     print "Sending message-$x to p1"
     send $p1 "message-$x"
 }

@@ -1,2 +1,0 @@
-set d [dict]
-print "Auto-import without 'std.' prefix is working."

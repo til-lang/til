@@ -1,3 +1,5 @@
+print "START"
+
 set offset 10
 range 0 10 | transform x {
         return $x [math ($x + $offset)]
@@ -26,3 +28,5 @@ range (x y z other) | case (x) {
     } case (>x) {
         print " that is, $x"
     }
+
+print "END"

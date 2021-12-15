@@ -1,23 +1,30 @@
+print "START"
+
 set q [queue]
 
+print "Test 1"
 range 1 | send $q
+print [pop $q] " should be 0"
+print [pop $q] " should be 1"
 
-print [pop $q] "should be 0"
-print [pop $q] "should be 1"
-
+print "Test 2"
 range 2 | send $q
-receive $q | foreach x {
-    print "Received $x"
-    if ($x == 2) { break }
+receive $q | foreach a {
+    print "Received $a"
+    if ($a == 2) { break }
 }
 
 # TODO: is_empty $q
 # TODO: lenght $q
 
+print "Test 3"
 range 3 | send $q
-receive.no_wait $q | foreach x {
-    print "Received (no_wait) $x"
+receive.no_wait $q | foreach b {
+    print "Received (no_wait) $b"
+    break
 }
-receive.no_wait $q | foreach x {
-    print "Received (no_wait, again) $x"
+receive.no_wait $q | foreach c {
+    print "Received (no_wait, again) $c"
 }
+
+print "END"

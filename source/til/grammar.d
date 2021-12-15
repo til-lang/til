@@ -20,7 +20,6 @@ const EOL = '\n';
 const SPACE = ' ';
 const TAB = '\t';
 const PIPE = '|';
-const BACKGROUND = '&';
 
 
 // Integers units:
@@ -83,6 +82,7 @@ class Parser
         }
         pop();
         return sp;
+        // XXX: raise an Exception if there is more than a SubProgram?
     }
 
     char currentChar()
@@ -219,7 +219,8 @@ class Parser
 
         while (!isEndOfLine && !isStopper)
         {
-            commands ~= consumeCommand();
+            auto command = consumeCommand();
+            commands ~= command;
 
             if (currentChar == PIPE) {
                 consumeChar();
@@ -241,7 +242,6 @@ class Parser
         push("command");
         NameAtom commandName = cast(NameAtom)consumeAtom();
         ListItem[] arguments;
-        bool inBackground = false;
 
         // That is: if the command HAS any argument:
         while (currentChar == SPACE)
@@ -251,13 +251,6 @@ class Parser
             if (currentChar.among('}', ']', ')', '>', PIPE))
             {
                 break;
-            }
-            else if (currentChar == BACKGROUND)
-            {
-                inBackground = true;
-                debug {stderr.writeln("IN BACKGROUND!");}
-                consumeChar();
-                continue;
             }
 
             arguments ~= consumeListItem();
@@ -282,7 +275,7 @@ class Parser
             }
         }
         pop();
-        return new Command(commandName.toString(), arguments, inBackground);
+        return new Command(commandName.toString(), arguments);
     }
 
     ListItem consumeListItem()

@@ -1,11 +1,14 @@
-proc prefixer (prefix) {
-    print "prefixer started"
-    read | foreach item {
-        print "Prefixing $item ..."
-        write "$prefix $item"
-    }
+print "start of the program"
+
+proc prefixer (prefix item) {
+    print "  Prefixing $item ..."
+    return "$prefix $item"
 }
 
-range ("Angela" "Bob" "Carla" "David") | prefixer "The name is" & | foreach phrase {
-    print $phrase
-}
+range ("Angela" "Bob" "Carla" "David") | transform x {
+        return [prefixer "The name is" $x]
+    } | foreach phrase {
+        print $phrase
+    }
+
+print "end of the program"
