@@ -474,7 +474,6 @@ class Parser
 
         bool isNumber = true;
         bool isSubst = false;
-        bool isInput = false;
         bool isOperator = false;
         uint dotCounter = 0;
 
@@ -487,9 +486,6 @@ class Parser
                 break;
 
             case '>':
-                isInput = true;
-                isNumber = false;
-                goto case;
             case '<':
             case '+':
             case '*':
@@ -613,11 +609,6 @@ class Parser
         {
             debug {stderr.writeln("new SubstAtom: ", s);}
             return new SubstAtom(s);
-        }
-        else if (isInput && !isOperator)
-        {
-            debug {stderr.writeln("new InputNameAtom: ", s);}
-            return new InputNameAtom(s[1..$]);
         }
         else if (isOperator)
         {

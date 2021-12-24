@@ -1,32 +1,32 @@
 print "START"
 
 set offset 10
-range 0 10 | transform x {
-        return $x [math ($x + $offset)]
-    } | case (>alfa 10) {
-        print "$alfa + $offset is ten"
-    } case (>beta 11) {
-        print "$beta + $offset is eleven"
-    } case (>gama >y) {
-        print "$gama + $offset is $y"
-        break
-    } case (>x >y) {
-        print "$x + 10 is $y"
-        print "BUT THIS MESSAGE SHOULD NOT BE DISPLAYED!"
+
+range 0 5 | transform x {
+        return [math ($x + $offset)] $x
+    } | foreach x {
+        print "x:" $x
+        set (a b) $x
+
+        if ($a == 10) {
+            print "$b + $offset is ten"
+        } else if ($a == 11) {
+            print "$b + $offset is eleven"
+        } else {
+            print "a is $a, b is $b"
+        }
     }
 
-range 100 105 | case (>x) {
-        print "$x"
-    }
-
-range (x y z other) | case (x) {
+range (x y z alfa beta gama) | foreach x {
+    if ($x == x) {
         print "xis"
-    } case (y) {
+    } else if ($x == y) {
         print "ipsolon"
-    } case (z) {
+    } else if ($x == z) {
         print "zee"
-    } case (>x) {
-        print " that is, $x"
+    } else {
+        print "other: $x"
     }
+}
 
 print "END"

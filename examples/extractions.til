@@ -1,6 +1,10 @@
 set str "abcdefghijk"
 set x 2048
-set list (1 2 3 4 5)
+set lista (1 2 3 4 5)
 
-print "By index: " <$list 0>
-print "head/tail: " <$list head> <$list tail>
+print "By index: " <$lista 0>
+print "head: " <$lista head> "; tail: " <$lista tail>
+print "range (1 4): " <$lista 1 4>
+print "reverse index (-1): " <$lista -1>
+print "reverse range (1 -2): " <$lista 1 -2>
+print "reverse range (-4 -2): " <$lista -4 -2>

@@ -53,25 +53,6 @@ class NameAtom : Atom
     }
 }
 
-class InputNameAtom : NameAtom
-{
-    // >x
-    // TODO: get rid of this
-
-    this(string s)
-    {
-        super(s);
-        this.type = ObjectType.InputName;
-    }
-
-    override CommandContext evaluate(CommandContext context)
-    {
-        context.push(this);
-        context.exitCode = ExitCode.Proceed;
-        return context;
-    }
-}
-
 class SubstAtom : NameAtom
 {
     // $x

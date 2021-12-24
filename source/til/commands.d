@@ -212,10 +212,24 @@ static this()
             {
                 break;
             }
-            auto item = nextContext.pop();
+            auto values = nextContext.items;
 
-            debug {stderr.writeln("foreach item: ", item);}
-            loopScope[argName] = item;
+            debug {stderr.writeln("foreach values: ", values);}
+
+            if (values.length == 0)
+            {
+                // TODO: check if this make sense:
+                nextContext.exitCode = ExitCode.Break;
+                return nextContext;
+            }
+            else if (values.length == 1)
+            {
+                loopScope[argName] = values[0];
+            }
+            else
+            {
+                loopScope[argName] = new SimpleList(values);
+            }
 
             context = loopScope.run(argBody.subprogram);
             debug {stderr.writeln("foreach.subprogram.exitCode:", context.exitCode);}
@@ -296,7 +310,25 @@ static this()
                     );
                 }
 
-                escopo[varName] = targetContext.pop();
+                debug {stderr.writeln("transform.targetContext.size:", targetContext.size);}
+                Items values = targetContext.items;
+                debug {stderr.writeln("  values:", values);}
+                if (values.length == 0)
+                {
+                    // TODO: check if this make sense:
+                    targetContext.exitCode = ExitCode.Break;
+                    return targetContext;
+                }
+                else if (values.length == 1)
+                {
+                    escopo[varName] = values[0];
+                }
+                else
+                {
+                    debug {stderr.writeln("transform.escopo[varName] is a SimpleList");}
+                    escopo[varName] = new SimpleList(values);
+                }
+
                 context = escopo.run(body.subprogram);
 
                 switch(context.exitCode)
@@ -335,147 +367,6 @@ static this()
         );
         context.push(iterator);
         context.exitCode = ExitCode.CommandSuccess;
-        return context;
-    };
-    // "switch/case"
-    simpleListCommands["case"] = (string path, CommandContext context)
-    {
-        /*
-        | case (>name "txt") {
-            print "$name is a plain text file"
-        } case (>name "md") {
-            print "$name is a MarkDown file"
-        }
-        */
-
-        // Put a "case" string just to be coherent with
-        // subsequent ones:
-        context.push("case");
-
-        // Collect all "cases":
-        struct caseCondition
-        {
-            Items variables;
-            SubList body;
-        }
-        caseCondition[] caseConditions;
-
-        while(context.size > 1)
-        {
-            auto caseWord = context.pop!string;
-            if (caseWord != "case")
-            {
-                auto msg = "Malformed `case` command: " ~ caseWord;
-                return context.error(msg, ErrorCode.InvalidSyntax, "");
-            }
-            auto argNames = context.pop!SimpleList;
-            caseConditions ~= caseCondition(
-                argNames.items, context.pop!SubList
-            );
-        }
-
-        // Last argument should be our target:
-        auto target = context.pop();
-
-        auto nextContext = context;
-        do
-        {
-            nextContext = target.next(context);
-            if (nextContext.exitCode == ExitCode.Break)
-            {
-                break;
-            }
-
-            Items currentItems = {
-                auto item = nextContext.pop();
-                debug {
-                    stderr.writeln(
-                        "case :", item.type, "/", item,
-                        "/", typeid(item)
-                    );
-                }
-
-                if (item.type == ObjectType.SimpleList)
-                {
-                    auto list = cast(SimpleList)item;
-                    if (list !is null)
-                    {
-                        return list.items;
-                    }
-                    else
-                    {
-                        throw new Exception(
-                            "Cannot cast "
-                            ~ to!string(typeid(item))
-                            ~ " to SimpleList"
-                        );
-                    }
-                }
-                else
-                {
-                    debug {stderr.writeln(item.type, " != ", ObjectType.SimpleList); }
-                    return [item];
-                }
-            }();
-            debug {stderr.writeln("currentItems:", currentItems);}
-
-            foreach (condition; caseConditions)
-            {
-                int matched = 0;
-                foreach(index, item; currentItems)
-                {
-                    debug {stderr.writeln("case item:", item.type, "/", item);}
-                    // case (>name, "txt")
-                    auto variable = condition.variables[index];
-                    debug {
-                        stderr.writeln(
-                            "case variable:", variable.type, "/", variable
-                        );
-                    }
-                    if (variable.type == ObjectType.InputName)
-                    {
-                        // Assignment
-                        context.escopo[to!string(variable)] = item;
-                        matched++;
-                    }
-                    else
-                    {
-                        // Comparison
-                        ListItem result = variable.operate("==", item, false);
-                        if (result.toBool == true)
-                        {
-                            matched++;
-                        }
-                        else
-                        {
-                            break;
-                        }
-                    }
-                }
-
-                if (matched == condition.variables.length)
-                {
-                    context = context.escopo.run(condition.body.subprogram);
-                    switch(context.exitCode)
-                    {
-                        case ExitCode.Break:
-                            context.exitCode = ExitCode.CommandSuccess;
-                            return context;
-                        case ExitCode.ReturnSuccess:
-                            return context;
-                        default:
-                            break;
-                    }
-                    break;
-                }
-            }
-        }
-        while(nextContext.exitCode == ExitCode.Continue);
-
-        if (context.exitCode != ExitCode.Failure)
-        {
-            context.exitCode = ExitCode.CommandSuccess;
-        }
         return context;
     };
 

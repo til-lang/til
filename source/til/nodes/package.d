@@ -51,7 +51,7 @@ enum ObjectType
 {
     Undefined,
     Other,
-    None,  // XXX : Reserved?
+    None,
     SimpleList,
     ExecList,
     SubList,
@@ -59,7 +59,6 @@ enum ObjectType
     Dict,
     String,
     Name,
-    InputName,
     Atom,
     Operator,
     Float,

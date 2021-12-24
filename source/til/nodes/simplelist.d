@@ -5,6 +5,10 @@ import std.range : empty, front, popFront;
 
 import til.nodes;
 
+debug
+{
+    import std.stdio;
+}
 
 CommandHandler[string] simpleListCommands;
 
@@ -100,8 +104,20 @@ class SimpleList : BaseList
                     auto nextArg = context.pop();
                     if (nextArg.type == ObjectType.Integer)
                     {
+                        auto start = firstArgument.toInt;
+                        auto end = nextArg.toInt;
+                        debug {stderr.writeln("start,end:", start, ",", end);}
+
+                        if (start < 0)
+                        {
+                            start = this.items.length + start;
+                        }
+                        if (end < 0)
+                        {
+                            end = this.items.length + end;
+                        }
                         context.push(new SimpleList(
-                            items[firstArgument.toInt..nextArg.toInt]
+                            items[start..end]
                         ));
                         return context;
                     }
@@ -110,7 +126,12 @@ class SimpleList : BaseList
                 // <(1 2 3) 0> → 1  (not inside any list)
                 else if (context.size == 0)
                 {
-                    context.push(items[firstArgument.toInt]);
+                    auto index = firstArgument.toInt;
+                    if (index < 0)
+                    {
+                        index = this.items.length + index;
+                    }
+                    context.push(items[index]);
                     return context;
                 }
                 break;
