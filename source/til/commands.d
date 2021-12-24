@@ -12,7 +12,6 @@ import til.exceptions;
 import til.logic;
 import til.modules;
 import til.nodes;
-import til.process : typesCommands;
 import til.procedures;
 import til.sharedlibs;
 
@@ -1280,13 +1279,4 @@ static this()
     // ---------------------------------------
     // Shared libraries:
     til.sharedlibs.loadCommands(commands);
-
-    // Types commands:
-    typesCommands["integer"] = integerCommands;
-    typesCommands["name"] = nameCommands;
-    typesCommands["string"] = stringCommands;
-    typesCommands["list"] = simpleListCommands;
-    typesCommands["pid"] = pidCommands;
-    typesCommands["dict"] = dictCommands;
-    typesCommands["queue"] = queueCommands;
 }

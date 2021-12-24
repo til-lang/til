@@ -22,9 +22,6 @@ enum ProcessState
 }
 
 
-CommandHandlerMap[string] typesCommands;
-
-
 class Process
 {
     SubProgram program;
@@ -48,9 +45,6 @@ class Process
     Item input = null;
     Item output = null;
 
-    // Types and their "methods"
-    CommandHandlerMap[string] typesCommands;
-
     this(Process parent)
     {
         this.index = this.counter++;
@@ -62,13 +56,6 @@ class Process
             this.output = parent.output;
 
             this.program = parent.program;
-            this.typesCommands = parent.typesCommands.dup;
-        }
-        else
-        {
-            // Load built-in typesCommands:
-            // XXX : is this the right place for `.dup`?
-            this.typesCommands = typesCommands;
         }
     }
     this(Process parent, SubProgram program)
