@@ -33,6 +33,11 @@ if ($x > 7) {
 # Til implements the concept of "streams", almost
 # like stdin/stdout in shell script.
 range 1 5 | foreach x { print $x }
+# 1
+# 2
+# 3
+# 4
+# 5
 
 # You can "transform" values from the stream before consuming them:
 range 1 5 | transform value {
@@ -40,12 +45,18 @@ range 1 5 | transform value {
     } | foreach x {
         print $x
     }
+# 2
+# 4
+# 6
+# 8
+# 10
 
 # We also have dictionaries!
 set d [dict (a 1) (b 2) (c 3)]
 
 # Values can be extracted using Til extraction syntax:
-print <$d a>  # prints "1"
+print <$d a>
+# 1
 
 # Extraction syntax is used to get values from lists, too:
 set lista (a b c d e)
