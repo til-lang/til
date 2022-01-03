@@ -78,7 +78,7 @@ class Command
                     "\n", target.commands
                 );
             }
-            handler = (name in target.commands);
+            handler = target.getCommandHandler(name);
             if (handler !is null) return *handler;
         }
 

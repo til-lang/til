@@ -19,6 +19,11 @@ class ListItem
         );
     }
 
+    CommandHandler *getCommandHandler(string name)
+    {
+        return (name in this.commands);
+    }
+
     // Operators:
     template opUnary(string operator)
     {
@@ -79,7 +84,13 @@ class ListItem
         );
     }
 
-
-    CommandContext evaluate(CommandContext context, bool force) {return this.evaluate(context);}
-    CommandContext evaluate(CommandContext context) {context.push(this); return context;}
+    CommandContext evaluate(CommandContext context, bool force)
+    {
+        return this.evaluate(context);
+    }
+    CommandContext evaluate(CommandContext context)
+    {
+        context.push(this);
+        return context;
+    }
 }

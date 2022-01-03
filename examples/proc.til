@@ -17,5 +17,5 @@ print [f 100 200 300]
 # x : >1< 2 3 >4<
 set result [f 1 2 3] [g 4]
 
-print "Expected: >1< 2 3 >4<"
+print "Expected: >1<23>4<"
 print $result

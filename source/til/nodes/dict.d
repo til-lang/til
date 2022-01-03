@@ -3,6 +3,11 @@ module til.nodes.dict;
 import til.modules;
 import til.nodes;
 
+debug
+{
+    import std.stdio;
+}
+
 CommandHandler[string] dictCommands;
 
 
@@ -54,6 +59,7 @@ class Dict : ListItem
     }
     void opIndexAssign(ListItem v, string k)
     {
+        debug {stderr.writeln(" dict[", k, "] = ", to!string(v));}
         values[k] = v;
     }
 }

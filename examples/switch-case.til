@@ -5,8 +5,8 @@ set offset 10
 range 0 5 | transform x {
         return [math ($x + $offset)] $x
     } | foreach x {
-        print "x:" $x
-        set (a b) $x
+        print "x:" [list $x]
+        set (a b) [list $x]
 
         if ($a == 10) {
             print "$b + $offset is ten"

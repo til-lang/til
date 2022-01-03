@@ -45,7 +45,7 @@ static this()
         import std.stdio;
         import std.file;
 
-        string filePath = context.pop!string;
+        string filePath = context.pop!string();
         debug {stderr.writeln("include.filePath:", filePath);}
 
         auto program = parse(to!string(read(filePath)));
@@ -67,20 +67,20 @@ static this()
     nameCommands["import"] = (string path, CommandContext context)
     {
         // import std.io as x
-        auto modulePath = context.pop!string;
+        auto modulePath = context.pop!string();
         string newName = modulePath;
 
         // import std.io as x
         if (context.size == 2)
         {
-            string asWord = context.pop!string;
+            string asWord = context.pop!string();
             debug {stderr.writeln("asWord:", asWord);}
             if (asWord != "as")
             {
                 auto msg = "Invalid syntax for import";
                 return context.error(msg, ErrorCode.InvalidArgument, "");
             }
-            newName = context.pop!string;
+            newName = context.pop!string();
         }
 
         if (!context.escopo.importModule(modulePath, newName))
@@ -101,14 +101,14 @@ static this()
         {
             while(true)
             {
-                auto conditions = context.pop!SimpleList;
-                auto thenBody = context.pop!SubList;
+                auto conditions = context.pop!SimpleList();
+                auto thenBody = context.pop!SubList();
 
                 debug {stderr.writeln("context before conditions evaluation:", context);}
                 conditions.forceEvaluate(context);
                 context.run(&boolean, 1);
 
-                auto isConditionTrue = context.pop!bool;
+                auto isConditionTrue = context.pop!bool();
                 debug {stderr.writeln("context AFTER conditions evaluation:", context);}
 
                 debug {stderr.writeln(conditions, " is ", isConditionTrue);}
@@ -131,7 +131,7 @@ static this()
                 // else if {...}
                 else
                 {
-                    auto elseWord = context.pop!string;
+                    auto elseWord = context.pop!string();
                     if (elseWord != "else")
                     {
                         auto msg = "Invalid format for if/then/else clause:"
@@ -144,12 +144,12 @@ static this()
                     // If only one part is left, it's for sure the last "else":
                     if (context.size == 1)
                     {
-                        auto elseBody = context.pop!SubList;
+                        auto elseBody = context.pop!SubList();
                         return context.escopo.run(elseBody.subprogram);
                     }
                     else
                     {
-                        auto ifWord = context.pop!string;
+                        auto ifWord = context.pop!string();
                         if (ifWord != "if")
                         {
                             auto msg = "Invalid format for if/then/else clause"
@@ -172,8 +172,8 @@ static this()
 
     nameCommands["foreach"] = (string path, CommandContext context)
     {
-        auto argName = context.pop!string;
-        auto argBody = context.pop!SubList;
+        auto argName = context.pop!string();
+        auto argBody = context.pop!SubList();
 
         /*
         Do NOT create a new scope for the
@@ -215,20 +215,7 @@ static this()
 
             debug {stderr.writeln("foreach values: ", values);}
 
-            if (values.length == 0)
-            {
-                // TODO: check if this make sense:
-                nextContext.exitCode = ExitCode.Break;
-                return nextContext;
-            }
-            else if (values.length == 1)
-            {
-                loopScope[argName] = values[0];
-            }
-            else
-            {
-                loopScope[argName] = new SimpleList(values);
-            }
+            loopScope[argName] = values;
 
             context = loopScope.run(argBody.subprogram);
             debug {stderr.writeln("foreach.subprogram.exitCode:", context.exitCode);}
@@ -351,8 +338,8 @@ static this()
             auto msg = "`transform` expects two arguments";
             return context.error(msg, ErrorCode.InvalidSyntax, "");
         }
-        auto varName = context.pop!string;
-        auto body = context.pop!SubList;
+        auto varName = context.pop!string();
+        auto body = context.pop!SubList();
 
         if (context.size == 0)
         {
@@ -375,9 +362,9 @@ static this()
     {
         // proc name (parameters) {body}
 
-        string name = context.pop!(string);
-        auto parameters = context.pop!SimpleList;
-        auto body = context.pop!SubList;
+        string name = context.pop!string();
+        auto parameters = context.pop!SimpleList();
+        auto body = context.pop!SubList();
 
         auto proc = new Procedure(
             name,
@@ -470,7 +457,7 @@ static this()
             return context.error(msg, ErrorCode.InvalidArgument, "");
         }
 
-        auto commandName = context.pop!string;
+        auto commandName = context.pop!string();
         Items arguments = context.items;
         ListItem input = null;
         if (context.hasInput)
@@ -510,7 +497,7 @@ static this()
     commands["print"] = (string path, CommandContext context)
     {
         debug {stderr.writeln("print.context.size: ", context.size);}
-        while(context.size) stdout.write(context.pop!string);
+        while(context.size) stdout.write(context.pop!string());
         stdout.writeln();
 
         context.exitCode = ExitCode.CommandSuccess;
@@ -519,7 +506,7 @@ static this()
     };
     commands["print.error"] = (string path, CommandContext context)
     {
-        while(context.size) stderr.write(context.pop!string);
+        while(context.size) stderr.write(context.pop!string());
         stderr.writeln();
 
         context.exitCode = ExitCode.CommandSuccess;
@@ -605,7 +592,7 @@ static this()
         */ 
         import std.datetime.stopwatch;
 
-        auto ms = context.pop!long;
+        auto ms = context.pop!long();
 
         auto sw = StopWatch(AutoStart.yes);
         while(true)
@@ -637,15 +624,15 @@ static this()
         // error "segmentation fault" 11 os
         if (context.size > 0)
         {
-            message = context.pop!string;
+            message = context.pop!string();
         }
         if (context.size > 0)
         {
-            code = cast(int)context.pop!long;
+            code = cast(int)context.pop!long();
         }
         if (context.size > 0)
         {
-            classe = context.pop!string;
+            classe = context.pop!string();
         }
 
         return context.error(message, code, classe);
@@ -660,6 +647,9 @@ static this()
         foreach(argument; context.items)
         {
             SimpleList l = cast(SimpleList)argument;
+            context = l.forceEvaluate(context);
+            l = cast(SimpleList)context.pop();
+
             ListItem value = l.items.back;
             l.items.popBack();
             string key = to!string(l.items.map!(x => to!string(x)).join("."));
@@ -678,7 +668,7 @@ static this()
         ulong size = 64;
         if (context.size > 0)
         {
-            size = context.pop!ulong;
+            size = context.pop!ulong();
         }
         auto queue = new Queue(size);
 
@@ -708,7 +698,7 @@ static this()
             return context.error(msg, ErrorCode.InvalidArgument, "");
         }
 
-        auto integer = context.pop!IntegerAtom;
+        auto integer = context.pop!IntegerAtom();
         // TODO: check for overflow
         integer.value++;
         context.push(integer);
@@ -723,7 +713,7 @@ static this()
             return context.error(msg, ErrorCode.InvalidArgument, "");
         }
 
-        auto integer = context.pop!IntegerAtom;
+        auto integer = context.pop!IntegerAtom();
         // TODO: check for underflow
         integer.value--;
         context.push(integer);
@@ -737,11 +727,11 @@ static this()
            range 10 20    # [10, 20]
            range 10 14 2  # 10 12 14
         */
-        auto start = context.pop!long;
+        auto start = context.pop!long();
         long limit = 0;
         if (context.size)
         {
-            limit = context.pop!long;
+            limit = context.pop!long();
         }
         else
         {
@@ -758,7 +748,7 @@ static this()
         long step = 1;
         if (context.size)
         {
-            step = context.pop!long;
+            step = context.pop!long();
         }
 
         class IntegerRange : Item
@@ -831,7 +821,7 @@ static this()
             return context.error(msg, ErrorCode.InvalidArgument, "");
         }
 
-        auto key = context.pop!string;
+        auto key = context.pop!string();
         context.escopo[key] = context.items;
 
         context.exitCode = ExitCode.CommandSuccess;
@@ -870,8 +860,8 @@ static this()
             return context.error(msg, ErrorCode.InvalidArgument, "");
         }
 
-        auto l1 = context.pop!SimpleList;
-        auto l2 = context.pop!SimpleList;
+        auto l1 = context.pop!SimpleList();
+        auto l2 = context.pop!SimpleList();
 
         debug {stderr.write("l1, l2: ", l1, " , ", l2);}
 
@@ -958,7 +948,7 @@ static this()
             }
         }
 
-        SimpleList list = context.pop!SimpleList;
+        SimpleList list = context.pop!SimpleList();
         context.push(new ItemsRange(list.items));
         context.exitCode = ExitCode.CommandSuccess;
         return context;
@@ -1013,11 +1003,14 @@ static this()
     // Dicts:
     dictCommands["set"] = (string path, CommandContext context)
     {
-        auto dict = context.pop!Dict;
+        auto dict = context.pop!Dict();
 
         foreach(argument; context.items)
         {
             SimpleList l = cast(SimpleList)argument;
+            context = l.forceEvaluate(context);
+            l = cast(SimpleList)context.pop();
+
             ListItem value = l.items.back;
             l.items.popBack();
             string key = to!string(l.items.map!(x => to!string(x)).join("."));
@@ -1029,7 +1022,7 @@ static this()
     };
     dictCommands["unset"] = (string path, CommandContext context)
     {
-        auto dict = context.pop!Dict;
+        auto dict = context.pop!Dict();
 
         foreach (argument; context.items)
         {
@@ -1060,7 +1053,7 @@ static this()
     // Queues:
     queueCommands["push"] = (string path, CommandContext context)
     {
-        auto queue = context.pop!Queue;
+        auto queue = context.pop!Queue();
 
         foreach(argument; context.items)
         {
@@ -1076,7 +1069,7 @@ static this()
     };
     queueCommands["push.no_wait"] = (string path, CommandContext context)
     {
-        auto queue = context.pop!Queue;
+        auto queue = context.pop!Queue();
 
         foreach(argument; context.items)
         {
@@ -1093,11 +1086,11 @@ static this()
     };
     queueCommands["pop"] = (string path, CommandContext context)
     {
-        auto queue = context.pop!Queue;
+        auto queue = context.pop!Queue();
         long howMany = 1;
         if (context.size > 0)
         {
-            auto integer = context.pop!IntegerAtom;
+            auto integer = context.pop!IntegerAtom();
             howMany = integer.value;
         }
         foreach(idx; 0..howMany)
@@ -1114,11 +1107,11 @@ static this()
     };
     queueCommands["pop.no_wait"] = (string path, CommandContext context)
     {
-        auto queue = context.pop!Queue;
+        auto queue = context.pop!Queue();
         long howMany = 1;
         if (context.size > 0)
         {
-            auto integer = context.pop!IntegerAtom;
+            auto integer = context.pop!IntegerAtom();
             howMany = integer.value;
         }
         foreach(idx; 0..howMany)
@@ -1136,7 +1129,7 @@ static this()
     };
     queueCommands["send"] = (string path, CommandContext context)
     {
-        auto queue = context.pop!Queue;
+        auto queue = context.pop!Queue();
 
         if (context.size == 0)
         {
@@ -1168,7 +1161,7 @@ static this()
     };
     queueCommands["send.no_wait"] = (string path, CommandContext context)
     {
-        auto queue = context.pop!Queue;
+        auto queue = context.pop!Queue();
 
         if (context.size == 0)
         {
@@ -1230,7 +1223,7 @@ static this()
             }
         }
 
-        auto queue = context.pop!Queue;
+        auto queue = context.pop!Queue();
         context.push(new QueueIterator(queue));
         context.exitCode = ExitCode.CommandSuccess;
         return context;
@@ -1270,8 +1263,90 @@ static this()
             }
         }
 
-        auto queue = context.pop!Queue;
+        auto queue = context.pop!Queue();
         context.push(new QueueIteratorNoWait(queue));
+        context.exitCode = ExitCode.CommandSuccess;
+        return context;
+    };
+
+    // ---------------------------------------------
+    // Custom types
+    commands["type"] = (string path, CommandContext context)
+    {
+        /*
+        type coordinates {
+            proc init (x y) {
+                return [dict (x $x) (y $y)
+            }
+        }
+        */
+        auto name = context.pop!string();
+        auto sublist = context.pop();
+        debug {stderr.writeln(" type.sublist.type:", sublist.type);}
+        auto subprogram = (cast(SubList)sublist).subprogram;
+
+        auto newScope = new Process(context.escopo);
+
+        // XXX: Weird, I know, but we must copy the stack...
+        newScope.stack = context.escopo.stack;
+        newScope.stackPointer = context.escopo.stackPointer;
+        debug {stderr.writeln("type.newScope:", newScope);}
+
+        auto newContext = context.next(newScope, context.size);
+        debug {stderr.writeln(" type.newContext:", newContext);}
+
+        // RUN!
+        debug {stderr.writeln(" running type subprogram:", subprogram);}
+        newContext = newContext.escopo.run(subprogram, newContext);
+
+        // Empty procedure stack:
+        // (Because, YES, the `type` command can return something...)
+        debug {stderr.writeln(" emptying type subprogram execution stack");}
+        foreach(item; newContext.items.retro)
+        {
+            debug {stderr.writeln("TYPE STACK MOVING ", item);}
+            context.push(item);
+        }
+
+        debug {stderr.writeln(" creating new Type:", newScope.commands);}
+        auto type = new Type(name);
+        type.commands = newScope.commands;
+        CommandHandler* initMethod = ("init" in newScope.commands);
+        if (initMethod is null)
+        {
+            auto msg = "The type " ~ name ~ " must have a `init` method";
+            return context.error(msg, ErrorCode.InvalidSyntax, "");
+        }
+
+        context.escopo.commands[name] = (string path, CommandContext context)
+        {
+            auto returnContext = (*initMethod)(path, context);
+            if (returnContext.exitCode == ExitCode.Failure)
+            {
+                return returnContext;
+            }
+
+            CommandHandlerMap newCommands;
+
+            auto returnedObject = returnContext.pop();
+
+            // set -> base.set
+            foreach(cmdName, command; returnedObject.commands)
+            {
+                newCommands[cmdName] = command;
+                newCommands["base." ~ cmdName] = command;
+            }
+
+            // (type.)set -> set
+            foreach(cmdName, command; type.commands)
+            {
+                newCommands[cmdName] = command;
+            }
+            returnedObject.commands = newCommands;
+            returnContext.push(returnedObject);
+            return returnContext;
+        };
+
         context.exitCode = ExitCode.CommandSuccess;
         return context;
     };

@@ -54,7 +54,6 @@ class Process
         {
             this.input = parent.input;
             this.output = parent.output;
-
             this.program = parent.program;
         }
     }
@@ -214,7 +213,7 @@ class Process
             s ~= " " ~ name ~ "\n";
         }
 
-        s ~= "COMMANDS:\n";
+        s ~= ".COMMANDS:\n";
         foreach(name; commands.byKey)
         {
             s ~= " " ~ name ~ " ";

@@ -77,8 +77,8 @@ class SimpleList : BaseList
 
         /*
         What resides in the stack, at the end, is not
-        the items inside the original SimpleLists,
-        but a new SimpleLists with its original
+        the items inside the original SimpleList,
+        but a new SimpleList with its original
         items already evaluated. We are only
         using the stack as temporary space.
         */

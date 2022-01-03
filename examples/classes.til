@@ -1,0 +1,29 @@
+type coordinates {
+    proc init (x y) {
+        print "coordinates.init: $x $y"
+        set d [dict (x $x) (y $y)]
+        print " d: $d"
+        set a $x
+        print " a: $a"
+        set sl (x $x)
+        print " sl: $sl"
+        return $d
+    }
+
+    proc set (dict key value) {
+        print "setting $key=$value"
+        base.set $dict ($key $value)
+    }
+
+    proc print (dict) {
+        set x <$dict x>
+        set y <$dict y>
+        print "($x,$y) <- $dict"
+    }
+}
+
+set c1 [coordinates 1 2]
+print $c1
+set $c1 x 12
+set $c1 y 34
+print $c1
