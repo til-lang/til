@@ -1,13 +1,7 @@
 type coordinates {
     proc init (x y) {
         print "coordinates.init: $x $y"
-        set d [dict (x $x) (y $y)]
-        print " d: $d"
-        set a $x
-        print " a: $a"
-        set sl (x $x)
-        print " sl: $sl"
-        return $d
+        return [dict (x $x) (y $y)]
     }
 
     proc set (dict key value) {
