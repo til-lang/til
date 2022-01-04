@@ -5,42 +5,39 @@
 * Debugging system for the language itself.
 * REPL - (it would be very nice to allow multi-line commands).
 
+## Code
+
+* Get rid of excessive "debug" messages.
 
 ## Language-wise
 
-* Run programs inside a *scheduler* (WIP).
-* Error handling! Capture exceptions in D and reflect it as
-  ExitCode.Failure in Til.
-* User-defined search path for dynamic libraries.
-
-### Error handling
-
-Initial conception:
-
-```tcl
-proc remove (filename) {
-    on_error (e) {
-        # If not found, it's already removed, so it's okay:
-        if (<$e code> == $file_not_found) { return }
-        
-        # If it's another error, pop it to the caller to
-        # decide what to do:
-        throw $e
-    }
-
-    shell.rm $filename
-}
-```
-
-If an error occurs inside the current scope, `on_error` is "called" and
-it's scope will be considered instead of the previous one (so that the
-programmer can choose to return a "neutral" ou "default" value, for
-example, or throw the error up in the call stack).
+* Improve error messages about compilation/syntax.
+* Procs can be considered "higher order" or not?
+* Should we be able to "append" new methods to already defined types?
 
 ## Commands
 
+* `assert`
+* `test`? -- To create unit tests, maybe...
 * `exit $exit_code` - quits the program with a numerical value (like
   "exit" from unix shells).
-* `list a b c` → `(a b c)`.
-* `type` → :Atom/:String/:List/:ExecList/:SubProgram (so we can have some
-  type of "pattern matching" using `case`.
+
+### Types and nodes
+
+* Create native types, like "int" or "float".
+* Create nodes, like SubList.
+* `eval "cmd"` (currently it only evaluates a SimpleList).
+
+### Lists
+
+* push
+* pop
+* insert
+* sort
+* flatten $list_1 item $list_2
+* contains $list item
+
+### File system
+
+* Python's `PosixPath`-like object, with related methods.
+    * Specially  `open`, so we can, you know... open files.

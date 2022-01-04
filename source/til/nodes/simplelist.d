@@ -26,6 +26,7 @@ class SimpleList : BaseList
         this.items = items;
         this.commands = simpleListCommands;
         this.type = ObjectType.SimpleList;
+        this.typeName = "list";
     }
 
     // -----------------------------

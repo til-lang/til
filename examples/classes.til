@@ -1,3 +1,4 @@
+print "START"
 type coordinates {
     proc init (x y) {
         print "coordinates.init: $x $y"
@@ -5,8 +6,8 @@ type coordinates {
     }
 
     proc set (dict key value) {
-        print "setting $key=$value"
-        base.set $dict ($key $value)
+        print "setting coordinates.$key=$value"
+        dict.set $dict ($key $value)
     }
 
     proc print (dict) {
@@ -21,3 +22,23 @@ print $c1
 set $c1 x 12
 set $c1 y 34
 print $c1
+
+
+print "INHERITANCE TEST"
+
+type position {
+    proc init (x y) {
+        return [coordinates $x $y]
+    }
+
+    proc set (coordinates key value) {
+        print "setting position.$key=$value"
+        coordinates.set $coordinates $key $value
+    }
+}
+
+set p1 [position 34 56]
+set $p1 x 78
+print "$p1"
+
+print "END"

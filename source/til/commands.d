@@ -1330,19 +1330,25 @@ static this()
 
             auto returnedObject = returnContext.pop();
 
-            // set -> base.set
+            string prefix1 = returnedObject.typeName ~ ".";
+            string prefix2 = name ~ ".";
+
+            // set -> dict.set
+            // set -> myclass.set
             foreach(cmdName, command; returnedObject.commands)
             {
                 newCommands[cmdName] = command;
-                newCommands["base." ~ cmdName] = command;
+                newCommands[prefix1 ~ cmdName] = command;
+                newCommands[prefix2 ~ cmdName] = command;
             }
 
-            // (type.)set -> set
+            // (type.)set -> set (simple copy)
             foreach(cmdName, command; type.commands)
             {
                 newCommands[cmdName] = command;
             }
             returnedObject.commands = newCommands;
+            returnedObject.typeName = name;
             returnContext.push(returnedObject);
             return returnContext;
         };

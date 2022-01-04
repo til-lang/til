@@ -18,6 +18,7 @@ class Dict : ListItem
     this()
     {
         this.type = ObjectType.Dict;
+        this.typeName = "dict";
         this.commands = dictCommands;
     }
     this(ListItem[string] values)
