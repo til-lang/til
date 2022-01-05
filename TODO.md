@@ -8,6 +8,7 @@
 ## Code
 
 * Get rid of excessive "debug" messages.
+* Get rid of any `TODO` and `XXX`.
 
 ## Language-wise
 
