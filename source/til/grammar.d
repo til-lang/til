@@ -82,7 +82,6 @@ class Parser
         }
         pop();
         return sp;
-        // XXX: raise an Exception if there is more than a SubProgram?
     }
 
     char currentChar()

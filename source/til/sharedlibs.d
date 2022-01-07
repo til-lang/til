@@ -15,7 +15,6 @@ import til.procedures;
 void*[string] sharedLibraries;
 
 
-// XXX : should we return something?
 void fnCall(void* lh, const(char*) functionNameZ)
 {
     void function() fn = cast(void function())dlsym(lh, functionNameZ);

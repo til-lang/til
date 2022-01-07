@@ -580,10 +580,6 @@ static this()
     // Time
     commands["sleep"] = (string path, CommandContext context)
     {
-        /*
-        XXX : is there any advantage in importing
-        it here instead of the top???
-        */ 
         import std.datetime.stopwatch;
 
         auto ms = context.pop!long();
@@ -683,7 +679,7 @@ static this()
 
     // ---------------------------------------------
     // Atoms:
-    // XXX: `incr` and `decr` do NOT conform to Tcl "equivalents"!
+    // (Please notice: `incr` and `decr` do NOT conform to Tcl "equivalents"!)
     integerCommands["incr"] = (string path, CommandContext context)
     {
         if (context.size != 1)
@@ -1288,9 +1284,6 @@ static this()
 
         auto newScope = new Process(context.escopo);
 
-        // XXX: Weird, I know, but we must copy the stack...
-        newScope.stack = context.escopo.stack;
-        newScope.stackPointer = context.escopo.stackPointer;
         debug {stderr.writeln("type.newScope:", newScope);}
 
         auto newContext = context.next(newScope, context.size);
@@ -1300,13 +1293,14 @@ static this()
         debug {stderr.writeln(" running type subprogram:", subprogram);}
         newContext = newContext.escopo.run(subprogram, newContext);
 
-        // Empty procedure stack:
-        // (Because, YES, the `type` command can return something...)
-        debug {stderr.writeln(" emptying type subprogram execution stack");}
-        foreach(item; newContext.items.retro)
+        if (newContext.exitCode == ExitCode.Failure)
         {
-            debug {stderr.writeln("TYPE STACK MOVING ", item);}
-            context.push(item);
+            // Simply pop up the error:
+            return newContext;
+        }
+        else
+        {
+            newContext.exitCode = ExitCode.CommandSuccess;
         }
 
         debug {stderr.writeln(" creating new Type:", newScope.commands);}

@@ -161,17 +161,17 @@ class Command
         context.exitCode = ExitCode.Undefined;
         auto newContext = handler(this.name, context);
 
-        // XXX : this is a kind of "sefaty check".
-        // It would be nice to NOT run this part
-        // in "release" code.
-        if (newContext.exitCode == ExitCode.Undefined)
+        debug
         {
-            throw new Exception(
-                "Command "
-                ~ to!string(name)
-                ~ " returned Undefined. The implementation"
-                ~ " is probably wrong."
-            );
+            if (newContext.exitCode == ExitCode.Undefined)
+            {
+                throw new Exception(
+                    "Command "
+                    ~ to!string(name)
+                    ~ " returned Undefined. The implementation"
+                    ~ " is probably wrong."
+                );
+            }
         }
         return newContext;
     }

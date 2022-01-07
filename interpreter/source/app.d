@@ -26,7 +26,6 @@ class InterpreterInput : Item
         }
         else
         {
-            // XXX : what about non-\n line terminator systems?
             context.push(new String(inputFile.readln()));
             context.exitCode = ExitCode.Continue;
         }

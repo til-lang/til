@@ -39,6 +39,6 @@ type position {
 
 set p1 [position 34 56]
 set $p1 x 78
-print "$p1"
+print $p1
 
 print "END"

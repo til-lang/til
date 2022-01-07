@@ -81,7 +81,6 @@ CommandContext int_run(CommandContext context, string[] operators)
         }
     }
 
-    // XXX : check if this is right:
     auto terms = context.items;
     // un-reverse the list...
     Items resultItems;
