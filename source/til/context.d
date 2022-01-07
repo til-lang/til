@@ -221,16 +221,11 @@ struct CommandContext
     // Errors
     CommandContext error(string message, int code, string classe)
     {
+        debug {stderr.writeln("context.error:", message);}
         auto e = new Erro(escopo, message, code, classe);
         push(e);
         this.exitCode = ExitCode.Failure;
 
-        /*
-        Return this so we can simply write
-        "return context.error(...)"
-        inside commands
-        implementations
-        */
         return this;
     }
 }

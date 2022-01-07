@@ -169,27 +169,9 @@ static this()
         /*
         range 5 | foreach x { ... }
         */
-        auto argName = context.pop!string();
-        auto argBody = context.pop!SubList();
-
-        /*
-        Do NOT create a new scope for the
-        body of foreach.
-        */
-        auto loopScope = context.escopo;
-
-        uint yieldStep;
-        if (argBody.subprogram.pipelines.length >= 8)
-        {
-            yieldStep = 0x01;
-        }
-        else if (argBody.subprogram.pipelines.length >= 4)
-        {
-            yieldStep = 0x03;
-        }
-        else
-        {
-            yieldStep = 0x07;
+        debug {
+            stderr.writeln("foreach context.size:", context.size);
+            stderr.writeln(" > ", context.escopo.peek());
         }
 
         if (context.size < 2)
@@ -197,6 +179,19 @@ static this()
             auto msg = "`foreach` expects two arguments";
             return context.error(msg, ErrorCode.InvalidSyntax, "");
         }
+
+        auto argName = context.pop!string();
+        debug {stderr.writeln(" > ", context.escopo.peek());}
+        auto argBody = context.pop!SubList();
+        debug {stderr.writeln(" > ", context.escopo.peek());}
+
+        /*
+        Do NOT create a new scope for the
+        body of foreach.
+        */
+        auto loopScope = context.escopo;
+
+        uint yieldStep = 0x07;
 
         uint index = 0;
         auto target = context.pop();

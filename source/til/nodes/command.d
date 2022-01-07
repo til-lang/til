@@ -64,10 +64,16 @@ class Command
 
         if (target !is null)
         {
+            debug {
+                stderr.writeln(
+                    " getHandler: ", name, " from ", target, "(", target.type, ")"
+                );
+            }
             handler = target.getCommandHandler(name);
             if (handler !is null) return *handler;
         }
 
+        debug {stderr.writeln(" getHandler: ", name);}
         auto h = escopo.getCommand(name);
         if (h !is null && target !is null)
         {
