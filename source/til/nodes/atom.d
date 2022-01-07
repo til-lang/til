@@ -98,7 +98,12 @@ class IntegerAtom : Atom
     }
     IntegerAtom opUnary(string operator)
     {
-        // TODO: filter by `operator`
+        if (operator != "-")
+        {
+            throw new Exception(
+                "Unsupported operator: " ~ operator
+            );
+        }
         return new IntegerAtom(-value);
     }
 
@@ -218,7 +223,12 @@ class FloatAtom : Atom
     // Operators:
     FloatAtom opUnary(string operator)
     {
-        // TODO: filter by `operator`
+        if (operator != "-")
+        {
+            throw new Exception(
+                "Unsupported operator: " ~ operator
+            );
+        }
         return new FloatAtom(-value);
     }
 

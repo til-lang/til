@@ -15,6 +15,7 @@
 * Improve error messages about compilation/syntax.
 * Procs can be considered "higher order" or not?
 * Should we be able to "append" new methods to already defined types?
+* Profiling!
 
 ## Commands
 

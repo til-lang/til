@@ -172,6 +172,9 @@ static this()
 
     nameCommands["foreach"] = (string path, CommandContext context)
     {
+        /*
+        range 5 | foreach x { ... }
+        */
         auto argName = context.pop!string();
         auto argBody = context.pop!SubList();
 
@@ -195,8 +198,13 @@ static this()
             yieldStep = 0x07;
         }
 
+        if (context.size < 2)
+        {
+            auto msg = "`foreach` expects two arguments";
+            return context.error(msg, ErrorCode.InvalidSyntax, "");
+        }
+
         uint index = 0;
-        // TODO: check for lack of arguments!
         auto target = context.pop();
         debug {stderr.writeln("foreach target: ", target);}
 
@@ -298,22 +306,8 @@ static this()
 
                 debug {stderr.writeln("transform.targetContext.size:", targetContext.size);}
                 Items values = targetContext.items;
+                escopo[varName] = values;
                 debug {stderr.writeln("  values:", values);}
-                if (values.length == 0)
-                {
-                    // TODO: check if this make sense:
-                    targetContext.exitCode = ExitCode.Break;
-                    return targetContext;
-                }
-                else if (values.length == 1)
-                {
-                    escopo[varName] = values[0];
-                }
-                else
-                {
-                    debug {stderr.writeln("transform.escopo[varName] is a SimpleList");}
-                    escopo[varName] = new SimpleList(values);
-                }
 
                 context = escopo.run(body.subprogram);
 
@@ -699,8 +693,12 @@ static this()
         }
 
         auto integer = context.pop!IntegerAtom();
-        // TODO: check for overflow
-        integer.value++;
+
+        if (integer.value > ++integer.value)
+        {
+            auto msg = "integer overflow";
+            return context.error(msg, ErrorCode.Overflow, "");
+        }
         context.push(integer);
         context.exitCode = ExitCode.CommandSuccess;
         return context;
@@ -714,8 +712,11 @@ static this()
         }
 
         auto integer = context.pop!IntegerAtom();
-        // TODO: check for underflow
-        integer.value--;
+        if (integer.value < --integer.value)
+        {
+            auto msg = "integer underflow";
+            return context.error(msg, ErrorCode.Underflow, "");
+        }
         context.push(integer);
         context.exitCode = ExitCode.CommandSuccess;
         return context;

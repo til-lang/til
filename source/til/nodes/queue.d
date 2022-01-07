@@ -89,7 +89,10 @@ class Queue : ListItem
     // Operators
     ListItem opIndex(ulong k)
     {
-        // TODO: check boundaries;
+        if (k >= values.length)
+        {
+            throw new Exception("Invalid index: " ~ to!string(k));
+        }
         return values[k];
     }
 }

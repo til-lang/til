@@ -1,6 +1,9 @@
 module til.scheduler;
 
 import core.thread.fiber;
+import std.algorithm : filter;
+import std.algorithm.searching : canFind;
+import std.array : array;
 
 import til.nodes;
 
@@ -55,6 +58,8 @@ class Scheduler
         do
         {
             activeCounter = 0;
+            ProcessFiber[] finishedFibers;
+
             foreach(fiber; fibers)
             {
                 if (fiber.state == Fiber.State.TERM)
@@ -62,10 +67,8 @@ class Scheduler
                     debug {
                         stderr.writeln(" FIBER TERM: ", fiber.process.index);
                     }
-                    // That's the only safe place to determine
-                    // if the process is actually
-                    // in Finished state:
                     fiber.process.state = ProcessState.Finished;
+                    finishedFibers ~= fiber;
 
                     // TODO: remove from fibers list!!!
                     continue;
@@ -73,6 +76,12 @@ class Scheduler
                 activeCounter++;
                 debug {stderr.writeln(" FIBER CALL: ", fiber.process.index);}
                 fiber.call();
+            }
+
+            // Clean up finished fibers:
+            if (finishedFibers.length != 0)
+            {
+                fibers = array(fibers.filter!(item => !finishedFibers.canFind(item)));
             }
         } while (activeCounter > 0);
 

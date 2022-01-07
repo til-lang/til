@@ -89,11 +89,15 @@ class Parser
     {
         return code[index];
     }
+    char lastChar()
+    {
+        return code[index - 1];
+    }
     char consumeChar()
     {
         if (eof)
         {
-            throw new Exception("Code input already ended.");
+            throw new Exception("Code input already ended");
         }
         debug {
             if (code[index] == EOL)
@@ -105,7 +109,7 @@ class Parser
                 stderr.writeln("consumed: '", code[index], "'");
             }
         }
-        auto result =  code[index++];
+        auto result = code[index++];
         col++;
 
         if (result == EOL)
@@ -515,16 +519,28 @@ class Parser
             switch (currentChar)
             {
                 case '=':
+                    if (lastChar.among!('=', '<', '>'))
+                    {
+                        token ~= consumeChar();
+                        break;
+                    }
+                    goto case;
                 case '>':
                 case '<':
                 case '*':
                 case '/':
                 case '|':
                 case '&':
-                    // TODO: check if the pair is actually valid
-                    // (invalid example: "&|")
-                    token ~= consumeChar();
-                    break;
+                    if (lastChar == currentChar)
+                    {
+                        token ~= consumeChar();
+                        break;
+                    }
+                    else
+                    {
+                        throw new Exception("Invalid operator");
+                    }
+
                 default:
                     break;
             }

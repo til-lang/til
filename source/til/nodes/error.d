@@ -20,6 +20,8 @@ enum ErrorCode
     SemanticError,
     Empty,
     Full,
+    Overflow,
+    Underflow,
 }
 
 
