@@ -107,7 +107,6 @@ class SimpleList : BaseList
                     {
                         auto start = firstArgument.toInt;
                         auto end = nextArg.toInt;
-                        debug {stderr.writeln("start,end:", start, ",", end);}
 
                         if (start < 0)
                         {

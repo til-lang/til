@@ -133,7 +133,6 @@ class SubstString : String
         string result;
         string value;
 
-        debug {stderr.writeln("SubstString.evaluate: ", parts);}
         foreach(part;parts)
         {
             if (part[0] != '$')
@@ -143,10 +142,6 @@ class SubstString : String
             else
             {
                 auto key = part[1..$];
-                debug {
-                    stderr.writeln(" key: ", key);
-                    stderr.writeln(" escopo: ", context.escopo);
-                }
                 Items values = context.escopo[key];
                 if (values is null)
                 {

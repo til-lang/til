@@ -84,7 +84,7 @@ int main(string[] args)
     {
         sw.stop();
         stderr.writeln(
-            "Code was loaded and parsed in ",
+            "Code was loaded in ",
             sw.peek.total!"msecs", " miliseconds"
         );
     }

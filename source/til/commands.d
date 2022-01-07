@@ -74,7 +74,6 @@ static this()
         if (context.size == 2)
         {
             string asWord = context.pop!string();
-            debug {stderr.writeln("asWord:", asWord);}
             if (asWord != "as")
             {
                 auto msg = "Invalid syntax for import";
@@ -104,13 +103,10 @@ static this()
                 auto conditions = context.pop!SimpleList();
                 auto thenBody = context.pop!SubList();
 
-                debug {stderr.writeln("context before conditions evaluation:", context);}
                 conditions.forceEvaluate(context);
                 context.run(&boolean, 1);
 
                 auto isConditionTrue = context.pop!bool();
-                debug {stderr.writeln("context AFTER conditions evaluation:", context);}
-
                 debug {stderr.writeln(conditions, " is ", isConditionTrue);}
 
                 // if (x == 0) {...}
@@ -138,8 +134,6 @@ static this()
                                    ~ " elseWord found was " ~ elseWord;
                         return context.error(msg, ErrorCode.InvalidSyntax, "");
                     }
-
-                    debug {stderr.writeln("context:", context);}
 
                     // If only one part is left, it's for sure the last "else":
                     if (context.size == 1)
@@ -212,22 +206,17 @@ static this()
         // Remember: `context` is going to change a lot from now on.
         do
         {
-            debug {stderr.writeln(" calling ", target, ".next");}
             nextContext = target.next(context);
-            debug {stderr.writeln("  next done ");}
             if (nextContext.exitCode == ExitCode.Break)
             {
                 break;
             }
-            auto values = nextContext.items;
+            debug {stderr.writeln("foreach.nextContext.exitCode:", nextContext.exitCode);}
 
-            debug {stderr.writeln("foreach values: ", values);}
-
-            loopScope[argName] = values;
+            loopScope[argName] = nextContext.items;
 
             context = loopScope.run(argBody.subprogram);
             debug {stderr.writeln("foreach.subprogram.exitCode:", context.exitCode);}
-            debug {stderr.writeln("foreach.nextContext.exitCode:", nextContext.exitCode);}
 
             if (context.exitCode == ExitCode.Break)
             {
@@ -304,10 +293,7 @@ static this()
                     );
                 }
 
-                debug {stderr.writeln("transform.targetContext.size:", targetContext.size);}
-                Items values = targetContext.items;
-                escopo[varName] = values;
-                debug {stderr.writeln("  values:", values);}
+                escopo[varName] = targetContext.items;
 
                 context = escopo.run(body.subprogram);
 
@@ -322,7 +308,6 @@ static this()
                     default:
                         break;
                 }
-                debug {stderr.writeln("transform.return.context.size:", context.size);}
                 return context;
             }
         }
@@ -490,12 +475,10 @@ static this()
     // Printing:
     commands["print"] = (string path, CommandContext context)
     {
-        debug {stderr.writeln("print.context.size: ", context.size);}
         while(context.size) stdout.write(context.pop!string());
         stdout.writeln();
 
         context.exitCode = ExitCode.CommandSuccess;
-        debug {stderr.writeln("print.quiting... ");}
         return context;
     };
     commands["print.error"] = (string path, CommandContext context)
@@ -783,7 +766,6 @@ static this()
 
             override CommandContext next(CommandContext context)
             {
-                debug {stderr.writeln("range.next.current: ", current);}
                 long value = current;
                 if (value > limit)
                 {
@@ -792,7 +774,6 @@ static this()
                 else
                 {
                     context.push(value);
-                    debug {stderr.writeln("range.push: ", value);}
                     context.exitCode = ExitCode.Continue;
                 }
                 current += step;
@@ -859,8 +840,6 @@ static this()
 
         auto l1 = context.pop!SimpleList();
         auto l2 = context.pop!SimpleList();
-
-        debug {stderr.write("l1, l2: ", l1, " , ", l2);}
 
         if (l2.type != ObjectType.SimpleList)
         {
@@ -1279,18 +1258,13 @@ static this()
         */
         auto name = context.pop!string();
         auto sublist = context.pop();
-        debug {stderr.writeln(" type.sublist.type:", sublist.type);}
         auto subprogram = (cast(SubList)sublist).subprogram;
 
         auto newScope = new Process(context.escopo);
 
-        debug {stderr.writeln("type.newScope:", newScope);}
-
         auto newContext = context.next(newScope, context.size);
-        debug {stderr.writeln(" type.newContext:", newContext);}
 
         // RUN!
-        debug {stderr.writeln(" running type subprogram:", subprogram);}
         newContext = newContext.escopo.run(subprogram, newContext);
 
         if (newContext.exitCode == ExitCode.Failure)

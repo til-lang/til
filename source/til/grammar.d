@@ -52,13 +52,13 @@ class Parser
     void push(string s)
     {
         stack ~= s ~ ":" ~ to!string(line);
-        debug {stderr.writeln("STACK:", to!string(stack.join(" ")), " ← ");}
+        debug {stderr.writeln("NODES:", to!string(stack.join(" ")), " ← ");}
     }
     void pop()
     {
         auto popped = stack.back;
         stack.popBack;
-        debug {stderr.writeln("STACK:", to!string(stack.join(" ")), " → ", popped);}
+        debug {stderr.writeln("NODES:", to!string(stack.join(" ")), " → ", popped);}
     }
 
     // --------------------------------------------
@@ -115,7 +115,7 @@ class Parser
         {
             col = 0;
             line++;
-            debug {stderr.writeln("line ", line);}
+            debug {stderr.writeln("== line ", line, " ==");}
         }
 
         if (index >= code.length)
@@ -133,7 +133,8 @@ class Parser
     {
         if (eof) return;
 
-        debug {stderr.writeln("whitespaces start");}
+        int counter = 0;
+
         bool consumed = true;
 
         while (consumed && !eof)
@@ -144,15 +145,22 @@ class Parser
             {
                 consumeChar();
                 consumed = true;
+                counter++;
             }
             // Comments:
             if (currentChar == '#')
             {
                 consumeLine();
                 consumed = true;
+                counter++;
             }
         }
-        debug {stderr.writeln("            end");}
+        debug {
+            if (counter)
+            {
+                stderr.writeln("whitespaces (" ~ to!string(counter) ~ ")");
+            }
+        }
     }
     void consumeLine()
     {
@@ -165,13 +173,13 @@ class Parser
     }
     void consumeWhitespace()
     {
-        debug {stderr.writeln("consuming whitespace");}
         assert(isWhitespace);
+        debug {stderr.writeln("whitespace");}
         consumeChar();
     }
     void consumeSpace()
     {
-        debug {stderr.writeln("consuming whitespace");}
+        debug {stderr.writeln("  SPACE");}
         assert(currentChar == SPACE);
         consumeChar();
     }
@@ -250,7 +258,6 @@ class Parser
         while (currentChar == SPACE)
         {
             consumeSpace();
-            debug {stderr.writeln("after space: ", currentChar);}
             if (currentChar.among('}', ']', ')', '>', PIPE))
             {
                 break;

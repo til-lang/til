@@ -37,7 +37,6 @@ class Command
             */
             debug {
                 stderr.writeln("   evaluating argument ", argument);
-                stderr.writeln("    in context ", context);
             }
             context = argument.evaluate(context.next);
 
@@ -56,7 +55,6 @@ class Command
             realArgumentsCounter += context.size;
         }
         context.size = cast(int)realArgumentsCounter;
-        debug {stderr.writeln("    context.size (arguments count): ", context.size);}
         return context;
     }
 
@@ -64,20 +62,8 @@ class Command
     {
         CommandHandler *handler;
 
-        debug {
-            stderr.writeln("getCommand ", name, " target:", target);
-            stderr.writeln(" process:", escopo);
-        }
-
         if (target !is null)
         {
-            debug {
-                stderr.writeln(
-                    "Searching for ", name, " in ", target,
-                    " type:", target.type,
-                    "\n", target.commands
-                );
-            }
             handler = target.getCommandHandler(name);
             if (handler !is null) return *handler;
         }
@@ -101,7 +87,6 @@ class Command
     {
         debug {
             stderr.writeln(" Running Command ", this, " ", this.arguments);
-            stderr.writeln("  context: ", context);
         }
 
         // evaluate arguments and set proper context.size:
@@ -120,17 +105,12 @@ class Command
             context.size++;
             context.hasInput = true;
         }
-        debug {stderr.writeln("    context.size: ", context.size);}
 
         // The target is always the first argument:
         Item target = null;
         if (context.size)
         {
             target = context.peek();
-        }
-
-        debug {
-            stderr.writeln("  target: ", target);
         }
 
         // append $item $list

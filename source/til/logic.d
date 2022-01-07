@@ -69,14 +69,12 @@ CommandContext pureBoolean(CommandContext context)
     */
     void and(ulong index)
     {
-        debug {stderr.writeln("context before AND: ", context);}
         auto nextList = new SimpleList(items[index..$]);
         context.push(nextList);
 
         context = boolean(context.next(1));
         auto newResult = context.pop();
         currentResult = currentResult && newResult.toBool();
-        debug {stderr.writeln("context after AND: ", context);}
     }
 
     // -----------------------------------------------
@@ -106,7 +104,6 @@ CommandContext pureBoolean(CommandContext context)
             listContext = boolean(listContext);
             // There should be an Atom(bool) at the top of the stack.
             auto newResult = listContext.pop();
-            debug {stderr.writeln("newResult for OR: ", newResult);}
             currentResult = currentResult || newResult.toBool();
             continue;
         }
@@ -126,9 +123,6 @@ CommandContext pureBoolean(CommandContext context)
         operate();
     }
     context.push(currentResult);
-    debug {
-        stderr.writeln(" pureBoolean result for ", list, " : ", currentResult);
-    }
     assert(context.size == 1);
     return context;
 }

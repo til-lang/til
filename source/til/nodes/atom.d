@@ -128,13 +128,9 @@ class IntegerAtom : Atom
     {
         if (reversed) return null;
 
-        debug {stderr.writeln(" > ", this.type, " ", operator, " ", rhs.type);}
-
         if (rhs.type == ObjectType.Integer)
         {
             auto t2 = cast(IntegerAtom) rhs;
-            debug {stderr.writeln(" > ", this, " ", operator, " ", t2);}
-            debug {stderr.writeln(" > ", this.value, " ", operator, " ", t2.value);}
             final switch(operator)
             {
                 // Logic:
@@ -163,7 +159,6 @@ class IntegerAtom : Atom
         else if (rhs.type == ObjectType.Float)
         {
             auto t2 = cast(FloatAtom)rhs;
-            debug {stderr.writeln(this.value, " ", operator, " ", t2.value);}
             final switch(operator)
             {
                 // Logic:
@@ -235,8 +230,6 @@ class FloatAtom : Atom
     override ListItem operate(string operator, ListItem rhs, bool reversed)
     {
         if (reversed) return null;
-
-        debug {stderr.writeln(" > ", this.type, " ", operator, " ", rhs.type);}
 
         FloatAtom t2;
 

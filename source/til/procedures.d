@@ -46,14 +46,11 @@ class Procedure
             auto argument = context.pop();
             newScope[parameterName] = argument;
         }
-        debug {stderr.writeln("caller scope:", context.escopo);}
 
         // newScope *shares* the Stack:
         newScope.stack = context.escopo.stack[];
         newScope.stackPointer = context.escopo.stackPointer;
         auto newContext = context.next(newScope, context.size);
-
-        debug {stderr.writeln("newScope:", newScope);}
 
         // RUN!
         newContext = newContext.escopo.run(body.subprogram, newContext);

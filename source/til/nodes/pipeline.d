@@ -69,7 +69,6 @@ class Pipeline
 
                 // -----------------
                 case ExitCode.CommandSuccess:
-                    debug {stderr.writeln(command, " CommandSuccess context.size:", context.size);}
                     if (context.size > 0)
                     {
                         hasInput = true;
