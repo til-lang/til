@@ -53,7 +53,7 @@ class Scheduler
         auto processFiber = new ProcessFiber(process);
         this.fibers ~= processFiber;
         this.activeFibers ~= processFiber;
-        return new Pid(process);
+        return new Pid(processFiber);
     }
 
     ExitCode run()

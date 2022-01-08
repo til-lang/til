@@ -5,6 +5,7 @@ import std.array;
 import std.conv : to, ConvException;
 import std.file : read;
 import std.stdio;
+import std.string : toLower;
 
 import til.grammar;
 
@@ -1071,6 +1072,43 @@ static this()
 
         Pid pid = cast(Pid)context.pop();
         context.push(pid.process.state != ProcessState.Finished);
+
+        context.exitCode = ExitCode.CommandSuccess;
+        return context;
+    };
+    pidCommands["state"] = (string path, CommandContext context)
+    {
+        if (context.size == 0)
+        {
+            auto msg = "`state` expect a Pid as argument";
+            return context.error(msg, ErrorCode.InvalidArgument, "");
+        }
+
+        Pid pid = cast(Pid)context.pop();
+        string state = to!string(pid.process.state).toLower();
+        context.push(state);
+
+        context.exitCode = ExitCode.CommandSuccess;
+        return context;
+    };
+    pidCommands["exit_code"] = (string path, CommandContext context)
+    {
+        if (context.size == 0)
+        {
+            auto msg = "`state` expect a Pid as argument";
+            return context.error(msg, ErrorCode.InvalidArgument, "");
+        }
+
+        Pid pid = cast(Pid)context.pop();
+        CommandContext processContext = pid.fiber.context;
+        // XXX: is it correct???
+        if (&processContext is null)
+        {
+            auto msg = "Process " ~ to!string(pid.process.index) ~ " is still running";
+            return context.error(msg, ErrorCode.SemanticError, "");
+        }
+        string exit_code = to!string(processContext.exitCode).toLower();
+        context.push(exit_code);
 
         context.exitCode = ExitCode.CommandSuccess;
         return context;

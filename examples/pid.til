@@ -14,6 +14,10 @@ set pid [spawn procedure]
 
 assert ([is_running $pid])
 print "$pid is running"
+
+set state [state $pid]
+print " the state is $state"
+
 send $pid "quit"
 
 set not_running false
@@ -25,5 +29,11 @@ range 128 | foreach x {
 }
 assert ($not_running)
 print " and now, $pid is not running anymore"
+
+set state [state $pid]
+print " the state is $state"
+
+set exit_code [exit_code $pid]
+print " and the exit_code is $exit_code"
 
 print "END"

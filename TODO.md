@@ -1,8 +1,7 @@
 # TODO
 
-* state $pid -> string
-* exit_code $pid : get Pid.Process exit code.
 * eval "cmd"
+* strings containing double-quotes and literal `$` symbols
 * push $list x
 * set x [pop $list]
 * push.front $list x

@@ -3,6 +3,7 @@ module til.nodes.pid;
 import std.conv : to;
 
 import til.nodes;
+import til.scheduler : ProcessFiber;
 
 debug
 {
@@ -14,10 +15,13 @@ CommandHandler[string] pidCommands;
 
 class Pid : ListItem
 {
-    Process process = null;
-    this(Process process)
+    ProcessFiber fiber;
+    Process process;
+
+    this(ProcessFiber fiber)
     {
-        this.process = process;
+        this.fiber = fiber;
+        this.process = fiber.process;
         this.commands = pidCommands;
     }
 
