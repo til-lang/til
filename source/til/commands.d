@@ -94,6 +94,27 @@ static this()
     };
 
     // ---------------------------------------------
+    // Strings commands
+    stringCommands["eval"] = (string path, CommandContext context)
+    {
+        import til.grammar;
+
+        auto code = context.pop!string();
+
+        debug {stderr.writeln("eval.code:", code);}
+        auto parser = new Parser(code);
+        SubProgram subprogram = parser.run();
+        debug {stderr.writeln("eval.subprogram:", subprogram);}
+
+        context = context.escopo.run(subprogram);
+        if (context.exitCode == ExitCode.Proceed)
+        {
+            context.exitCode = ExitCode.CommandSuccess;
+        }
+        return context;
+    };
+
+    // ---------------------------------------------
     // Native types, nodes and conversion
     stringCommands["to.int"] = (string path, CommandContext context)
     {

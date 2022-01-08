@@ -558,7 +558,7 @@ class Parser
         }
 
         // And all the others:
-        while (true)
+        while (!eof)
         {
             if (currentChar >= 'a' && currentChar <= 'z' || currentChar == '_')
             {
