@@ -484,7 +484,6 @@ class Parser
     {
         push("atom");
         char[] token;
-        size_t counter = 0;
 
         bool isNumber = true;
         bool isSubst = false;
@@ -578,9 +577,11 @@ class Parser
             token ~= consumeChar();
         }
 
+        debug {stderr.writeln(" token: ", token);}
         pop();
 
         string s = cast(string)token;
+        debug {stderr.writeln(" s: ", s);}
 
         if (isNumber)
         {
@@ -641,7 +642,46 @@ class Parser
             debug {stderr.writeln("new OperatorAtom: ", s);}
             return new OperatorAtom(s);
         }
-        
+
+        // Handle hexadecimal format, like 0xabcdef
+        if (s.length > 2 && s[0..2] == "0x")
+        {
+            bool success = true;
+            long value = 0;
+            long x;
+            foreach (index, chr; s[2..$])
+            {
+                x = chr - '0';
+                if (x < 10)
+                {
+                    value += pow(x, index);
+                    continue;
+                }
+
+                x = chr - 'A';
+                if (x < 6)
+                {
+                    value += pow(x + 10, index);
+                    continue;
+                }
+
+                x = chr - 'a';
+                if (x < 6)
+                {
+                    value += pow(x + 10, index);
+                    continue;
+                }
+
+                success = false;
+                break;
+            }
+            if (success)
+            {
+                debug {stderr.writeln("new IntegerAtom: ", value);}
+                return new IntegerAtom(value);
+            }
+        }
+
         debug {stderr.writeln("new NameAtom: ", s);}
         return new NameAtom(cast(string)token);
     }

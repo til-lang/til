@@ -1,0 +1,32 @@
+print "START"
+
+proc overflow () {
+    set max 0x7fffffff
+
+    proc on.error (e) {
+        print $e
+        print "overflow: Success"
+    }
+
+    incr $max
+    
+    error "Increasing \$max should overflow."
+}
+
+proc underflow () {
+    set min 0x00000000
+
+    proc on.error (e) {
+        print $e
+        print "underflow: Success"
+    }
+
+    decr $min
+
+    error "Decreasing \$min should underflow."
+}
+
+overflow
+underflow
+
+print "END"
