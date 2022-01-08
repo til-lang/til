@@ -1,0 +1,15 @@
+print "START"
+
+proc test_toint (s expected_value) {
+    assert ([to.int $s] == $expected_value)
+    print "$s == $expected_value"
+}
+
+test_toint "" 0
+test_toint "123" 123
+test_toint "0x" 0
+test_toint "0x0" 0
+test_toint "0xff" 255
+test_toint "0xfe" 254
+
+print "END"

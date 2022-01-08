@@ -8,6 +8,7 @@ import std.stdio;
 
 import til.grammar;
 
+import til.conv;
 import til.exceptions;
 import til.logic;
 import til.modules;
@@ -63,7 +64,6 @@ static this()
         }
         return context;
     };
-
     nameCommands["import"] = (string path, CommandContext context)
     {
         // import std.io as x
@@ -88,6 +88,24 @@ static this()
             return context.error(msg, ErrorCode.InvalidArgument, "");
         }
 
+        context.exitCode = ExitCode.CommandSuccess;
+        return context;
+    };
+
+    // ---------------------------------------------
+    // Native types, nodes and conversion
+    stringCommands["to.int"] = (string path, CommandContext context)
+    {
+        string target = context.pop!string();
+
+        auto result = toLong(target);
+        if (!result.success)
+        {
+            auto msg = "Could not convert to integer";
+            return context.error(msg, ErrorCode.InvalidArgument, "");
+        }
+
+        context.push(result.value);
         context.exitCode = ExitCode.CommandSuccess;
         return context;
     };

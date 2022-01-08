@@ -5,6 +5,7 @@ import std.conv : to;
 import std.math : pow;
 import std.range : back, popBack;
 
+import til.conv;
 import til.exceptions;
 import til.nodes;
 
@@ -646,39 +647,11 @@ class Parser
         // Handle hexadecimal format, like 0xabcdef
         if (s.length > 2 && s[0..2] == "0x")
         {
-            bool success = true;
-            long value = 0;
-            long x;
-            foreach (index, chr; s[2..$])
+            auto result = toLong(s);
+            if (result.success)
             {
-                x = chr - '0';
-                if (x < 10)
-                {
-                    value += pow(x, index);
-                    continue;
-                }
-
-                x = chr - 'A';
-                if (x < 6)
-                {
-                    value += pow(x + 10, index);
-                    continue;
-                }
-
-                x = chr - 'a';
-                if (x < 6)
-                {
-                    value += pow(x + 10, index);
-                    continue;
-                }
-
-                success = false;
-                break;
-            }
-            if (success)
-            {
-                debug {stderr.writeln("new IntegerAtom: ", value);}
-                return new IntegerAtom(value);
+                debug {stderr.writeln("new IntegerAtom: ", result.value);}
+                return new IntegerAtom(result.value);
             }
         }
 
