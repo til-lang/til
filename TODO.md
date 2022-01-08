@@ -14,15 +14,12 @@
 
 ## Commands
 
-* `exit $exit_code` - quits the program with a numerical value (like
-  "exit" from unix shells).
 * `test`? -- To create unit tests, maybe...
 * Should we act like a shell and run system commands automatically???
 
 ### Types and nodes
 
-* Create native types, like "int" or "float".
-* Create nodes, like SubList.
+* Pid: get Process exit code.
 * `eval "cmd"` (currently it only evaluates a SimpleList).
 
 ### Lists

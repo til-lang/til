@@ -12,4 +12,16 @@ test_toint "0x0" 0
 test_toint "0xff" 255
 test_toint "0xfe" 254
 
+proc test_tofloat (s expected_value) {
+    assert ([to.float $s] == $expected_value)
+    print "$s == $expected_value"
+}
+
+test_tofloat "" 0.0
+test_tofloat "0" 0.0
+test_tofloat "1" 1.0
+test_tofloat "1.234" 1.234
+test_tofloat "0.001" 0.001
+test_tofloat ".01" 0.01
+
 print "END"

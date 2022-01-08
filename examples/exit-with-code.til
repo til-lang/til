@@ -1,0 +1,3 @@
+print "START"
+exit 1
+print "END"

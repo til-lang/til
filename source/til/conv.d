@@ -1,12 +1,9 @@
 module til.conv;
 
+import std.conv : to, ConvException;
 import std.math : pow;
 import std.range : enumerate, retro;
 
-debug
-{
-    import std.stdio;
-}
 
 struct LongValue {
     bool success = true;
@@ -22,6 +19,10 @@ LongValue toLong(string s)
     }
     else
     {
+        if (s.length == 0)
+        {
+            s = "0";
+        }
         return toLongFromDecimal(s);
     }
 }
@@ -30,22 +31,15 @@ LongValue toLongFromDecimal(string s)
 {
     LongValue returnValue;
 
-    long x;
-    foreach (index, chr; s.retro.enumerate)
+    try
     {
-        x = chr - '0';
-        debug {stderr.writeln("chr:", chr, "; x:", x, "; index:", index);}
-        if (x < 10)
-        {
-            returnValue.value += x * pow(10, index);
-            continue;
-        }
-
+        returnValue.value = to!long(s);
+    }
+    catch (ConvException)
+    {
         returnValue.success = false;
-        break;
     }
 
-    debug {stderr.writeln(" value:", returnValue.value);}
     return returnValue;
 }
 
@@ -81,6 +75,5 @@ LongValue toLongFromHex(string s)
         break;
     }
 
-    debug {stderr.writeln(" value:", returnValue.value);}
     return returnValue;
 }

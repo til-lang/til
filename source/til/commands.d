@@ -2,7 +2,7 @@ module til.commands;
 
 import std.algorithm.iteration : map, joiner;
 import std.array;
-import std.conv : to;
+import std.conv : to, ConvException;
 import std.file : read;
 import std.stdio;
 
@@ -106,6 +106,30 @@ static this()
         }
 
         context.push(result.value);
+        context.exitCode = ExitCode.CommandSuccess;
+        return context;
+    };
+    stringCommands["to.float"] = (string path, CommandContext context)
+    {
+        string target = context.pop!string();
+
+        if (target.length == 0)
+        {
+            target = "0.0";
+        }
+
+        float result;
+        try
+        {
+            result = to!float(target);
+        }
+        catch (ConvException)
+        {
+            auto msg = "Could not convert to float";
+            return context.error(msg, ErrorCode.InvalidArgument, "");
+        }
+
+        context.push(result);
         context.exitCode = ExitCode.CommandSuccess;
         return context;
     };
@@ -824,6 +848,20 @@ static this()
         context.push(range);
         context.exitCode = ExitCode.CommandSuccess;
         return context;
+    };
+    integerCommands["exit"] = (string path, CommandContext context)
+    {
+        string classe = "";
+        string message = "Process was stopped";
+
+        IntegerAtom code = cast(IntegerAtom)context.pop();
+
+        if (context.size > 0)
+        {
+            message = context.pop!string();
+        }
+
+        return context.error(message, cast(int)code.value, classe);
     };
 
     // Names:
