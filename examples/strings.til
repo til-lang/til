@@ -1,0 +1,7 @@
+print "START"
+
+print "A string with a \$ (dollar sign) in it."
+print "A string with a \" (double quote) in it."
+print "A string with a \\ (backslash) in it."
+
+print "END"

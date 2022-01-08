@@ -446,6 +446,14 @@ class Parser
                 }
                 token = new char[0];
             }
+            else if (currentChar == '\\')
+            {
+                // Discard it:
+                consumeChar();
+
+                // Add the next char, whatever it is:
+                token ~= consumeChar();
+            }
             else if (currentChar != '"')
             {
                 token ~= consumeChar();

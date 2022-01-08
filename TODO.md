@@ -1,7 +1,5 @@
 # TODO
 
-* eval "cmd"
-* strings containing double-quotes and literal `$` symbols
 * push $list x
 * set x [pop $list]
 * push.front $list x
