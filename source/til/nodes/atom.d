@@ -305,6 +305,18 @@ class BooleanAtom : Atom
     {
         return to!string(value);
     }
+    override ListItem operate(string operator, ListItem rhs, bool reversed)
+    {
+        switch(operator)
+        {
+            case "==":
+                return new BooleanAtom(this.value == rhs.toBool());
+            case "!=":
+                return new BooleanAtom(this.value != rhs.toBool());
+            default:
+                return super.operate(operator, rhs, reversed);
+        }
+    }
 }
 
 class OperatorAtom : Atom

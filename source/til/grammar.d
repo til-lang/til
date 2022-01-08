@@ -507,6 +507,7 @@ class Parser
             case '|':
             case '&':
             case '=':
+            case '!':
                 isOperator = true;
                 isNumber = false;
                 token ~= consumeChar();
@@ -529,7 +530,7 @@ class Parser
             switch (currentChar)
             {
                 case '=':
-                    if (lastChar.among!('=', '<', '>'))
+                    if (lastChar.among!('=', '<', '>', '!'))
                     {
                         token ~= consumeChar();
                         break;
@@ -655,7 +656,21 @@ class Parser
             }
         }
 
-        debug {stderr.writeln("new NameAtom: ", s);}
-        return new NameAtom(cast(string)token);
+        // Names that are boolean:
+        switch (s)
+        {
+            case "true":
+            case "yes":
+                debug {stderr.writeln("new BooleanAtom(true)");}
+                return new BooleanAtom(true);
+            case "false":
+            case "no":
+                debug {stderr.writeln("new BooleanAtom(false)");}
+                return new BooleanAtom(false);
+            default:
+                debug {stderr.writeln("new NameAtom: ", s);}
+                return new NameAtom(s);
+        }
+
     }
 }

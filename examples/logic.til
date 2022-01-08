@@ -1,3 +1,4 @@
+print "START"
 set a 1
 set b 2
 set c 3
@@ -12,8 +13,7 @@ if ($a > $b) {
     print "WRONG"
 }
 if ($a < $b) {
-    print "a < b"
-    print " = $a < $b"
+    print "a < b ($a < $b)"
 }
 
 if ($a > $b || $a > 10 || $a < $b) {
@@ -23,6 +23,21 @@ if ($a > $b || $a < $b && 1 > 2) {
     print "OR+AND is WRONG"
 } else {
     print "OR+AND is okay"
+}
+
+if ($a > $b || true || $a < $b) {
+    print "three OR with boolean in the middle is okay"
+}
+if ($a > $b || $a < $b && 1 > 2) {
+    print "OR+AND with boolean is WRONG"
+} else {
+    print "OR+AND with boolean is okay"
+}
+
+if (false || $a < $b) {
+    print "bool and comparison is okay"
+} else {
+    print "bool and comparison is WRONG"
 }
 
 #       t         f          t
@@ -45,5 +60,10 @@ if ((($a < $b && 55 > 57) || ($a < $b && (97 < 98 && 12 > 34)))) {
 } else {
     print "Second lot of parenthesis is okay"
 }
+
+assert (true)
+print "true is working"
+assert (false != true)
+print "false != true is working"
 
 print "END"

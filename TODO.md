@@ -1,5 +1,22 @@
 # TODO
 
+* state $pid -> string
+* exit_code $pid : get Pid.Process exit code.
+* eval "cmd"
+* push $list x
+* set x [pop $list]
+* push.front $list x
+* set sorted [sort $list]
+* set new_list [cat $list_1 item $list_2]
+* if ([contains $list item]) { ... }
+* test (?) -- To create unit tests, maybe...
+
+```tcl
+test "conversion to float" {
+    assert ([to.float "1.23"] == 1.23])
+}
+```
+
 ## Utilities
 
 * Debugging system for the language itself.
@@ -7,29 +24,11 @@
 
 ## Language-wise
 
+* Should we act like a shell and run system commands automatically???
 * Improve error messages about compilation/syntax.
 * Procs can be considered "higher order" or not?
 * Should we be able to "append" new methods to already defined types?
 * Profiling!
-
-## Commands
-
-* `test`? -- To create unit tests, maybe...
-* Should we act like a shell and run system commands automatically???
-
-### Types and nodes
-
-* Pid: get Process exit code.
-* `eval "cmd"` (currently it only evaluates a SimpleList).
-
-### Lists
-
-* push
-* pop
-* insert
-* sort
-* flatten $list_1 item $list_2
-* contains $list item
 
 ### File system
 

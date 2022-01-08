@@ -1061,6 +1061,20 @@ static this()
         context.exitCode = ExitCode.CommandSuccess;
         return context;
     };
+    pidCommands["is_running"] = (string path, CommandContext context)
+    {
+        if (context.size == 0)
+        {
+            auto msg = "`is_running` expect a Pid as argument";
+            return context.error(msg, ErrorCode.InvalidArgument, "");
+        }
+
+        Pid pid = cast(Pid)context.pop();
+        context.push(pid.process.state != ProcessState.Finished);
+
+        context.exitCode = ExitCode.CommandSuccess;
+        return context;
+    };
 
     // ---------------------------------------
     // Dicts:

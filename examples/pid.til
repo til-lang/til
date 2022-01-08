@@ -1,0 +1,29 @@
+print "START"
+
+proc procedure () {
+    read | foreach msg {
+        if ($msg == "quit") {
+            return
+        } else {
+            print "p received: $msg"
+        }
+    }
+}
+
+set pid [spawn procedure]
+
+assert ([is_running $pid])
+print "$pid is running"
+send $pid "quit"
+
+set not_running false
+range 128 | foreach x {
+    if ([is_running $pid] == false) {
+        set not_running true
+        break
+    }
+}
+assert ($not_running)
+print " and now, $pid is not running anymore"
+
+print "END"

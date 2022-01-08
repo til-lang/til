@@ -32,11 +32,6 @@ CommandContext pureBoolean(CommandContext context)
     // -----------------------------------------------
     void operate()
     {
-        if (context.size < 3)
-        {
-            return;
-        }
-
         // It was pushed in reading order...
         auto t2 = context.pop();
         auto operator = context.pop!string;
@@ -83,17 +78,52 @@ CommandContext pureBoolean(CommandContext context)
     {
         string s = to!string(item);
 
+        debug {stderr.writeln(" item: ", s);}
+
         if (item.type == ObjectType.Operator)
         {
+            /*
+           A logic expression is just a sequence
+           of ands and ors. "Or" is the default
+           operation.
+            */
             if (s == "&&")
             {
-                and(index+1);
+                and(index + 1);
                 break;
             }
             else if (s == "||")
             {
-                // OR is our default behaviour.
-                // So we do nothing, here.
+                // situation                         : context.size
+                // (1 > 2 || true)                   : 0
+                // (1 > 2 || false || true)          : 1
+                //                 ^^
+                // (1 > 2 || false != true || 1 < 2) : 3
+                //                         ^^
+                if (context.size == 3)
+                {
+                    // (1 > 2 || false != true || 1 < 2)
+                    //                         ^^
+                    debug {stderr.writeln(" context.size is 3");}
+                    operate();
+                }
+                else if (context.size == 1)
+                {
+                    // (1 > 2 || false || 1 < 2)
+                    //  false      ^   ^^
+                    //       lastItem  item
+                    auto lastItem = context.pop();
+                    debug {stderr.writeln(" context.size is 1: ", lastItem);}
+                    currentResult = currentResult || lastItem.toBool();
+                }
+                else if (context.size == 2)
+                {
+                    throw new Exception(
+                        "Invalid operation (only "
+                        ~ to!string(context.size)
+                        ~ " items)"
+                    );
+                }
                 continue;
             }
         }
@@ -113,16 +143,30 @@ CommandContext pureBoolean(CommandContext context)
             context.push(item);
             continue;
         }
-        else if (item.type == ObjectType.Boolean)
-        {
-            currentResult = currentResult || item;
-            continue;
-        }
+
         // Not an operator? Must be a value...
         context.push(item);
-        operate();
+        if (context.size >= 3)
+        {
+            operate();
+        }
     }
-    context.push(currentResult);
-    assert(context.size == 1);
+
+    // assert (true) -> context.size = 1
+    if (context.size != 1)
+    {
+        context.push(currentResult);
+    }
+
+    if (context.size != 1)
+    {
+        throw new Exception(
+            "Context size is not 1: "
+            ~ to!string(context.items)
+            ~ " (currentResult: "
+            ~ to!string(currentResult)
+            ~ ")"
+        );
+    }
     return context;
 }
