@@ -5,10 +5,6 @@
 * Debugging system for the language itself.
 * REPL - (it would be very nice to allow multi-line commands).
 
-## Code
-
-* Get rid of excessive "debug" messages.
-
 ## Language-wise
 
 * Improve error messages about compilation/syntax.
@@ -18,10 +14,10 @@
 
 ## Commands
 
-* `assert`
-* `test`? -- To create unit tests, maybe...
 * `exit $exit_code` - quits the program with a numerical value (like
   "exit" from unix shells).
+* `test`? -- To create unit tests, maybe...
+* Should we act like a shell and run system commands automatically???
 
 ### Types and nodes
 

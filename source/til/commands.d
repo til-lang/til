@@ -606,6 +606,31 @@ static this()
         return context.error(message, code, classe);
     };
 
+    // ---------------------------------------------
+    // Debugging
+    commands["assert"] = (string path, CommandContext context)
+    {
+        while (context.size)
+        {
+            SimpleList target = context.pop!SimpleList();
+            target.forceEvaluate(context);
+
+            auto evaluatedTarget = context.peek();
+
+            context.run(&boolean, 1);
+
+            auto isTrue = context.pop!bool();
+            if (!isTrue)
+            {
+                auto msg = "assertion error: " ~ evaluatedTarget.toString();
+                return context.error(msg, ErrorCode.Assertion, "");
+            }
+        }
+
+        context.exitCode = ExitCode.CommandSuccess;
+        return context;
+    };
+
     // ---------------------------------------
     // Dict:
     commands["dict"] = (string path, CommandContext context)
@@ -875,7 +900,6 @@ static this()
     };
     simpleListCommands["eval"] = (string path, CommandContext context)
     {
-        // Expect a SimpleList:
         auto list = context.pop();
 
         // Force evaluation:
@@ -883,6 +907,18 @@ static this()
 
         newContext.exitCode = ExitCode.CommandSuccess;
         return newContext;
+    };
+    simpleListCommands["expand"] = (string path, CommandContext context)
+    {
+        SimpleList list = context.pop!SimpleList();
+
+        foreach (item; list.items.retro)
+        {
+            context.push(item);
+        }
+
+        context.exitCode = ExitCode.CommandSuccess;
+        return context;
     };
     simpleListCommands["range"] = (string path, CommandContext context)
     {

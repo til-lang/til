@@ -445,7 +445,7 @@ class Parser
                 }
                 token = new char[0];
             }
-            else
+            else if (currentChar != '"')
             {
                 token ~= consumeChar();
             }
@@ -469,10 +469,14 @@ class Parser
             debug {stderr.writeln("new SubstString: ", parts);}
             return new SubstString(parts);
         }
-        else
+        else if (parts.length)
         {
             debug {stderr.writeln("new String: ", parts);}
             return new String(parts[0]);
+        }
+        else
+        {
+            return new String("");
         }
     }
 

@@ -33,6 +33,8 @@ class ProcessFiber : Fiber
 class Scheduler
 {
     ProcessFiber[] fibers = null;
+    ProcessFiber[] activeFibers = null;
+
     this(Process process)
     {
         this([process]);
@@ -48,7 +50,9 @@ class Scheduler
     Pid add(Process process)
     {
         process.scheduler = this;
-        fibers ~= new ProcessFiber(process);
+        auto processFiber = new ProcessFiber(process);
+        this.fibers ~= processFiber;
+        this.activeFibers ~= processFiber;
         return new Pid(process);
     }
 
@@ -60,7 +64,7 @@ class Scheduler
             activeCounter = 0;
             ProcessFiber[] finishedFibers;
 
-            foreach(fiber; fibers)
+            foreach(fiber; activeFibers)
             {
                 if (fiber.state == Fiber.State.TERM)
                 {
@@ -79,9 +83,11 @@ class Scheduler
             }
 
             // Clean up finished fibers:
-            if (finishedFibers.length != 0)
+            if (activeCounter > 0 && finishedFibers.length != 0)
             {
-                fibers = array(fibers.filter!(item => !finishedFibers.canFind(item)));
+                activeFibers = array(
+                    activeFibers.filter!(item => !finishedFibers.canFind(item))
+                );
             }
         } while (activeCounter > 0);
 

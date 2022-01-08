@@ -12,7 +12,7 @@ debug
 
 enum ErrorCode
 {
-    Unknown,
+    Unknown = 1,
     InternalError,
     CommandNotFound,
     InvalidArgument,
@@ -22,6 +22,7 @@ enum ErrorCode
     Full,
     Overflow,
     Underflow,
+    Assertion,
 }
 
 

@@ -1,37 +1,24 @@
 print "START"
 
-range 5 | foreach x {
-    print $x
+proc test_range (args expected_result) {
+    print "args: $args"
+    print "expected_result: $expected_result"
+    set s ""
+    range [expand $args] | foreach x {
+        set s "$s $x"
+    }
+    assert ($s == $expected_result)
+    print "---"
 }
-print "---"
-
-range 10 23 3 | foreach x {
-    print $x
-}
-print "---"
-
-range 100 123 3 | foreach x {
-    print $x
-}
-print "---"
-
-range 3 | foreach x {
-    print "range 3: $x"
-}
-print "---"
-
-range 3 5 | foreach x {
-    print "range 3 5: $x"
-}
-print "---"
-
-range 5 15 4 | foreach x {
-    print "range 5 15 4: $x"
-}
-print "---"
+test_range (5) " 0 1 2 3 4 5"
+test_range (10 23 3) " 10 13 16 19 22"
+test_range (3 5) " 3 4 5"
+test_range (5 15 4) " 5 9 13"
 
 set r [range 3]
+set s ""
 push $r | foreach x {
-    print $x
+    set s "$s $x"
 }
+assert ($s == " 0 1 2 3")
 print "END"
