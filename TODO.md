@@ -1,6 +1,5 @@
 # TODO
 
-* Act like a shell and run system commands automatically
 * set sorted [sort $list]
 * if ([contains $list item]) { ... }
 * test (?) -- To create unit tests, maybe...

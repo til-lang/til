@@ -1,0 +1,27 @@
+print "START"
+
+proc ls (path) {
+    print "path: $path"
+    set p [exec ls $path]
+    push $p | foreach line {
+        print "ls> $line"
+    }
+    print " done:" <$p returncode>
+
+    if (<$p returncode> != 0) {
+        set e <$p error>
+        push $e | foreach line {
+            print "ls.error> $line"
+        }
+    }
+}
+
+ls "/"
+ls "/blobs"
+
+print "Piping test:"
+exec ls "/" | exec grep "etc" | foreach x {
+    print $x
+}
+
+print "END"

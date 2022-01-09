@@ -11,6 +11,7 @@ import til.grammar;
 
 import til.conv;
 import til.exceptions;
+import til.exec;
 import til.logic;
 import til.modules;
 import til.nodes;
@@ -111,6 +112,28 @@ static this()
         {
             context.exitCode = ExitCode.CommandSuccess;
         }
+        return context;
+    };
+
+    // ---------------------------------------------
+    // System commands
+    commands["exec"] = (string path, CommandContext context)
+    {
+        string[] command;
+        ListItem inputStream;
+
+        if (context.hasInput)
+        {
+            command = context.pop(context.size - 1).map!(x => to!string(x)).array;
+            inputStream = context.pop();
+        }
+        else
+        {
+            command = context.items.map!(x => to!string(x)).array;
+        }
+
+        context.push(new SystemProcess(command, inputStream));
+        context.exitCode = ExitCode.CommandSuccess;
         return context;
     };
 

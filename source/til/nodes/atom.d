@@ -47,6 +47,8 @@ class NameAtom : Atom
         {
             case "==":
                 return new BooleanAtom(to!string(this) == to!string(rhs));
+            case "!=":
+                return new BooleanAtom(to!string(this) != to!string(rhs));
             default:
                 return super.operate(operator, rhs, reversed);
         }
@@ -136,6 +138,8 @@ class IntegerAtom : Atom
                 // Logic:
                 case "==":
                     return new BooleanAtom(this.value == t2.value);
+                case "!=":
+                    return new BooleanAtom(this.value != t2.value);
                 case ">":
                     return new BooleanAtom(this.value > t2.value);
                 case ">=":
@@ -164,6 +168,8 @@ class IntegerAtom : Atom
                 // Logic:
                 case "==":
                     return new BooleanAtom(this.value == t2.value);
+                case "!=":
+                    return new BooleanAtom(this.value != t2.value);
                 case ">":
                     return new BooleanAtom(this.value > t2.value);
                 case ">=":
@@ -252,6 +258,8 @@ class FloatAtom : Atom
             // Logic:
             case "==":
                 return new BooleanAtom(this.value == t2.value);
+            case "!=":
+                return new BooleanAtom(this.value != t2.value);
             case ">":
                 return new BooleanAtom(this.value > t2.value);
             case ">=":
