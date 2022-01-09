@@ -1,10 +1,6 @@
 # TODO
 
-* push $list x
-* set x [pop $list]
-* push.front $list x
 * set sorted [sort $list]
-* set new_list [cat $list_1 item $list_2]
 * if ([contains $list item]) { ... }
 * test (?) -- To create unit tests, maybe...
 

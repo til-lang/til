@@ -1,3 +1,5 @@
+print "START"
+
 print [math [
     set a 1
     set b 2
@@ -9,3 +11,22 @@ set x 10
 set y 20
 set terms ($x + $y)
 print [math $terms]
+
+print "push and pop:"
+set lista (1 2)
+print "lista: $lista"
+push $lista 3
+print "lista after push: $lista"
+set item [pop $lista]
+print "lista after pop: $lista"
+print " popped item: $item"
+
+print "concatenation:"
+set list1 (1 2)
+set item 3
+set list2 (4 5)
+set lista [list [expand $list1] $item [expand $list2]]
+print "concatenated list: $lista"
+print " expected: 1 2 3 4 5"
+
+print "END"

@@ -976,28 +976,6 @@ static this()
         context.exitCode = ExitCode.CommandSuccess;
         return context;
     };
-    simpleListCommands["eval"] = (string path, CommandContext context)
-    {
-        auto list = context.pop();
-
-        // Force evaluation:
-        auto newContext = list.evaluate(context, true);
-
-        newContext.exitCode = ExitCode.CommandSuccess;
-        return newContext;
-    };
-    simpleListCommands["expand"] = (string path, CommandContext context)
-    {
-        SimpleList list = context.pop!SimpleList();
-
-        foreach (item; list.items.retro)
-        {
-            context.push(item);
-        }
-
-        context.exitCode = ExitCode.CommandSuccess;
-        return context;
-    };
     simpleListCommands["range"] = (string path, CommandContext context)
     {
         /*
@@ -1060,6 +1038,58 @@ static this()
         {
             context.push(item);
         }
+        context.exitCode = ExitCode.CommandSuccess;
+        return context;
+    };
+
+    // ---------------------------------------
+    // SimpleList commands:
+    simpleListCommands["eval"] = (string path, CommandContext context)
+    {
+        auto list = context.pop();
+
+        // Force evaluation:
+        auto newContext = list.evaluate(context, true);
+
+        newContext.exitCode = ExitCode.CommandSuccess;
+        return newContext;
+    };
+    simpleListCommands["expand"] = (string path, CommandContext context)
+    {
+        SimpleList list = context.pop!SimpleList();
+
+        foreach (item; list.items.retro)
+        {
+            context.push(item);
+        }
+
+        context.exitCode = ExitCode.CommandSuccess;
+        return context;
+    };
+    simpleListCommands["push"] = (string path, CommandContext context)
+    {
+        SimpleList list = context.pop!SimpleList();
+
+        Items items = context.items;
+        list.items ~= items;
+
+        context.exitCode = ExitCode.CommandSuccess;
+        return context;
+    };
+    simpleListCommands["pop"] = (string path, CommandContext context)
+    {
+        SimpleList list = context.pop!SimpleList();
+
+        if (list.items.length == 0)
+        {
+            auto msg = "Cannot pop: the list is empty";
+            return context.error(msg, ErrorCode.Empty, "");
+        }
+
+        auto lastItem = list.items[$-1];
+        context.push(lastItem);
+        list.items.popBack;
+
         context.exitCode = ExitCode.CommandSuccess;
         return context;
     };
