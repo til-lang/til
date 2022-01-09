@@ -398,9 +398,7 @@ class Parser
         assert(open == '"');
 
         char[] token;
-        string[] parts;
-        bool[] substitutions;
-        bool hasSubstitutions;
+        StringPart[] parts;
 
         ulong index = 0;
         do 
@@ -409,8 +407,7 @@ class Parser
             {
                 if (token.length)
                 {
-                    parts ~= cast(string)token;
-                    substitutions ~= false;
+                    parts ~= new StringPart(token, false);
                     token = new char[0];
                 }
 
@@ -436,9 +433,7 @@ class Parser
                         consumeChar();
                     }
 
-                    parts ~= cast(string)token;
-                    substitutions ~= true;
-                    hasSubstitutions = true;
+                    parts ~= new StringPart(token, true);
                 }
                 else
                 {
@@ -471,23 +466,22 @@ class Parser
         // the first part, always:
         if (token.length)
         {
-            parts ~= cast(string)token;
-            substitutions ~= false;
+            parts ~= new StringPart(token, false);
         }
 
         auto close = consumeChar();
         assert(close == '"');
 
         pop();
-        if (substitutions.length != 0)
+        if (parts.length > 1)
         {
             debug {stderr.writeln("new SubstString: ", parts);}
-            return new SubstString(parts, substitutions);
+            return new SubstString(parts);
         }
-        else if (parts.length)
+        else if (parts.length == 1)
         {
             debug {stderr.writeln("new String: ", parts);}
-            return new String(parts[0]);
+            return new String(parts[0].value);
         }
         else
         {

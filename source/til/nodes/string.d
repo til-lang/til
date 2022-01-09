@@ -109,16 +109,31 @@ class String : ListItem
     }
 }
 
+// Part of a SubstString
+class StringPart
+{
+    string value;
+    bool isName;
+    this(string value, bool isName)
+    {
+        this.value = value;
+        this.isName = isName;
+    }
+    this(char[] chr, bool isName)
+    {
+        this(cast(string)chr, isName);
+    }
+}
+
+
 class SubstString : String
 {
-    string[] parts;
-    bool[] substitutions;
+    StringPart[] parts;
 
-    this(string[] parts, bool[] substitutions)
+    this(StringPart[] parts)
     {
         super("");
         this.parts = parts;
-        this.substitutions = substitutions;
         this.type = ObjectType.String;
     }
 
@@ -135,24 +150,21 @@ class SubstString : String
         string result;
         string value;
 
-        debug {
-            stderr.writeln("string.evaluate.substitutions:", substitutions);
-        }
-        foreach(index, part; parts)
+        foreach(part; parts)
         {
             debug {
-                stderr.writeln("index:", index, "; part:", part);
+                stderr.writeln("SubstString.part:", part);
             }
-            if (substitutions[index])
+            if (part.isName)
             {
-                Items values = context.escopo[part];
+                Items values = context.escopo[part.value];
                 result ~= to!string(values
                     .map!(x => to!string(x))
                     .joiner(" "));
             }
             else
             {
-                result ~= part;
+                result ~= part.value;
             }
         }
 
