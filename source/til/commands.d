@@ -1093,6 +1093,15 @@ static this()
         context.exitCode = ExitCode.CommandSuccess;
         return context;
     };
+    simpleListCommands["sorted"] = (string path, CommandContext context)
+    {
+        SimpleList list = context.pop!SimpleList();
+
+        // TODO: sort the items.
+        context.push(new SimpleList(list.items));
+        context.exitCode = ExitCode.CommandSuccess;
+        return context;
+    };
 
     // ---------------------------------------
     // Pids:

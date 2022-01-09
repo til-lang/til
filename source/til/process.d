@@ -76,7 +76,7 @@ class Process
             }
             else
             {
-                throw new Exception(name ~ " variable not found!");
+                throw new Exception("`" ~ name ~ "` variable not found!");
             }
         }
         else

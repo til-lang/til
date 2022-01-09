@@ -399,24 +399,25 @@ class Parser
 
         char[] token;
         string[] parts;
-        bool hasSubstitutions = false;
+        bool[] substitutions;
+        bool hasSubstitutions;
 
+        ulong index = 0;
         do 
         {
             if (currentChar == '$')
             {
-                hasSubstitutions = true;
                 if (token.length)
                 {
                     parts ~= cast(string)token;
+                    substitutions ~= false;
                     token = new char[0];
                 }
 
+                // Consume the '$':
+                consumeChar();
+
                 // Current part:
-
-                // Add the '$' in front of current part:
-                token ~= consumeChar();
-
                 bool enclosed = (currentChar == '{');
                 if (enclosed) consumeChar();
 
@@ -427,31 +428,35 @@ class Parser
                     token ~= consumeChar();
                 }
 
-                if (token.length > 1)
+                if (token.length != 0)
                 {
                     if (enclosed)
                     {
                         assert(currentChar == '}');
                         consumeChar();
                     }
+
                     parts ~= cast(string)token;
+                    substitutions ~= true;
+                    hasSubstitutions = true;
                 }
                 else
                 {
                     throw new Exception(
                         "Invalid string: "
-                        ~ to!string(parts)
-                        ~ cast(string)token
+                        ~ "parts:" ~  to!string(parts)
+                        ~ "; token:" ~ cast(string)token
+                        ~ "; length:" ~ to!string(token.length)
                     );
                 }
                 token = new char[0];
             }
             else if (currentChar == '\\')
             {
-                // Discard it:
+                // Discard the escape charater:
                 consumeChar();
 
-                // Add the next char, whatever it is:
+                // And add the next char, whatever it is:
                 token ~= consumeChar();
             }
             else if (currentChar != '"')
@@ -467,16 +472,17 @@ class Parser
         if (token.length)
         {
             parts ~= cast(string)token;
+            substitutions ~= false;
         }
 
         auto close = consumeChar();
         assert(close == '"');
 
         pop();
-        if (hasSubstitutions)
+        if (substitutions.length != 0)
         {
             debug {stderr.writeln("new SubstString: ", parts);}
-            return new SubstString(parts);
+            return new SubstString(parts, substitutions);
         }
         else if (parts.length)
         {

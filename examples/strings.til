@@ -4,4 +4,12 @@ print "A string with a \$ (dollar sign) in it."
 print "A string with a \" (double quote) in it."
 print "A string with a \\ (backslash) in it."
 
+set value 123
+print "value:" $value
+print "value is $value"
+set s "\$value is $value"
+print $s
+assert ($s == "\$value is 123")
+print "ok: $s"
+
 print "END"

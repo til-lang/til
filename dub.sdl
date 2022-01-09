@@ -14,6 +14,7 @@ subPackage {
     targetPath "dist"
     targetName "til"
     dflags "-link-defaultlib-shared" "-L-L$LIBTIL_PATH" "-L-ltil"
+    dependency "editline-d" version="~>0.0.1"
 }
 
 subPackage {

@@ -8,6 +8,8 @@ import til.grammar;
 import til.nodes;
 import til.scheduler;
 
+import til.interpreter.repl;
+
 
 class InterpreterInput : Item
 {
@@ -68,6 +70,11 @@ int main(string[] args)
     {
         auto sw = StopWatch(AutoStart.no);
         sw.start();
+    }
+
+    if (args.length == 1)
+    {
+        return repl();
     }
 
     auto filename = args[1];

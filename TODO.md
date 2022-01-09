@@ -1,5 +1,6 @@
 # TODO
 
+* Act like a shell and run system commands automatically
 * set sorted [sort $list]
 * if ([contains $list item]) { ... }
 * test (?) -- To create unit tests, maybe...
@@ -10,16 +11,9 @@ test "conversion to float" {
 }
 ```
 
-## Utilities
-
-* Debugging system for the language itself.
-* REPL - (it would be very nice to allow multi-line commands).
-
 ## Language-wise
 
-* Should we act like a shell and run system commands automatically???
-* Improve error messages about compilation/syntax.
-* Procs can be considered "higher order" or not?
+* Procs can be considered "higher order" or not? Do they need to?
 * Should we be able to "append" new methods to already defined types?
 * Profiling!
 

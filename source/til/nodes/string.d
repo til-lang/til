@@ -112,11 +112,13 @@ class String : ListItem
 class SubstString : String
 {
     string[] parts;
+    bool[] substitutions;
 
-    this(string[] parts)
+    this(string[] parts, bool[] substitutions)
     {
         super("");
         this.parts = parts;
+        this.substitutions = substitutions;
         this.type = ObjectType.String;
     }
 
@@ -133,26 +135,24 @@ class SubstString : String
         string result;
         string value;
 
-        foreach(part;parts)
+        debug {
+            stderr.writeln("string.evaluate.substitutions:", substitutions);
+        }
+        foreach(index, part; parts)
         {
-            if (part[0] != '$')
+            debug {
+                stderr.writeln("index:", index, "; part:", part);
+            }
+            if (substitutions[index])
             {
-                result ~= part;
+                Items values = context.escopo[part];
+                result ~= to!string(values
+                    .map!(x => to!string(x))
+                    .joiner(" "));
             }
             else
             {
-                auto key = part[1..$];
-                Items values = context.escopo[key];
-                if (values is null)
-                {
-                    result ~= "<?" ~ key ~ "?>";
-                }
-                else
-                {
-                    result ~= to!string(values
-                        .map!(x => to!string(x))
-                        .joiner(" "));
-                }
+                result ~= part;
             }
         }
 
