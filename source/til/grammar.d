@@ -33,6 +33,14 @@ static this()
     units['G'] = 3;
 }
 
+class IncompleteInputException : Exception
+{
+    this(string msg)
+    {
+        super(msg);
+    }
+}
+
 class Parser
 {
     size_t index = 0;
@@ -97,7 +105,7 @@ class Parser
     {
         if (eof)
         {
-            throw new Exception("Code input already ended");
+            throw new IncompleteInputException("Code input already ended");
         }
         debug {
             if (code[index] == EOL)

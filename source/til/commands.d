@@ -41,6 +41,18 @@ static this()
         context.exitCode = ExitCode.CommandSuccess;
         return context;
     };
+    commands["pop"] = (string path, CommandContext context)
+    {
+        context.size++;
+        context.exitCode = ExitCode.CommandSuccess;
+        return context;
+    };
+    commands["stack"] = (string path, CommandContext context)
+    {
+        context.size = cast(int)context.escopo.stackPointer;
+        context.exitCode = ExitCode.CommandSuccess;
+        return context;
+    };
 
     // ---------------------------------------------
     // Modules / includes
@@ -424,6 +436,12 @@ static this()
     {
         // proc name (parameters) {body}
 
+        if (context.size != 3)
+        {
+            auto msg = "`proc` expects three arguments";
+            return context.error(msg, ErrorCode.InvalidArgument, "");
+        }
+
         string name = context.pop!string();
         auto parameters = context.pop!SimpleList();
         auto body = context.pop!SubList();
@@ -515,7 +533,7 @@ static this()
 
         if (context.size == 0)
         {
-            auto msg = "`spawn` expect at least one argument";
+            auto msg = "`spawn` expects at least one argument";
             return context.error(msg, ErrorCode.InvalidArgument, "");
         }
 
@@ -635,7 +653,7 @@ static this()
     {
         if (context.size > 1)
         {
-            auto msg = "`write` expect only one argument";
+            auto msg = "`write` expects only one argument";
             return context.error(msg, ErrorCode.InvalidArgument, "");
         }
         context.escopo.output.write(context.pop());
@@ -1162,7 +1180,7 @@ static this()
     {
         if (context.size != 2)
         {
-            auto msg = "`send` expect two arguments";
+            auto msg = "`send` expects two arguments";
             return context.error(msg, ErrorCode.InvalidArgument, "");
         }
 
@@ -1183,7 +1201,7 @@ static this()
     {
         if (context.size > 2)
         {
-            auto msg = "`send` expect only two arguments";
+            auto msg = "`send` expects only two arguments";
             return context.error(msg, ErrorCode.InvalidArgument, "");
         }
         Pid pid = cast(Pid)context.pop();
@@ -1393,7 +1411,7 @@ static this()
     {
         if (context.size != 1)
         {
-            auto msg = "`receive` expect one argument";
+            auto msg = "`receive` expects one argument";
             return context.error(msg, ErrorCode.InvalidArgument, "");
         }
 
@@ -1430,7 +1448,7 @@ static this()
     {
         if (context.size != 1)
         {
-            auto msg = "`receive` expect one argument";
+            auto msg = "`receive` expects one argument";
             return context.error(msg, ErrorCode.InvalidArgument, "");
         }
 

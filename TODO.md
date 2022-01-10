@@ -1,5 +1,6 @@
 # TODO
 
+* BUG: `print [math (($x + 1) * 10)]`
 * test (?) -- To create unit tests, maybe...
 
 ```tcl
@@ -7,6 +8,10 @@ test "conversion to float" {
     assert ([to.float "1.23"] == 1.23])
 }
 ```
+
+* curl
+* JSON
+* Vectors!
 
 ## Language-wise
 

@@ -1,7 +1,7 @@
 module til.interpreter.repl;
 
 import std.stdio;
-import std.string : fromStringz;
+import std.string : fromStringz, toStringz;
 
 import til.commands;
 import til.exceptions;
@@ -16,29 +16,68 @@ int repl()
 {
     auto process = new Process(null);
     process.commands = commands;
+    string command;
 
+    process["prompt"] = new String("> ");
+
+mainLoop:
     while (true)
     {
-        auto line = readline("> ");
-        if (line is null)
+        auto prompt = process["prompt"][0].toString();
+
+        while (true)
         {
+            auto line = readline(prompt.toStringz());
+            if (line is null)
+            {
+                break mainLoop;
+            }
+            command ~= to!string(line.fromStringz()) ~ "\n";
+            if (command.length == 0)
+            {
+                continue;
+            }
+            auto parser = new Parser(command);
+            try
+            {
+                process.program = parser.consumeSubProgram();
+            }
+            catch (IncompleteInputException)
+            {
+                prompt = "... ";
+                continue;
+            }
             break;
         }
-        string command = to!string(line.fromStringz());
-        if (command.length == 0)
-        {
-            continue;
-        }
-        stdout.writeln("[" ~ to!string(line.fromStringz()) ~ "]");
-        add_history(line);
 
-        auto parser = new Parser(command);
+        stdout.writeln("[" ~ command ~ "]");
+        add_history(command.toStringz());
+
         process.state = ProcessState.New;
-        process.program = parser.run();
         auto scheduler = new Scheduler(process);
-        scheduler.run();
+        ExitCode exitCode = scheduler.run();
+        command = "";
+
+        foreach (fiber; scheduler.fibers)
+        {
+            if (fiber.context.exitCode != ExitCode.Proceed)
+            {
+                stdout.writeln("Process ", fiber.process.index, ":");
+                stderr.writeln(" exitCode ", fiber.context.exitCode);
+                foreach (item; fiber.context.items)
+                {
+                    stderr.writeln(" ", item);
+                }
+            }
+            else
+            {
+                foreach (item; fiber.context.items)
+                {
+                    stdout.writeln(" ", item);
+                }
+            }
+        }
     }
-    stdout.writeln("exiting repl...");
     clear_history();
 
     return 0;
