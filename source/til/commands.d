@@ -1,11 +1,12 @@
 module til.commands;
 
-import std.algorithm.iteration : map, joiner;
+import std.algorithm.iteration : joiner, map;
+import std.algorithm.searching : canFind;
+import std.algorithm.sorting : sort;
 import std.array;
 import std.conv : to, ConvException;
 import std.file : read;
 import std.stdio;
-import std.string : toLower;
 
 import til.grammar;
 
@@ -1116,14 +1117,64 @@ static this()
         context.exitCode = ExitCode.CommandSuccess;
         return context;
     };
-    simpleListCommands["sorted"] = (string path, CommandContext context)
+    simpleListCommands["sort"] = (string path, CommandContext context)
     {
         SimpleList list = context.pop!SimpleList();
 
-        // TODO: sort the items.
-        context.push(new SimpleList(list.items));
+        class Comparator
+        {
+            ListItem item;
+            this(ListItem item)
+            {
+                this.item = item;
+            }
+
+            override int opCmp(Object o)
+            {
+                Comparator other = cast(Comparator)o;
+                BooleanAtom result = cast(BooleanAtom)item.operate("<", other.item, false);
+                if (result.value)
+                {
+                    return -1;
+                }
+                else
+                {
+                    return 0;
+                }
+            }
+        }
+
+        Comparator[] comparators = list.items.map!(x => new Comparator(x)).array;
+        Items sorted = comparators.sort.map!(x => x.item).array;
+        context.push(new SimpleList(sorted));
         context.exitCode = ExitCode.CommandSuccess;
         return context;
+    };
+    simpleListCommands["reverse"] = (string path, CommandContext context)
+    {
+        SimpleList list = context.pop!SimpleList();
+        Items reversed = list.items.retro.array;
+        context.push(new SimpleList(reversed));
+        context.exitCode = ExitCode.CommandSuccess;
+        return context;
+    };
+    simpleListCommands["contains"] = (string path, CommandContext context)
+    {
+        if (context.size != 2)
+        {
+            auto msg = "`send` expect two arguments";
+            return context.error(msg, ErrorCode.InvalidArgument, "");
+        }
+
+        SimpleList list = context.pop!SimpleList();
+        ListItem item = context.pop();
+
+        context.exitCode = ExitCode.CommandSuccess;
+        return context.push(
+            list.items
+                .map!(x => to!string(x))
+                .canFind(to!string(item))
+        );
     };
 
     // ---------------------------------------
@@ -1141,57 +1192,6 @@ static this()
         // Process input should be a Queue:
         Queue input = cast(Queue)pid.process.input;
         input.push(value);
-
-        context.exitCode = ExitCode.CommandSuccess;
-        return context;
-    };
-    pidCommands["is_running"] = (string path, CommandContext context)
-    {
-        if (context.size == 0)
-        {
-            auto msg = "`is_running` expect a Pid as argument";
-            return context.error(msg, ErrorCode.InvalidArgument, "");
-        }
-
-        Pid pid = cast(Pid)context.pop();
-        context.push(pid.process.state != ProcessState.Finished);
-
-        context.exitCode = ExitCode.CommandSuccess;
-        return context;
-    };
-    pidCommands["state"] = (string path, CommandContext context)
-    {
-        if (context.size == 0)
-        {
-            auto msg = "`state` expect a Pid as argument";
-            return context.error(msg, ErrorCode.InvalidArgument, "");
-        }
-
-        Pid pid = cast(Pid)context.pop();
-        string state = to!string(pid.process.state).toLower();
-        context.push(state);
-
-        context.exitCode = ExitCode.CommandSuccess;
-        return context;
-    };
-    pidCommands["exit_code"] = (string path, CommandContext context)
-    {
-        if (context.size == 0)
-        {
-            auto msg = "`state` expect a Pid as argument";
-            return context.error(msg, ErrorCode.InvalidArgument, "");
-        }
-
-        Pid pid = cast(Pid)context.pop();
-        CommandContext processContext = pid.fiber.context;
-        // XXX: is it correct???
-        if (&processContext is null)
-        {
-            auto msg = "Process " ~ to!string(pid.process.index) ~ " is still running";
-            return context.error(msg, ErrorCode.SemanticError, "");
-        }
-        string exit_code = to!string(processContext.exitCode).toLower();
-        context.push(exit_code);
 
         context.exitCode = ExitCode.CommandSuccess;
         return context;

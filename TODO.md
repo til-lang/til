@@ -1,7 +1,5 @@
 # TODO
 
-* set sorted [sort $list]
-* if ([contains $list item]) { ... }
 * test (?) -- To create unit tests, maybe...
 
 ```tcl

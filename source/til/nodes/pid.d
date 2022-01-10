@@ -1,6 +1,7 @@
 module til.nodes.pid;
 
 import std.conv : to;
+import std.string : toLower;
 
 import til.nodes;
 import til.scheduler : ProcessFiber;
@@ -34,6 +35,21 @@ class Pid : ListItem
         {
             case "state":
                 return context.push(to!string(process.state));
+
+            case "is_running":
+                return context.push(process.state != ProcessState.Finished);
+
+            case "exit_code":
+                CommandContext processContext = fiber.context;
+
+                // XXX: is it correct???
+                if (&processContext is null)
+                {
+                    auto msg = "Process " ~ to!string(process.index) ~ " is still running";
+                    return context.error(msg, ErrorCode.SemanticError, "");
+                }
+                string exit_code = to!string(processContext.exitCode).toLower();
+                return context.push(exit_code);
 
             default:
                 auto msg = "Invalid argument to Pid extraction";

@@ -29,4 +29,10 @@ set lista [list [expand $list1] $item [expand $list2]]
 print "concatenated list: $lista"
 print " expected: 1 2 3 4 5"
 
+print "contains"
+set list3 (1 2 3 4)
+set item 4
+assert ([contains $list3 $item])
+print "list $list3 contains $item"
+
 print "END"

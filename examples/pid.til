@@ -12,17 +12,17 @@ proc procedure () {
 
 set pid [spawn procedure]
 
-assert ([is_running $pid])
+assert (<$pid is_running>)
 print "$pid is running"
 
-set state [state $pid]
+set state <$pid state>
 print " the state is $state"
 
 send $pid "quit"
 
 set not_running false
 range 128 | foreach x {
-    if ([is_running $pid] == false) {
+    if (<$pid is_running> == false) {
         set not_running true
         break
     }
@@ -30,10 +30,10 @@ range 128 | foreach x {
 assert ($not_running)
 print " and now, $pid is not running anymore"
 
-set state [state $pid]
+set state <$pid state>
 print " the state is $state"
 
-set exit_code [exit_code $pid]
+set exit_code <$pid exit_code>
 print " and the exit_code is $exit_code"
 
 print "END"

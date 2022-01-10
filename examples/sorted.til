@@ -1,0 +1,11 @@
+print "START"
+
+set list (30 20 10 0 40)
+print "list: $list"
+set sorted [sort $list]
+print "sorted: $sorted"
+
+set r [reverse $sorted]
+print "reversed: $r"
+
+print "END"
