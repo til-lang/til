@@ -1,28 +1,40 @@
+print "START"
+
+proc test (formula expected_result) {
+    assert ([math $formula] == $expected_result)
+    print "$formula = $expected_result"
+}
 print "Integer math:"
-print "1 * 0: " [math (1 * 0)]
-print "1 + 0: " [math (1 + 0)]
-print "4 / 2: " [math (4 / 2)]
-print "5 - 2: " [math (5 - 2)]
-print "1 + 2 * 3: " [math (1 + 2 * 3)]
+test (1 * 0) 0
+test (1 + 0) 1
+test (4 / 2) 2
+test (5 - 2) 3
+test (1 + 2 * 3) 7
 
 print "Float math:"
 print " Float : Integer"
-print "1.1 * 0: " [math (1.1 * 0)]
-print "1.2 + 0: " [math (1.2 + 0)]
-print "4.3 / 2: " [math (4.3 / 2)]
-print "5.4 - 2: " [math (5.4 - 2)]
-print "1.5 + 2 * 3: " [math (1.5 + 2 * 3)]
+test (1.1 * 0) 0
+test (1.2 + 0) 1.2
+test (4.3 / 2) 2.15
+test (5.4 - 2) 3.4
+test (1.5 + 2 * 3) 7.5
 
 print " Integer : Float"
-print "1 * 0.1: " [math (1 * 0.1)]
-print "1 + 0.2: " [math (1 + 0.2)]
-print "4 / 2.3: " [math (4 / 2.3)]
-print "5 - 2.4: " [math (5 - 2.4)]
-print "1 + 2.5 * 3: " [math (1 + 2.5 * 3)]
+test (1 * 0.1) 0.1
+test (1 + 0.2) 1.2
+
+set r [math (4 / 2.3)]
+assert (1.73 < $r && $r < 1.74)
+print "1.73 < $r < 1.74"
+
+test (5 - 2.4) 2.6
+test (2 + 2.5 * 2) 7
 
 print " Float : Float"
-print "1.1 * 0.1: " [math (1.1 * 0.1)]
-print "1.2 + 0.2: " [math (1.2 + 0.2)]
-print "4.3 / 2.3: " [math (4.3 / 2.3)]
-print "5.4 - 2.4: " [math (5.4 - 2.4)]
-print "1.5 + 2.5 * 3.5: " [math (1.5 + 2.5 * 3.5)]
+test (1.1 * 0.1) 0.11
+test (1.2 + 0.2) 1.4
+test (4.3 / 2.3) 1.86957
+test (5.4 - 2.4) 3
+test (2.7 + 2.5 * 2.0) 7.7
+
+print "END"

@@ -1,6 +1,17 @@
 # TODO
 
 * BUG: `print [math (($x + 1) * 10)]`
+* `object.Exception@source/til/process.d(79): <x> variable not found!`
+    * Make it an context.error.
+* improve extractions: get rid of SimpleLists as arguments
+    * for list ranges, use a command, like `range $lista 0 5`
+* strings
+    * split
+    * join
+    * find
+* regexps
+* get the script's command line arguments
+
 * test (?) -- To create unit tests, maybe...
 
 ```tcl
@@ -9,8 +20,16 @@ test "conversion to float" {
 }
 ```
 
-* curl
+* ExitCode.Skip
+* Allow `transform` to skip
+* Allow `foreach` to skip
+
+* range 0 10 | zip [range 20 30] -> (0 20) , (1 21) , ...
+
+* Jinja-like templates
 * JSON
+* protobuf
+* curl
 * Vectors!
 
 ## Language-wise

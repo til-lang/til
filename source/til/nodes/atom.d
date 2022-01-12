@@ -1,5 +1,7 @@
 module til.nodes.atom;
 
+import std.math.rounding : nearbyint;
+
 import til.nodes;
 
 debug
@@ -8,6 +10,7 @@ debug
 }
 
 CommandHandler[string] integerCommands;
+CommandHandler[string] floatCommands;
 CommandHandler[string] nameCommands;
 
 
@@ -203,6 +206,7 @@ class FloatAtom : Atom
     {
         this.value = value;
         this.type = ObjectType.Float;
+        this.commands = floatCommands;
     }
     override bool toBool()
     {
@@ -255,20 +259,6 @@ class FloatAtom : Atom
 
         switch(operator)
         {
-            // Logic:
-            case "==":
-                return new BooleanAtom(this.value == t2.value);
-            case "!=":
-                return new BooleanAtom(this.value != t2.value);
-            case ">":
-                return new BooleanAtom(this.value > t2.value);
-            case ">=":
-                return new BooleanAtom(this.value >= t2.value);
-            case "<":
-                return new BooleanAtom(this.value < t2.value);
-            case "<=":
-                return new BooleanAtom(this.value <= t2.value);
-
             // Math:
             case "+":
                 return new FloatAtom(this.value + t2.value);
@@ -279,6 +269,30 @@ class FloatAtom : Atom
             case "/":
                 return new FloatAtom(this.value / t2.value);
 
+            default:
+                break;
+        }
+
+        // TODO: use something like a `scale` variable to control this:
+        auto v1 = nearbyint(this.value * 100000);
+        auto v2 = nearbyint(t2.value * 100000);
+
+        switch(operator)
+        {
+
+            // Logic:
+            case "==":
+                return new BooleanAtom(v1 == v2);
+            case "!=":
+                return new BooleanAtom(v1 != v2);
+            case ">":
+                return new BooleanAtom(v1 > v2);
+            case ">=":
+                return new BooleanAtom(v1 >= v2);
+            case "<":
+                return new BooleanAtom(v1 < v2);
+            case "<=":
+                return new BooleanAtom(v1 <= v2);
             default:
                 return null;
         }
