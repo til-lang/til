@@ -12,4 +12,15 @@ print $s
 assert ($s == "\$value is 123")
 print "ok: $s"
 
+proc test_undefined_variable () {
+    proc on.error (e) {
+        print "Error (as expected): $e"
+    }
+
+    print "Should not print a " "$totally_undefined_variable" " in the beginning of the string"
+    print "Nor another $totally_undefined_variable anywhere in the string"
+}
+
+test_undefined_variable
+
 print "END"

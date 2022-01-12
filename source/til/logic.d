@@ -16,7 +16,7 @@ CommandContext boolean(CommandContext context)
 {
     assert(context.size == 1);
     // Resolve any math beforehand:
-    auto resolvedContext = int_run(context);
+    auto resolvedContext = math(context);
     assert(resolvedContext.size == 1);
     return pureBoolean(resolvedContext);
 }

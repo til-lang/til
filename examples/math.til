@@ -37,4 +37,11 @@ test (4.3 / 2.3) 1.86957
 test (5.4 - 2.4) 3
 test (2.7 + 2.5 * 2.0) 7.7
 
+print " Parenthesis"
+test ((1 + 1) * 2) 4
+
+set x 1
+print [math (($x + 1) * 2)]
+test (($x + 1) * 2) 4
+
 print "END"

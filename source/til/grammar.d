@@ -407,6 +407,7 @@ class Parser
 
         char[] token;
         StringPart[] parts;
+        bool hasSubstitution = false;
 
         ulong index = 0;
         do 
@@ -442,6 +443,7 @@ class Parser
                     }
 
                     parts ~= new StringPart(token, true);
+                    hasSubstitution = true;
                 }
                 else
                 {
@@ -481,7 +483,7 @@ class Parser
         assert(close == '"');
 
         pop();
-        if (parts.length > 1)
+        if (hasSubstitution)
         {
             debug {stderr.writeln("new SubstString: ", parts);}
             return new SubstString(parts);

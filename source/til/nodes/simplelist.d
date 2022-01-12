@@ -33,9 +33,9 @@ class SimpleList : BaseList
     // Utilities and operators:
     override string toString()
     {
-        return to!string(this.items
+        return "(" ~ to!string(this.items
             .map!(x => to!string(x))
-            .joiner(" "));
+            .joiner(" ")) ~ ")";
     }
 
     override CommandContext evaluate(CommandContext context, bool force)

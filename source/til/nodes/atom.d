@@ -69,19 +69,20 @@ class SubstAtom : NameAtom
 
     override CommandContext evaluate(CommandContext context)
     {
-        auto values = context.escopo[value];
-        if (values is null)
+        Items values;
+        try
         {
-            throw new Exception(
-                "Key not found: " ~ value
-            );
+            values = context.escopo[value];
         }
-        else
+        catch (NotFoundError)
         {
-            foreach(value; values.retro)
-            {
-                context.push(value);
-            }
+            auto msg = "Variable " ~ to!string(value) ~ " is not set";
+            return context.error(msg, ErrorCode.InvalidArgument, "");
+        }
+
+        foreach(value; values.retro)
+        {
+            context.push(value);
         }
 
         context.exitCode = ExitCode.Proceed;

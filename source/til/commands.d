@@ -1065,7 +1065,7 @@ static this()
         auto list = cast(SimpleList)context.pop();
         context.run(&list.forceEvaluate);
 
-        auto newContext = int_run(context);
+        auto newContext = math(context);
         if (newContext.size != 1)
         {
             auto msg = "math.run: error. Should return 1 item.\n"
@@ -1074,7 +1074,7 @@ static this()
             return context.error(msg, ErrorCode.InternalError, "til.internal");
         }
 
-        // int_run pushes a new list, but we don't want that.
+        // math pushes a new list, but we don't want that.
         auto resultList = cast(SimpleList)context.pop();
         foreach(item; resultList.items)
         {

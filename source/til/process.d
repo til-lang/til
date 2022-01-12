@@ -22,6 +22,15 @@ enum ProcessState
 }
 
 
+class NotFoundError : Exception
+{
+    this(string msg)
+    {
+        super(msg);
+    }
+}
+
+
 class Process
 {
     SubProgram program;
@@ -76,7 +85,7 @@ class Process
             }
             else
             {
-                throw new Exception("`" ~ name ~ "` variable not found!");
+                throw new NotFoundError("`" ~ name ~ "` variable not found!");
             }
         }
         else

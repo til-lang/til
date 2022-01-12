@@ -16,7 +16,7 @@ string[][2] precedences = [
     ["+", "-"],
 ];
 
-CommandContext int_run(CommandContext context)
+CommandContext math(CommandContext context)
 {
     /*
     (1 + 2 * 3)
@@ -28,13 +28,13 @@ CommandContext int_run(CommandContext context)
     CommandContext lastContext = null;
     foreach(operators; precedences)
     {
-        lastContext = int_run(context, operators);
+        lastContext = math(context, operators);
     }
     assert(context.size == 1);
     return lastContext;
 }
 
-CommandContext int_run(CommandContext context, string[] operators)
+CommandContext math(CommandContext context, string[] operators)
 {
     // There should be a SimpleList at the top of the stack.
     auto list = cast(SimpleList)context.pop();
@@ -52,10 +52,20 @@ CommandContext int_run(CommandContext context, string[] operators)
             assert(lContext.size == 1);
             // Now we have an evaluated SimpleList in the stack,
             // just like our own initial condition.
-            auto rContext = int_run(lContext);
+            auto rContext = math(lContext);
             assert(rContext.size == 1);
             // Assimilate the result into our own context:
             context.size += rContext.size;
+
+            // math should return a SimpleList with ONLY ONE ITEM:
+            // ((1 + 2) + 4) -> ((3) + 4) -> (3 + 4)
+            SimpleList resultList = cast(SimpleList)context.peek();
+            if (resultList.items.length == 1)
+            {
+                context.pop();
+                ListItem resultValue = resultList.items[0];
+                context.push(resultValue);
+            }
 
             /*
             The result (now in the stack) can be both a proper one like
@@ -89,6 +99,7 @@ CommandContext int_run(CommandContext context, string[] operators)
         resultItems ~= term;
     }
     auto resultList = new SimpleList(resultItems);
+    debug {stderr.writeln(" math return: ", resultList);}
     context.push(resultList);
     return context;
 }
