@@ -92,71 +92,28 @@ class SimpleList : BaseList
     {
         if (context.size == 0) return context.push(this);
 
-        auto firstArgument = context.pop();
-        // by indexes:
-        // <(1 2 3 4 5) (0 2 4)> → (1 3 5)
-        switch(firstArgument.type)
-        {
-            case ObjectType.Integer:
-                // by range:
-                // <(1 2 3 4 5) 0 2> → (1 2)
-                if (context.size == 1)
-                {
-                    auto nextArg = context.pop();
-                    if (nextArg.type == ObjectType.Integer)
-                    {
-                        auto start = firstArgument.toInt;
-                        auto end = nextArg.toInt;
+        // start:
+        auto start = context.pop().toInt();
 
-                        if (start < 0)
-                        {
-                            start = this.items.length + start;
-                        }
-                        if (end < 0)
-                        {
-                            end = this.items.length + end;
-                        }
-                        context.push(new SimpleList(
-                            items[start..end]
-                        ));
-                        return context;
-                    }
-                }
-                // by index:
-                // <(1 2 3) 0> → 1  (not inside any list)
-                else if (context.size == 0)
-                {
-                    auto index = firstArgument.toInt;
-                    if (index < 0)
-                    {
-                        index = this.items.length + index;
-                    }
-                    context.push(items[index]);
-                    return context;
-                }
-                break;
-            case ObjectType.Name:
-                auto str = firstArgument.toString;
-                switch(str)
-                {
-                    case "head":
-                        context.push(items[0]);
-                        return context;
-                    case "tail":
-                        context.push(new SimpleList(items[1..$]));
-                        return context;
-                    default:
-                        break;
-                }
-                break;
-            default:
-                break;
+        if (start < 0)
+        {
+            start = this.items.length + start;
         }
 
-        // else...
-        auto msg = "Extraction of "
-                   ~ to!string(firstArgument.type)
-                   ~ " not implemented in SimpleList";
-        return context.error(msg, ErrorCode.InvalidArgument, "");
+        // end:
+        auto end = start + 1;
+        if (context.size)
+        {
+            end = context.pop().toInt();
+            if (end < 0)
+            {
+                end = this.items.length + end;
+            }
+        }
+
+        // slice:
+        context.push(new SimpleList(items[start..end]));
+
+        return context;
     }
 }

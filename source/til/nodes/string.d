@@ -84,28 +84,24 @@ class String : ListItem
     override CommandContext extract(CommandContext context)
     {
         if (context.size == 0) return context.push(this);
-        auto firstArgument = context.pop();
 
-        if (firstArgument.type == ObjectType.Integer)
+        auto start = context.pop().toInt();
+        if (start < 0)
         {
-            if (context.size == 1)
+            start = this.repr.length + start;
+        }
+
+        auto end = start + 1;
+        if (context.size)
+        {
+            end = context.pop().toInt();
+            if (end < 0)
             {
-                auto nextArg = context.pop();
-                if (nextArg.type == ObjectType.Integer)
-                {
-                    auto idx1 = firstArgument.toInt;
-                    auto idx2 = nextArg.toInt;
-                    return context.push(new String(this.repr[idx1..idx2]));
-                }
-            }
-            else if (context.size == 0)
-            {
-                auto idx = firstArgument.toInt;
-                return context.push(new String(this.repr[idx..idx+1]));
+                end = this.repr.length + end;
             }
         }
-        auto msg = "Invalid argument to String extraction";
-        return context.error(msg, ErrorCode.InvalidArgument, "");
+
+        return context.push(new String(this.repr[start..end]));
     }
 }
 

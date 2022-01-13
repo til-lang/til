@@ -1,10 +1,7 @@
 # TODO
 
-* Is `{}` a valid SubList? And `{ }`???
-* improve extractions: get rid of SimpleLists as arguments
-    * for list ranges, use a command, like `range $lista 0 5`
 * strings
-    * special characters, line newline and tab.
+    * special characters, like newline and tab.
     * multi-line strings
     * split
     * join
@@ -25,6 +22,33 @@ test "conversion to float" {
 * Allow `foreach` to skip
 
 * range 0 10 | zip [range 20 30] -> (0 20) , (1 21) , ...
+
+```tcl
+
+type context_manager {
+    proc init (name) {
+        return [dict (name $name)]
+    }
+    proc open (d) {
+        set $d open true
+    }
+    proc close (d error) {
+        set $d open false
+    }
+}
+
+scope "context manager test" {
+    with cm [context_manager "teste"]
+    # with: gets the context_manager instance,
+    # calls .open right away,
+    # and attribute the instance to $cm.
+
+    ...
+
+    # Also, errors are resolved by local on.error.
+}
+# call "close $cm" when the scope ends.
+```
 
 * Decimal type!
 * JSON

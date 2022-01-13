@@ -23,4 +23,9 @@ proc test_undefined_variable () {
 
 test_undefined_variable
 
+# Extractions:
+set s "123456789"
+assert (<$s 0> == "1")
+assert (<$s -1> == "9")
+
 print "END"
