@@ -61,4 +61,8 @@ class Pid : ListItem
     {
         return "Pid for Process " ~ to!string(this.process.index);
     }
+    override CommandContext next(CommandContext context)
+    {
+        return this.process.output.next(context);
+    }
 }

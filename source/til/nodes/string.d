@@ -148,9 +148,6 @@ class SubstString : String
 
         foreach(part; parts)
         {
-            debug {
-                stderr.writeln("SubstString.part:", part);
-            }
             if (part.isName)
             {
                 Items values;

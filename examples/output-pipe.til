@@ -1,12 +1,21 @@
+print "START"
+
 proc generator (x) {
     print "generator started"
 
     range $x | foreach i {
         write "i=$i"
     }
+
+    write "quit"
+    print "generator ended"
 }
 
 spawn generator 4 | foreach i {
-    print $i
+    print "i:$i"
+    if ($i == "quit") {
+        break
+    }
 }
 
+print "END"

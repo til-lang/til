@@ -71,8 +71,11 @@ class ListItem
     }
     CommandContext next(CommandContext context)
     {
-        context.exitCode = ExitCode.Break;
-        return context;
+        auto thisInfo = typeid(this);
+        throw new Exception(
+            "Iterating over "
+            ~ thisInfo.toString() ~ " not implemented."
+        );
     }
 
     // Extractions:

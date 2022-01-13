@@ -4,6 +4,12 @@ import std.range : front, popFront;
 
 import til.nodes;
 
+debug
+{
+    import std.stdio;
+}
+
+
 CommandHandler[string] queueCommands;
 
 class Queue : ListItem
@@ -16,17 +22,6 @@ class Queue : ListItem
         this.size = size;
         this.commands = queueCommands;
     }
-
-    /*
-    // Copied directly from Dict...
-    override CommandContext extract(CommandContext context)
-    {
-        auto arguments = context.items!string;
-        string key = to!string(arguments.join("."));
-        context.push(this[key]);
-        return context;
-    }
-    */
 
     // ------------------
     // Conversions
@@ -95,4 +90,29 @@ class Queue : ListItem
         }
         return values[k];
     }
+}
+
+
+class WaitingQueue : Queue
+{
+    this(ulong size)
+    {
+        super(size);
+    }
+
+    override CommandContext next(CommandContext context)
+    {
+        while (isEmpty)
+        {
+            debug {stderr.writeln("WaitingQueue isEmpty: yield");}
+            context.yield();
+        }
+
+        auto item = pop();
+        debug {stderr.writeln("WaitingQueue.popped:", item);}
+        context.push(item);
+        context.exitCode = ExitCode.Continue;
+        return context;
+    }
+
 }

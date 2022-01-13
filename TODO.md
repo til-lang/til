@@ -1,6 +1,7 @@
 # TODO
 
 * strings
+    * length
     * special characters, like newline and tab.
     * multi-line strings
     * split

@@ -127,6 +127,12 @@ static this()
         }
         return context;
     };
+    stringCommands["length"] = (string path, CommandContext context)
+    {
+        auto s = context.pop!String();
+        return context.push(s.repr.length);
+    };
+
 
     // ---------------------------------------------
     // System commands
@@ -531,12 +537,6 @@ static this()
         // spawn f | read | foreach x { ... }
         // range 5 | spawn g | foreach y { ... }
 
-        if (context.size == 0)
-        {
-            auto msg = "`spawn` expects at least one argument";
-            return context.error(msg, ErrorCode.InvalidArgument, "");
-        }
-
         auto commandName = context.pop!string();
         Items arguments = context.items;
         ListItem input = null;
@@ -561,12 +561,15 @@ static this()
         else
         {
             debug {stderr.writeln("New process input is a generic Queue");}
-            process.input = new Queue(64);
+            process.input = new WaitingQueue(64);
         }
-        process.output = new Queue(64);
+        process.output = new WaitingQueue(64);
 
         auto pid = context.escopo.scheduler.add(process);
         context.push(pid);
+
+        // Give some time for the new process to start:
+        context.yield();
 
         context.exitCode = ExitCode.CommandSuccess;
         return context;
@@ -656,7 +659,9 @@ static this()
             auto msg = "`write` expects only one argument";
             return context.error(msg, ErrorCode.InvalidArgument, "");
         }
-        context.escopo.output.write(context.pop());
+        Queue output = cast(Queue)context.escopo.output;
+        output.push(context.pop());
+
         context.exitCode = ExitCode.CommandSuccess;
         return context;
     };
