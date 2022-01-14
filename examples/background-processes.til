@@ -1,10 +1,11 @@
+print "START"
+
 proc p (n) {
     print "p $n"
     sleep 300
     print "post sleep: $n"
 }
 
-print "START"
 range 1 5 | foreach x {
     print $x
     spawn p $x

@@ -15,12 +15,21 @@ CommandHandler[string] queueCommands;
 class Queue : ListItem
 {
     ulong size;
-    ListItem[] values;
+    Items values;
 
     this(ulong size)
     {
         this.size = size;
         this.commands = queueCommands;
+    }
+    this(ulong size, Items values)
+    {
+        this(size);
+        this.values = values;
+    }
+    this(Queue q)
+    {
+        this(q.size, q.values);
     }
 
     // ------------------

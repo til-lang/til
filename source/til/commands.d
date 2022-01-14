@@ -598,45 +598,13 @@ static this()
     // Piping
     commands["read"] = (string path, CommandContext context)
     {
-        class ProcessInputIterator : Item
-        {
-            Item input;
-            this(Item input)
-            {
-                this.input = input;
-            }
-            override string toString()
-            {
-                return "ProcessInputIterator";
-            }
-            override CommandContext next(CommandContext context)
-            {
-                // Implement the "wait" part:
-                while (true)
-                {
-                    context = input.next(context);
-                    if (context.exitCode == ExitCode.Break)
-                    {
-                        // Give up control and try again later:
-                        context.yield();
-                        continue;
-                    }
-
-                    return context;
-                }
-            }
-        }
-
         if (context.escopo.input is null)
         {
-            auto msg = "`read`: process input is null";
+            auto msg = "`read.no_wait`: process input is null";
             return context.error(msg, ErrorCode.InvalidArgument, "");
         }
-
-        debug {stderr.writeln("Creating a ProcessInputIterator based on ", context.escopo.input);}
-        auto iterator = new ProcessInputIterator(context.escopo.input);
-        context.push(iterator);
-
+        // Probably a WaitingQueue:
+        context.push(context.escopo.input);
         context.exitCode = ExitCode.CommandSuccess;
         return context;
     };
@@ -647,8 +615,10 @@ static this()
             auto msg = "`read.no_wait`: process input is null";
             return context.error(msg, ErrorCode.InvalidArgument, "");
         }
-        // Probably a Queue:
-        context.push(context.escopo.input);
+        // Probably a WaitingQueue, let's change its behavior to
+        // a regular Queue:
+        auto q = cast(WaitingQueue)context.escopo.input;
+        context.push(new Queue(q));
         context.exitCode = ExitCode.CommandSuccess;
         return context;
     };

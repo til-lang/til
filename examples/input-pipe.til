@@ -1,7 +1,17 @@
+print "START"
+
 proc printer () {
+    print "printer started"
+    sleep 1000
     read.no_wait | foreach line {
         print "> $line"
     }
+    print "printer ended"
 }
 
-range 5 | spawn printer
+set p [spawn printer]
+range 5 | foreach x {
+    send $p $x
+}
+
+print "END"

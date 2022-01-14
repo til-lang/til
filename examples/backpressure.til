@@ -1,3 +1,5 @@
+print "START"
+
 proc p (name) {
     print "p $name START"
     read | foreach msg {
@@ -16,4 +18,5 @@ range 10 | foreach x {
     print "Sending message-$x to p1"
     send $p1 "message-$x"
 }
-print "Main program: END"
+
+print "END"

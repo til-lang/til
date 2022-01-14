@@ -1,6 +1,7 @@
 import std.datetime.stopwatch;
 import std.file;
 import std.stdio;
+import std.string : stripRight;
 
 import til.commands;
 import til.exceptions;
@@ -28,7 +29,8 @@ class InterpreterInput : Item
         }
         else
         {
-            context.push(new String(inputFile.readln()));
+            auto input = inputFile.readln();
+            context.push(new String(to!string(input).stripRight("\n")));
             context.exitCode = ExitCode.Continue;
         }
         return context;

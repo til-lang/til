@@ -1,5 +1,13 @@
 # TODO
 
+* Some ListItem methods should try to **resolve into commands** before
+  throwing Exceptions.
+    * extract
+    * `.to<type>` -> `"to_<type>"`
+    * operate
+    * next
+* Could we get rid of `Object.type`?
+
 * strings
     * length
     * special characters, like newline and tab.
@@ -25,7 +33,6 @@ test "conversion to float" {
 * range 0 10 | zip [range 20 30] -> (0 20) , (1 21) , ...
 
 ```tcl
-
 type context_manager {
     proc init (name) {
         return [dict (name $name)]
@@ -37,6 +44,11 @@ type context_manager {
         set $d open false
     }
 }
+
+* Vectors!
+    * bytes, first, to act as generic non-encoded strings.
+    * integers
+    * floats
 
 scope "context manager test" {
     with cm [context_manager "teste"]
@@ -54,10 +66,10 @@ scope "context manager test" {
 * Decimal type!
 * JSON
     * Save `.representation` together with native types.
+* curl
 * Jinja-like templates
 * protobuf
-* curl
-* Vectors!
+* gRPC
 
 ## Language-wise
 

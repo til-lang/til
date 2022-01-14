@@ -20,7 +20,7 @@ class ListItem
         );
     }
 
-    CommandHandler *getCommandHandler(string name)
+    CommandHandler* getCommandHandler(string name)
     {
         return (name in this.commands);
     }
@@ -71,21 +71,15 @@ class ListItem
     }
     CommandContext next(CommandContext context)
     {
-        auto thisInfo = typeid(this);
-        throw new Exception(
-            "Iterating over "
-            ~ thisInfo.toString() ~ " not implemented."
-        );
+        context = runCommand(context, "next");
+        return context;
     }
 
     // Extractions:
     CommandContext extract(CommandContext context)
     {
-        auto info = typeid(this);
-        throw new Exception(
-            "Extraction not implemented on "
-            ~ info.toString()
-        );
+        context = runCommand(context, "extract");
+        return context;
     }
 
     CommandContext evaluate(CommandContext context, bool force)
@@ -95,6 +89,46 @@ class ListItem
     CommandContext evaluate(CommandContext context)
     {
         context.push(this);
+        return context;
+    }
+
+    CommandContext runCommand(
+        CommandContext context, string name
+    )
+    {
+        CommandHandler* handler = this.getCommandHandler(name);
+
+        if (handler is null)
+        {
+            auto info = typeid(this);
+            throw new Exception(
+                name
+                ~ " not implemented for "
+                ~ info.toString()
+            );
+        }
+
+        // Run the command:
+        // We set the exitCode to Undefined as a flag
+        // to check if the handler is really doing
+        // the basics, at least.
+        context.exitCode = ExitCode.Undefined;
+
+        context.push(this);
+        context = (*handler)(name, context);
+
+        debug
+        {
+            if (context.exitCode == ExitCode.Undefined)
+            {
+                throw new Exception(
+                    "Command "
+                    ~ to!string(name)
+                    ~ " returned Undefined. The implementation"
+                    ~ " is probably wrong."
+                );
+            }
+        }
         return context;
     }
 }
