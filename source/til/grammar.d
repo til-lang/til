@@ -1,6 +1,6 @@
 module til.grammar;
 
-import std.algorithm : among;
+import std.algorithm : among, canFind;
 import std.conv : to;
 import std.math : pow;
 import std.range : back, popBack;
@@ -22,6 +22,13 @@ const SPACE = ' ';
 const TAB = '\t';
 const PIPE = '|';
 
+const OPERATORS = [
+    '+', '-', '*', '/',
+    '!', '=',
+    '&', '|',
+    '<', '>',
+    '@', '^', '~'
+];
 
 // Integers units:
 uint[char] units;
@@ -505,81 +512,69 @@ class Parser
         char[] token;
 
         bool isNumber = true;
+        bool mustBeNumber = false;
         bool isSubst = false;
         bool isOperator = false;
         uint dotCounter = 0;
 
-        // Characters allowed only in the beginning:
-        switch (currentChar)
+        // `$x`
+        if (currentChar == '$')
         {
-            case '-':
-                isOperator = true;
-                token ~= consumeChar();
-                break;
-
-            case '>':
-            case '<':
-            case '+':
-            case '*':
-            case '/':
-            case '|':
-            case '&':
-            case '=':
-            case '!':
-                isOperator = true;
-                isNumber = false;
-                token ~= consumeChar();
-                break;
-
-            case '$':
-                isNumber = false;
-                isSubst = true;
-                // Throw the character away:
-                consumeChar();
-                break;
-
-            default:
-                break;
+            isNumber = false;
+            isSubst = true;
+            // Do NOT add `$` to the SubstAtom.
+            consumeChar();
         }
-
-        // Operators may have two characters:
-        if (isOperator)
+        else
         {
-            switch (currentChar)
+            // `>=`
+            while (!eof && OPERATORS.canFind(currentChar))
             {
-                case '=':
-                    if (lastChar.among!('=', '<', '>', '!'))
-                    {
-                        token ~= consumeChar();
-                        break;
-                    }
-                    goto case;
-                case '>':
-                case '<':
-                case '*':
-                case '/':
-                case '|':
-                case '&':
-                    if (lastChar == currentChar)
-                    {
-                        token ~= consumeChar();
-                        break;
-                    }
-                    else
-                    {
-                        throw new Exception("Invalid operator");
-                    }
+                token ~= consumeChar();
+            }
 
-                default:
-                    break;
+            if (token.length)
+            {
+                auto s = to!string(token);
+                // `+`
+                if (s != "-")
+                {
+                    if (!eof && !isWhitespace)
+                    {
+                        // *name = invalid!
+                        throw new Exception(
+                            "Invalid atom format: "
+                            ~ s
+                        );
+                    }
+                    return new OperatorAtom(s);
+                }
+                // `- `, like in `($a - $b)`
+                else if (eof || isWhitespace)
+                {
+                    return new OperatorAtom(s);
+                }
+                // `-10`
+                else
+                {
+                    mustBeNumber = true;
+                }
             }
         }
 
-        // And all the others:
+        // The rest:
         while (!eof)
         {
             if (currentChar >= 'a' && currentChar <= 'z' || currentChar == '_')
             {
+                if (mustBeNumber)
+                {
+                    auto s = to!string(token);
+                    throw new Exception(
+                        "Invalid atom format: "
+                        ~ s
+                    );
+                }
                 isNumber = false;
                 isOperator = false;
             }

@@ -11,6 +11,28 @@ debug
     import std.stdio;
 }
 
+SimpleList applyPrecedenceRules(SimpleList list)
+{
+    /*
+    mul/div: 1 + 2 < 3 * 5 || 30 > 20 && 20 > 10
+          -> 1 + 2 < (3 * 5) || 30 > 20 && 20 > 10
+
+    sum/sub: 1 + 2 < (3 * 5) || 30 > 20 && 20 > 10
+         -> (1 + 2) < (3 * 5) || 30 > 20 && 20 > 10
+
+    comparisons:  (1 + 2) < (3 * 5) || 30 > 20 && 20 > 10
+               -> ((1 + 2) < (3 * 5)) || (30 > 20) && (20 > 10)
+
+    and: ((1 + 2) < (3 * 5)) || (30 > 20) && (20 > 10)
+      -> ((1 + 2) < (3 * 5)) || ((30 > 20) && (20 > 10))
+
+    or: ((1 + 2) < (3 * 5)) || ((30 > 20) && (20 > 10))
+     -> ((1 + 2) < (3 * 5)) || ((30 > 20) && (20 > 10))
+    */
+
+    return list;
+}
+
 CommandContext math(CommandContext context)
 {
     // There should be a SimpleList at the top of the stack.
@@ -56,7 +78,7 @@ CommandContext math(CommandContext context)
         }
         else
         {
-            if (item.type == ObjectType.Operator)
+            if (context.size == 1)
             {
                 lastOperator = to!string(item);
             }
