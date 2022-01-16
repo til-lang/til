@@ -1,21 +1,29 @@
 print "START"
 
+# NameAtom:
+assert (a == a)
+print "a == a"
+
 type number {
     proc init (x) {
         print "init: $x"
         return $x
     }
-    proc operate (x operator rhs reversed) {
-        print "operate: $x $operator $rhs $reversed"
-        if ($operator == "+") {
+    proc operate (x operator lhs) {
+        print "number.operate: $lhs $operator $x"
+        if ("$operator" == "+") {
             return 0
         }
-        return [base.operate $x $operator $rhs $reversed]
+        return [integer.operate $x $operator $lhs]
+    }
+    proc operate.reverse (lhs operator x) {
+        return [number.operate $lhs $operator $x]
     }
 }
 
 set n [number 5]
-assert ([math ($n - 1)] == 4)
-assert ([math ($n + 1)] == 0)
+assert ([math (1 - $n)] == -4)
+assert ([math (1 + $n)] == 0)
+assert ([math ($n + 1)] == 6)
 
 print "END"

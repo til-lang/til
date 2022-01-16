@@ -902,6 +902,70 @@ static this()
 
         return context.error(message, cast(int)code.value, classe);
     };
+    integerCommands["operate"] = (string path, CommandContext context)
+    {
+        IntegerAtom t2 = context.pop!IntegerAtom();
+        Item operator = context.pop();
+        Item lhs = context.pop();
+
+        string op = to!string(operator);
+
+        debug {
+            stderr.writeln(
+                "IntegerAtom.operate:", lhs,
+                " (", lhs.type, ")",
+                " ", op,
+                " ", t2
+            );
+        }
+
+        if (lhs.type != ObjectType.Integer)
+        {
+            context.push(t2);
+            context.push(operator);
+            return lhs.reverseOperate(context);
+        }
+
+        auto t1 = cast(IntegerAtom)lhs;
+        final switch(op)
+        {
+            // Logic:
+            case "==":
+                context.push(t1.value == t2.value);
+                break;
+            case "!=":
+                context.push(t1.value != t2.value);
+                break;
+            case ">":
+                context.push(t1.value > t2.value);
+                break;
+            case ">=":
+                context.push(t1.value >= t2.value);
+                break;
+            case "<":
+                context.push(t1.value < t2.value);
+                break;
+            case "<=":
+                context.push(t1.value <= t2.value);
+                break;
+
+            // Math:
+            case "+":
+                context.push(t1.value + t2.value);
+                break;
+            case "-":
+                context.push(t1.value - t2.value);
+                break;
+            case "*":
+                context.push(t1.value * t2.value);
+                break;
+            case "/":
+                context.push(t1.value / t2.value);
+                break;
+        }
+        context.exitCode = ExitCode.CommandSuccess;
+        return context;
+    };
 
     // Names:
     commands["set"] = (string path, CommandContext context)
@@ -928,6 +992,28 @@ static this()
 
         context.escopo.variables.remove(to!string(firstArgument));
 
+        context.exitCode = ExitCode.CommandSuccess;
+        return context;
+    };
+    nameCommands["operate"] = (string path, CommandContext context)
+    {
+        Item rhs = context.pop();
+        Item operator = context.pop();
+        Item lhs = context.pop();
+
+        switch(to!string(operator))
+        {
+            case "==":
+                context.push(to!string(lhs) == to!string(rhs));
+                break;
+            case "!=":
+                context.push(to!string(lhs) != to!string(rhs));
+                break;
+            default:
+                context.push(rhs);
+                context.push(operator);
+                return lhs.reverseOperate(context);
+        }
         context.exitCode = ExitCode.CommandSuccess;
         return context;
     };
@@ -1514,6 +1600,8 @@ static this()
 
             string prefix1 = returnedObject.typeName ~ ".";
             string prefix2 = name ~ ".";
+            debug {stderr.writeln("prefix1:", prefix1); }
+            debug {stderr.writeln("prefix2:", prefix2); }
 
             // set -> dict.set
             // set -> myclass.set
@@ -1527,6 +1615,7 @@ static this()
             // (type.)set -> set (simple copy)
             foreach(cmdName, command; type.commands)
             {
+                debug {stderr.writeln(cmdName, "->", command); }
                 newCommands[cmdName] = command;
             }
             returnedObject.commands = newCommands;

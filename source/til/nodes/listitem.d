@@ -3,6 +3,11 @@ module til.nodes.listitem;
 
 import til.nodes;
 
+debug
+{
+    import std.stdio;
+}
+
 
 class NotImplementedError : Exception
 {
@@ -77,13 +82,15 @@ class ListItem
     }
     CommandContext operate(CommandContext context)
     {
-        context.push(this);
+        debug {
+            auto info = typeid(this);
+            stderr.writeln(to!string(info), ".operate!");
+        }
         context = runCommand(context, "operate");
         return context;
     }
     CommandContext reverseOperate(CommandContext context)
     {
-        context.push(this);
         context = runCommand(context, "operate.reverse");
         return context;
     }

@@ -46,6 +46,7 @@ CommandContext math(CommandContext context)
     string lastOperator;
     foreach(item; items)
     {
+        debug {stderr.writeln("math.item:", item);}
         if (item.type == ObjectType.SimpleList)
         {
             context.push(item);
@@ -82,6 +83,7 @@ CommandContext math(CommandContext context)
             {
                 lastOperator = to!string(item);
             }
+            debug {stderr.writeln(" math.push:", item);}
             context.push(item);
         }
     }

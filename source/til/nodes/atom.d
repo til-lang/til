@@ -43,27 +43,6 @@ class NameAtom : Atom
         context.exitCode = ExitCode.Proceed;
         return context;
     }
-
-    override CommandContext operate(CommandContext context)
-    {
-        Item operator = context.pop();
-        Item lhs = context.pop();
-
-        switch(to!string(operator))
-        {
-            case "==":
-                context.push(to!string(lhs) == to!string(this));
-                break;
-            case "!=":
-                context.push(to!string(lhs) != to!string(this));
-                break;
-            default:
-                context.push(this);
-                context.push(operator);
-                return lhs.reverseOperate(context);
-        }
-        return context;
-    }
 }
 
 class SubstAtom : NameAtom
@@ -108,6 +87,7 @@ class IntegerAtom : Atom
     {
         this.value = value;
         this.type = ObjectType.Integer;
+        this.typeName = "integer";
         this.commands = integerCommands;
     }
     IntegerAtom opUnary(string operator)
@@ -136,71 +116,6 @@ class IntegerAtom : Atom
     override string toString()
     {
         return to!string(value);
-    }
-
-    override CommandContext operate(CommandContext context)
-    {
-        Item operator = context.pop();
-        Item lhs = context.pop();
-
-        string op = to!string(operator);
-
-        debug {
-            stderr.writeln(
-                "IntegerAtom.operate:", lhs,
-                " (", lhs.type, ")",
-                " ", op,
-                " ", this
-            );
-        }
-
-        if (lhs.type != ObjectType.Integer)
-
-        {
-            context.push(this);
-            context.push(operator);
-            return lhs.reverseOperate(context);
-        }
-
-        auto t1 = cast(IntegerAtom) lhs;
-        final switch(op)
-        {
-            // Logic:
-            case "==":
-                context.push(t1.value == this.value);
-                break;
-            case "!=":
-                context.push(t1.value != this.value);
-                break;
-            case ">":
-                context.push(t1.value > this.value);
-                break;
-            case ">=":
-                context.push(t1.value >= this.value);
-                break;
-            case "<":
-                context.push(t1.value < this.value);
-                break;
-            case "<=":
-                context.push(t1.value <= this.value);
-                break;
-
-            // Math:
-            case "+":
-                context.push(t1.value + this.value);
-                break;
-            case "-":
-                context.push(t1.value - this.value);
-                break;
-            case "*":
-                context.push(t1.value * this.value);
-                break;
-            case "/":
-                context.push(t1.value / this.value);
-                break;
-        }
-        context.exitCode = ExitCode.CommandSuccess;
-        return context;
     }
 }
 
