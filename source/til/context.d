@@ -46,6 +46,7 @@ struct CommandContext
     }
     CommandContext next(Process escopo, int argumentCount)
     {
+        this.size -= argumentCount;
         auto newContext = CommandContext(escopo, argumentCount);
         return newContext;
     }

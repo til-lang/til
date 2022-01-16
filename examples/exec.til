@@ -24,4 +24,9 @@ exec ls "/" | exec grep "etc" | foreach x {
     print $x
 }
 
+print "Parallelism test:"
+exec "examples/waiter.sh" | foreach x {
+    print "waiter.sh> $x"
+}
+
 print "END"

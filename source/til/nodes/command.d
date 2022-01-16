@@ -96,10 +96,10 @@ class Command
         }
 
         // evaluate arguments and set proper context.size:
-        context = this.evaluateArguments(context);
-        if (context.exitCode == ExitCode.Failure)
+        auto executionContext = this.evaluateArguments(context);
+        if (executionContext.exitCode == ExitCode.Failure)
         {
-            return context;
+            return executionContext;
         }
 
         if (hasInput)
@@ -108,15 +108,15 @@ class Command
             // Consider the input, that is,
             // the last "argument" for
             // the command:
-            context.size++;
-            context.hasInput = true;
+            executionContext.size++;
+            executionContext.hasInput = true;
         }
 
         // The target is always the first argument:
         Item target = null;
-        if (context.size)
+        if (executionContext.size)
         {
-            target = context.peek();
+            target = executionContext.peek();
         }
 
         // append $item $list
@@ -134,7 +134,7 @@ class Command
             );
         }
 
-        return this.runHandler(context, handler, target);
+        return this.runHandler(executionContext, handler, target);
     }
     CommandContext runHandler(
         CommandContext context, CommandHandler handler, Item target

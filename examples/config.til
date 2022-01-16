@@ -1,3 +1,4 @@
+print "START"
 # Config files should not need to import anything.
 
 set font.family "Fira Code"
@@ -7,8 +8,10 @@ set theme.name "Industrial"
 # set hour [time.current.hour]
 set hour 19
 
-if (1 > 2 || $hour >= 6 && $hour < 18) {
+if ((1 > 2) || ($hour >= 6) && ($hour < 18)) {
     set theme.mode "light"
 } else {
     set theme.mode "dark"
 }
+
+print "END"

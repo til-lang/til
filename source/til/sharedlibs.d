@@ -7,7 +7,6 @@ import std.conv : to;
 import std.string : strip, toStringz;
 
 import til.exceptions;
-import til.logic;
 import til.nodes;
 import til.procedures;
 

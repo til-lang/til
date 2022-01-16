@@ -4,13 +4,13 @@ print "Expected: 2 'Correct'."
 set a 1
 set b 2
 
-if ($a > $b + 3) {
+if ($a > ($b + 3)) {
     print "Wrong! [1]"
 } else {
     print "Correct. [1]"
 }
 
-if ($a + 1 >= $b) {
+if (($a + 1) >= $b) {
     print "Correct. [2]"
 } else {
     print "Wrong! [2]"

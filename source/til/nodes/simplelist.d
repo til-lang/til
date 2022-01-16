@@ -70,10 +70,11 @@ class SimpleList : BaseList
     }
     CommandContext forceEvaluate(CommandContext context)
     {
-        context.size = 0;
+        long listSize = 0;
         foreach(item; this.items.retro)
         {
-            context.run(&(item.evaluate));
+            context = item.evaluate(context.next());
+            listSize += context.size;
         }
 
         /*
@@ -83,7 +84,8 @@ class SimpleList : BaseList
         items already evaluated. We are only
         using the stack as temporary space.
         */
-        auto newList = new SimpleList(context.items);
+        auto newList = new SimpleList(context.pop(listSize));
+        context = context.next();
         context.push(newList);
         return context;
     }

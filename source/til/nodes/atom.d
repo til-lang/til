@@ -44,17 +44,25 @@ class NameAtom : Atom
         return context;
     }
 
-    override ListItem operate(string operator, ListItem rhs, bool reversed)
+    override CommandContext operate(CommandContext context)
     {
-        switch(operator)
+        Item operator = context.pop();
+        Item lhs = context.pop();
+
+        switch(to!string(operator))
         {
             case "==":
-                return new BooleanAtom(to!string(this) == to!string(rhs));
+                context.push(to!string(lhs) == to!string(this));
+                break;
             case "!=":
-                return new BooleanAtom(to!string(this) != to!string(rhs));
+                context.push(to!string(lhs) != to!string(this));
+                break;
             default:
-                return super.operate(operator, rhs, reversed);
+                context.push(this);
+                context.push(operator);
+                return lhs.reverseOperate(context);
         }
+        return context;
     }
 }
 
@@ -130,71 +138,69 @@ class IntegerAtom : Atom
         return to!string(value);
     }
 
-    override ListItem operate(string operator, ListItem rhs, bool reversed)
+    override CommandContext operate(CommandContext context)
     {
-        if (reversed) return null;
+        Item operator = context.pop();
+        Item lhs = context.pop();
 
-        if (rhs.type == ObjectType.Integer)
-        {
-            auto t2 = cast(IntegerAtom) rhs;
-            final switch(operator)
-            {
-                // Logic:
-                case "==":
-                    return new BooleanAtom(this.value == t2.value);
-                case "!=":
-                    return new BooleanAtom(this.value != t2.value);
-                case ">":
-                    return new BooleanAtom(this.value > t2.value);
-                case ">=":
-                    return new BooleanAtom(this.value >= t2.value);
-                case "<":
-                    return new BooleanAtom(this.value < t2.value);
-                case "<=":
-                    return new BooleanAtom(this.value <= t2.value);
+        string op = to!string(operator);
 
-                // Math:
-                case "+":
-                    return new IntegerAtom(this.value + t2.value);
-                case "-":
-                    return new IntegerAtom(this.value - t2.value);
-                case "*":
-                    return new IntegerAtom(this.value * t2.value);
-                case "/":
-                    return new IntegerAtom(this.value / t2.value);
-            }
+        debug {
+            stderr.writeln(
+                "IntegerAtom.operate:", lhs,
+                " (", lhs.type, ")",
+                " ", op,
+                " ", this
+            );
         }
-        else if (rhs.type == ObjectType.Float)
-        {
-            auto t2 = cast(FloatAtom)rhs;
-            final switch(operator)
-            {
-                // Logic:
-                case "==":
-                    return new BooleanAtom(this.value == t2.value);
-                case "!=":
-                    return new BooleanAtom(this.value != t2.value);
-                case ">":
-                    return new BooleanAtom(this.value > t2.value);
-                case ">=":
-                    return new BooleanAtom(this.value >= t2.value);
-                case "<":
-                    return new BooleanAtom(this.value < t2.value);
-                case "<=":
-                    return new BooleanAtom(this.value <= t2.value);
 
-                // Math:
-                case "+":
-                    return new FloatAtom(this.value + t2.value);
-                case "-":
-                    return new FloatAtom(this.value - t2.value);
-                case "*":
-                    return new FloatAtom(this.value * t2.value);
-                case "/":
-                    return new FloatAtom(this.value / t2.value);
-            }
+        if (lhs.type != ObjectType.Integer)
+
+        {
+            context.push(this);
+            context.push(operator);
+            return lhs.reverseOperate(context);
         }
-        return null;
+
+        auto t1 = cast(IntegerAtom) lhs;
+        final switch(op)
+        {
+            // Logic:
+            case "==":
+                context.push(t1.value == this.value);
+                break;
+            case "!=":
+                context.push(t1.value != this.value);
+                break;
+            case ">":
+                context.push(t1.value > this.value);
+                break;
+            case ">=":
+                context.push(t1.value >= this.value);
+                break;
+            case "<":
+                context.push(t1.value < this.value);
+                break;
+            case "<=":
+                context.push(t1.value <= this.value);
+                break;
+
+            // Math:
+            case "+":
+                context.push(t1.value + this.value);
+                break;
+            case "-":
+                context.push(t1.value - this.value);
+                break;
+            case "*":
+                context.push(t1.value * this.value);
+                break;
+            case "/":
+                context.push(t1.value / this.value);
+                break;
+        }
+        context.exitCode = ExitCode.CommandSuccess;
+        return context;
     }
 }
 
@@ -238,65 +244,109 @@ class FloatAtom : Atom
         return new FloatAtom(-value);
     }
 
-    override ListItem operate(string operator, ListItem rhs, bool reversed)
+    override CommandContext reverseOperate(CommandContext context)
     {
-        if (reversed) return null;
-
-        FloatAtom t2;
-
-        if (rhs.type == ObjectType.Integer)
+        auto operator = context.pop();
+        auto rhs = context.pop();
+        // 1.1 * 2
+        //  f op i
+        //  ^
+        //  |
+        // this!
+        // IntegerAtom is going to call FloatAtom.reverseOperate
+        if (rhs.type != ObjectType.Integer)
         {
-            auto it2 = cast(IntegerAtom)rhs;
-            t2 = new FloatAtom(cast(float)it2.value);
+            context.push(rhs);
+            context.push(operator);
+            return super.reverseOperate(context);
         }
-        else if (rhs.type == ObjectType.Float)
+
+        IntegerAtom i = cast(IntegerAtom)rhs;
+        FloatAtom t2 = new FloatAtom(cast(float)i.value);
+
+        context.push(this);
+        context.push(operator);
+        return t2.operate(context);
+
+    }
+    override CommandContext operate(CommandContext context)
+    {
+        auto operator = context.pop();
+        auto lhs = context.pop();
+
+        FloatAtom t1;
+        if (lhs.type == ObjectType.Integer)
         {
-            t2 = cast(FloatAtom)rhs;
+            auto it1 = cast(IntegerAtom)lhs;
+            t1 = new FloatAtom(cast(float)it1.value);
+        }
+        else if (lhs.type == ObjectType.Float)
+        {
+            t1 = cast(FloatAtom)lhs;
         }
         else
         {
-            return null;
+            context.push(this);
+            context.push(operator);
+            return lhs.reverseOperate(context);
         }
 
-        switch(operator)
+        bool done = true;
+        string op = to!string(operator);
+        switch(op)
         {
             // Math:
             case "+":
-                return new FloatAtom(this.value + t2.value);
+                context.push(t1.value + this.value);
+                break;
             case "-":
-                return new FloatAtom(this.value - t2.value);
+                context.push(t1.value - this.value);
+                break;
             case "*":
-                return new FloatAtom(this.value * t2.value);
+                context.push(t1.value * this.value);
+                break;
             case "/":
-                return new FloatAtom(this.value / t2.value);
-
+                context.push(t1.value / this.value);
+                break;
             default:
+                done = false;
                 break;
         }
-
-        // TODO: use something like a `scale` variable to control this:
-        auto v1 = nearbyint(this.value * 100000);
-        auto v2 = nearbyint(t2.value * 100000);
-
-        switch(operator)
+        if (!done)
         {
+            // TODO: use something like a `scale` variable to control this:
+            auto v1 = nearbyint(t1.value * 100000);
+            auto v2 = nearbyint(this.value * 100000);
 
-            // Logic:
-            case "==":
-                return new BooleanAtom(v1 == v2);
-            case "!=":
-                return new BooleanAtom(v1 != v2);
-            case ">":
-                return new BooleanAtom(v1 > v2);
-            case ">=":
-                return new BooleanAtom(v1 >= v2);
-            case "<":
-                return new BooleanAtom(v1 < v2);
-            case "<=":
-                return new BooleanAtom(v1 <= v2);
-            default:
-                return null;
+            switch(op)
+            {
+                // Logic:
+                case "==":
+                    context.push(v1 == v2);
+                    break;
+                case "!=":
+                    context.push(v1 != v2);
+                    break;
+                case ">":
+                    context.push(v1 > v2);
+                    break;
+                case ">=":
+                    context.push(v1 >= v2);
+                    break;
+                case "<":
+                    context.push(v1 < v2);
+                    break;
+                case "<=":
+                    context.push(v1 <= v2);
+                    break;
+                default:
+                    context.push(this);
+                    context.push(operator);
+                    return lhs.reverseOperate(context);
+            }
         }
+        context.exitCode = ExitCode.CommandSuccess;
+        return context;
     }
 }
 
@@ -328,17 +378,26 @@ class BooleanAtom : Atom
     {
         return to!string(value);
     }
-    override ListItem operate(string operator, ListItem rhs, bool reversed)
+    override CommandContext operate(CommandContext context)
     {
-        switch(operator)
+        auto operator = context.pop();
+        auto lhs = context.pop();
+
+        switch(to!string(operator))
         {
             case "==":
-                return new BooleanAtom(this.value == rhs.toBool());
+                context.push(lhs.toBool() == this.value);
+                break;
             case "!=":
-                return new BooleanAtom(this.value != rhs.toBool());
+                context.push(lhs.toBool() != this.value);
+                break;
             default:
-                return super.operate(operator, rhs, reversed);
+                context.push(this);
+                context.push(operator);
+                return super.reverseOperate(context);
         }
+        context.exitCode = ExitCode.CommandSuccess;
+        return context;
     }
 }
 

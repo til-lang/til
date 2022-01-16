@@ -16,46 +16,48 @@ if ($a < $b) {
     print "a < b ($a < $b)"
 }
 
-if ($a > $b || $a > 10 || $a < $b) {
+if (($a > $b) || ($a > 10) || ($a < $b)) {
     print "three OR is okay"
 }
-if ($a > $b || $a < $b && 1 > 2) {
+if (($a > $b) || ($a < $b) && (1 > 2)) {
     print "OR+AND is WRONG"
 } else {
     print "OR+AND is okay"
 }
 
-if ($a > $b || true || $a < $b) {
+if (($a > $b) || true || ($a < $b)) {
     print "three OR with boolean in the middle is okay"
 }
-if ($a > $b || $a < $b && 1 > 2) {
+if (($a > $b) || ($a < $b) && (1 > 2)) {
     print "OR+AND with boolean is WRONG"
 } else {
     print "OR+AND with boolean is okay"
 }
 
-if (false || $a < $b) {
+if (false || ($a < $b)) {
     print "bool and comparison is okay"
 } else {
     print "bool and comparison is WRONG"
 }
 
-#       t         f          t
-if (($a < $b && 1 > 2) || $a < $b) {
+#       t            f            t
+if ((($a < $b) && (1 > 2)) || ($a < $b)) {
     print "Parenthesis is okay"
 } else {
     print "Parenthesis is WRONG"
 }
 
-#        t          f            t           f          t
-if ((($a < $b && 55 > 57) || ($a < $b && (97 > 98 || 12 < 34)))) {
+#         t            f             t              f            t
+if (((($a < $b) && (54 > 57)) || (($a < $b) && ((95 > 96) || (12 < 34))))) {
     print "Lots of parenthesis is okay"
 } else {
     print "Lots of parenthesis is WRONG"
 }
 
-#        t    f     f     f      t    f      t    f     f
-if ((($a < $b && 55 > 57) || ($a < $b && (97 < 98 && 12 > 34)))) {
+print "stack: " [stack]
+
+#         t      f     f       f      t      f      t      f     f
+if (((($a < $b) && (55 > 58)) || (($a < $b) && ((97 < 98) && (12 > 34))))) {
     print "Second lot of parenthesis is WRONG"
 } else {
     print "Second lot of parenthesis is okay"

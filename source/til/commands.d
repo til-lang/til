@@ -13,7 +13,7 @@ import til.grammar;
 import til.conv;
 import til.exceptions;
 import til.exec;
-import til.logic;
+import til.math;
 import til.modules;
 import til.nodes;
 import til.procedures;
@@ -202,67 +202,72 @@ static this()
     // Flow control
     simpleListCommands["if"] = (string path, CommandContext context)
     {
-        context = ()
+        while(true)
         {
-            while(true)
+            // NOT popping the conditions: `math` will take care of that, already.
+            auto mathContext = math(context.next(1));
+            auto isConditionTrue = mathContext.pop!bool();
+            debug {stderr.writeln(" isConditionTrue:", isConditionTrue);}
+            debug {stderr.writeln(" context.size:", context.size);}
+            debug {stderr.writeln(" escopo.stackPointer:", context.escopo.stackPointer);}
+
+            auto thenBody = context.pop!SubList();
+
+            if (isConditionTrue)
             {
-                auto conditions = context.pop!SimpleList();
-                auto thenBody = context.pop!SubList();
-
-                conditions.forceEvaluate(context);
-                context.run(&boolean, 1);
-
-                auto isConditionTrue = context.pop!bool();
-                debug {stderr.writeln(conditions, " is ", isConditionTrue);}
-
-                // if (x == 0) {...}
-                if (isConditionTrue)
+                // Get rid of eventual "else":
+                context.items();
+                // Run body:
+                context = context.escopo.run(thenBody.subprogram);
+                break;
+            }
+            // no else:
+            else if (context.size == 0)
+            {
+                context.exitCode = ExitCode.CommandSuccess;
+                break;
+            }
+            // else {...}
+            // else if {...}
+            else
+            {
+                auto elseWord = context.pop!string();
+                if (elseWord != "else")
                 {
-                    // Get rid of eventual "else":
-                    context.items();
-                    // Run body:
-                    return context.escopo.run(thenBody.subprogram);
+                    auto msg = "Invalid format for if/then/else clause:"
+                               ~ " elseWord found was " ~ elseWord  ~ ".";
+                    debug {
+                        foreach (item; context.items)
+                        {
+                            stderr.writeln(" elseWord.item:", item);
+                        }
+                    }
+                    return context.error(msg, ErrorCode.InvalidSyntax, "");
                 }
-                // no else:
-                else if (context.size == 0)
+
+                // If only one part is left, it's for sure the last "else":
+                if (context.size == 1)
                 {
-                    context.exitCode = ExitCode.CommandSuccess;
-                    return context;
+                    auto elseBody = context.pop!SubList();
+                    context = context.escopo.run(elseBody.subprogram);
+                    break;
                 }
-                // else {...}
-                // else if {...}
                 else
                 {
-                    auto elseWord = context.pop!string();
-                    if (elseWord != "else")
+                    auto ifWord = context.pop!string();
+                    if (ifWord != "if")
                     {
-                        auto msg = "Invalid format for if/then/else clause:"
-                                   ~ " elseWord found was " ~ elseWord;
+                        auto msg = "Invalid format for if/then/else clause"
+                                   ~ " ifWord found was " ~ ifWord;
                         return context.error(msg, ErrorCode.InvalidSyntax, "");
                     }
-
-                    // If only one part is left, it's for sure the last "else":
-                    if (context.size == 1)
-                    {
-                        auto elseBody = context.pop!SubList();
-                        return context.escopo.run(elseBody.subprogram);
-                    }
-                    else
-                    {
-                        auto ifWord = context.pop!string();
-                        if (ifWord != "if")
-                        {
-                            auto msg = "Invalid format for if/then/else clause"
-                                       ~ " ifWord found was " ~ ifWord;
-                            return context.error(msg, ErrorCode.InvalidSyntax, "");
-                        }
-                        // The next item is an "if", so we can
-                        // simply return to the beginning:
-                        continue;
-                    }
+                    // The next item is an "if", so we can
+                    // simply return to the beginning:
+                    continue;
                 }
             }
-        }();
+        }
+
         if (context.exitCode == ExitCode.Proceed)
         {
             context.exitCode = ExitCode.CommandSuccess;
@@ -693,17 +698,12 @@ static this()
     {
         while (context.size)
         {
-            SimpleList target = context.pop!SimpleList();
-            target.forceEvaluate(context);
-
-            auto evaluatedTarget = context.peek();
-
-            context.run(&boolean, 1);
-
-            auto isTrue = context.pop!bool();
+            auto target = context.peek();
+            auto mathContext = math(context.next(1));
+            auto isTrue = mathContext.pop!bool();
             if (!isTrue)
             {
-                auto msg = "assertion error: " ~ evaluatedTarget.toString();
+                auto msg = "assertion error: " ~ target.toString();
                 return context.error(msg, ErrorCode.Assertion, "");
             }
         }
@@ -1035,26 +1035,17 @@ static this()
     };
     simpleListCommands["math"] = (string path, CommandContext context)
     {
-        import til.math;
-
-        auto list = cast(SimpleList)context.pop();
-        context.run(&list.forceEvaluate);
-
-        auto newContext = math(context);
-        if (newContext.size != 1)
+        // NOT popping the SimpleList: `math` will handle that, already:
+        context = math(context.next(1));
+        if (context.size != 1)
         {
             auto msg = "math.run: error. Should return 1 item.\n"
-                       ~ to!string(newContext.escopo)
-                       ~ " returned " ~ to!string(newContext.size);
+                       ~ to!string(context.escopo)
+                       ~ " returned " ~ to!string(context.size);
             return context.error(msg, ErrorCode.InternalError, "til.internal");
         }
 
-        // math pushes a new list, but we don't want that.
-        auto resultList = cast(SimpleList)context.pop();
-        foreach(item; resultList.items)
-        {
-            context.push(item);
-        }
+        // NOT pushing the result: `math` already did that.
         context.exitCode = ExitCode.CommandSuccess;
         return context;
     };
@@ -1117,15 +1108,22 @@ static this()
         class Comparator
         {
             ListItem item;
-            this(ListItem item)
+            CommandContext context;
+            this(CommandContext context, ListItem item)
             {
+                this.context = context;
                 this.item = item;
             }
 
             override int opCmp(Object o)
             {
                 Comparator other = cast(Comparator)o;
-                BooleanAtom result = cast(BooleanAtom)item.operate("<", other.item, false);
+
+                context.push(other.item);
+                context.push("<");
+                context = item.operate(context);
+                auto result = cast(BooleanAtom)context.pop();
+
                 if (result.value)
                 {
                     return -1;
@@ -1137,7 +1135,7 @@ static this()
             }
         }
 
-        Comparator[] comparators = list.items.map!(x => new Comparator(x)).array;
+        Comparator[] comparators = list.items.map!(x => new Comparator(context, x)).array;
         Items sorted = comparators.sort.map!(x => x.item).array;
         context.push(new SimpleList(sorted));
         context.exitCode = ExitCode.CommandSuccess;

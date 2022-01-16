@@ -2,12 +2,13 @@
 
 * Some ListItem methods should try to **resolve into commands** before
   throwing Exceptions.
-    * extract
-    * `.to<type>` -> `"to_<type>"`
     * operate
-    * next
+        * the terms and operator are **already** pushed to the stack...
+        * calling a command will **not** be much more expensive.
+    * `.to<type>` -> `"to_<type>"`
 * Could we get rid of `Object.type`?
-
+    * Probably not, unless we disallow operations between types.
+* `exec` should call `on.error` if the command fails.
 * strings
     * length
     * special characters, like newline and tab.

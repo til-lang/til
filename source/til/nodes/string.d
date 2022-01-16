@@ -30,20 +30,23 @@ class String : ListItem
     }
 
     // Operators:
-    override ListItem operate(string operator, ListItem rhs, bool reversed)
+    override CommandContext operate(CommandContext context)
     {
-        if (reversed) return null;
-        if (rhs.type != ObjectType.String) return null;
+        auto operator = context.pop();
+        auto rhs = context.pop();
 
-        /*
-        Remember: we are receiving and
-        already-evaluated value, so
-        it can only be a "simple"
-        String.
-        */
+        if (rhs.type != ObjectType.String)
+        {
+            context.push(this);
+            context.push(operator);
+            return rhs.reverseOperate(context);
+        }
+
         auto t2 = cast(String)rhs;
 
-        return new BooleanAtom(this.repr == t2.repr);
+        context.push(this.repr == t2.repr);
+        context.exitCode = ExitCode.CommandSuccess;
+        return context;
     }
 
 

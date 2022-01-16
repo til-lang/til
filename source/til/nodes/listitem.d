@@ -4,6 +4,15 @@ module til.nodes.listitem;
 import til.nodes;
 
 
+class NotImplementedError : Exception
+{
+    this(string msg)
+    {
+        super(msg);
+    }
+}
+
+
 // A base class for all kind of items that
 // compose a list (including Lists):
 class ListItem
@@ -11,19 +20,6 @@ class ListItem
     ObjectType type;
     string typeName;
     CommandHandlerMap commands;
-
-    ListItem operate(string operator, ListItem rhs, bool reversed)
-    {
-        auto info = typeid(this);
-        throw new Exception(
-            "operate (" ~ operator ~ ") not implemented in " ~ info.toString()
-        );
-    }
-
-    CommandHandler* getCommandHandler(string name)
-    {
-        return (name in this.commands);
-    }
 
     // Operators:
     template opUnary(string operator)
@@ -69,18 +65,6 @@ class ListItem
             ~ thisInfo.toString() ~ " to string not implemented."
         );
     }
-    CommandContext next(CommandContext context)
-    {
-        context = runCommand(context, "next");
-        return context;
-    }
-
-    // Extractions:
-    CommandContext extract(CommandContext context)
-    {
-        context = runCommand(context, "extract");
-        return context;
-    }
 
     CommandContext evaluate(CommandContext context, bool force)
     {
@@ -91,7 +75,33 @@ class ListItem
         context.push(this);
         return context;
     }
+    CommandContext operate(CommandContext context)
+    {
+        context.push(this);
+        context = runCommand(context, "operate");
+        return context;
+    }
+    CommandContext reverseOperate(CommandContext context)
+    {
+        context.push(this);
+        context = runCommand(context, "operate.reverse");
+        return context;
+    }
+    CommandContext next(CommandContext context)
+    {
+        context = runCommand(context, "next");
+        return context;
+    }
+    CommandContext extract(CommandContext context)
+    {
+        context = runCommand(context, "extract");
+        return context;
+    }
 
+    CommandHandler* getCommandHandler(string name)
+    {
+        return (name in this.commands);
+    }
     CommandContext runCommand(
         CommandContext context, string name
     )
@@ -101,7 +111,7 @@ class ListItem
         if (handler is null)
         {
             auto info = typeid(this);
-            throw new Exception(
+            throw new NotImplementedError(
                 name
                 ~ " not implemented for "
                 ~ info.toString()
@@ -112,9 +122,8 @@ class ListItem
         // We set the exitCode to Undefined as a flag
         // to check if the handler is really doing
         // the basics, at least.
-        context.exitCode = ExitCode.Undefined;
-
         context.push(this);
+        context.exitCode = ExitCode.Undefined;
         context = (*handler)(name, context);
 
         debug
