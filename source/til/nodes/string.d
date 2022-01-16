@@ -82,30 +82,6 @@ class String : ListItem
             return new String(newRepr);
         }
     }
-
-    // -----------------------------
-    override CommandContext extract(CommandContext context)
-    {
-        if (context.size == 0) return context.push(this);
-
-        auto start = context.pop().toInt();
-        if (start < 0)
-        {
-            start = this.repr.length + start;
-        }
-
-        auto end = start + 1;
-        if (context.size)
-        {
-            end = context.pop().toInt();
-            if (end < 0)
-            {
-                end = this.repr.length + end;
-            }
-        }
-
-        return context.push(new String(this.repr[start..end]));
-    }
 }
 
 // Part of a SubstString

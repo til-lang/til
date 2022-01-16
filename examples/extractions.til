@@ -12,4 +12,20 @@ print "reverse index (-1): " <$lista -1>
 print "reverse range (1 -2): " <$lista 1 -2>
 print "reverse range (-4 -2): " <$lista -4 -2>
 
+print "Custom type"
+
+type dicio {
+    proc init () {
+        return [dict]
+    }
+    proc extract (d key) {
+        print "Extracting key $key"
+        return "none"
+    }
+}
+
+set d [dicio]
+print <$d x>
+assert (<$d y> == "none")
+
 print "END"

@@ -27,14 +27,6 @@ class Dict : ListItem
         this.values = values;
     }
 
-    override CommandContext extract(CommandContext context)
-    {
-        auto arguments = context.items!string;
-        string key = to!string(arguments.join("."));
-        context.push(this[key]);
-        return context;
-    }
-
     // ------------------
     // Conversions
     override string toString()

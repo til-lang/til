@@ -89,33 +89,4 @@ class SimpleList : BaseList
         context.push(newList);
         return context;
     }
-
-    override CommandContext extract(CommandContext context)
-    {
-        if (context.size == 0) return context.push(this);
-
-        // start:
-        auto start = context.pop().toInt();
-
-        if (start < 0)
-        {
-            start = this.items.length + start;
-        }
-
-        // end:
-        auto end = start + 1;
-        if (context.size)
-        {
-            end = context.pop().toInt();
-            if (end < 0)
-            {
-                end = this.items.length + end;
-            }
-        }
-
-        // slice:
-        context.push(new SimpleList(items[start..end]));
-
-        return context;
-    }
 }

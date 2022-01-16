@@ -109,6 +109,32 @@ static this()
 
     // ---------------------------------------------
     // Strings commands
+    stringCommands["extract"] = (string path, CommandContext context)
+    {
+        String s = context.pop!String();
+
+        if (context.size == 0) return context.push(s);
+
+        auto start = context.pop().toInt();
+        if (start < 0)
+        {
+            start = s.repr.length + start;
+        }
+
+        auto end = start + 1;
+        if (context.size)
+        {
+            end = context.pop().toInt();
+            if (end < 0)
+            {
+                end = s.repr.length + end;
+            }
+        }
+
+        context.exitCode = ExitCode.CommandSuccess;
+        context.push(new String(s.repr[start..end]));
+        return context;
+    };
     stringCommands["eval"] = (string path, CommandContext context)
     {
         import til.grammar;
@@ -1137,7 +1163,37 @@ static this()
     };
 
     // ---------------------------------------
-    // SimpleList commands:
+    simpleListCommands["extract"] = (string path, CommandContext context)
+    {
+        SimpleList l = context.pop!SimpleList();
+
+        if (context.size == 0) return context.push(l);
+
+        // start:
+        auto start = context.pop().toInt();
+
+        if (start < 0)
+        {
+            start = l.items.length + start;
+        }
+
+        // end:
+        auto end = start + 1;
+        if (context.size)
+        {
+            end = context.pop().toInt();
+            if (end < 0)
+            {
+                end = l.items.length + end;
+            }
+        }
+
+        // slice:
+        context.push(new SimpleList(l.items[start..end]));
+
+        context.exitCode = ExitCode.CommandSuccess;
+        return context;
+    };
     simpleListCommands["eval"] = (string path, CommandContext context)
     {
         auto list = context.pop();
@@ -1319,6 +1375,16 @@ static this()
             }
             dict.values.remove(key);
         }
+
+        context.exitCode = ExitCode.CommandSuccess;
+        return context;
+    };
+    dictCommands["extract"] = (string path, CommandContext context)
+    {
+        Dict d = context.pop!Dict();
+        auto arguments = context.items!string;
+        string key = to!string(arguments.join("."));
+        context.push(d[key]);
 
         context.exitCode = ExitCode.CommandSuccess;
         return context;
