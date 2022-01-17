@@ -428,16 +428,22 @@ static this()
 
         // Remember: `context` is going to change a lot from now on.
         auto nextContext = context;
-        do
+forLoop:
+        while (true)
         {
             nextContext = target.next(context.next());
-            if (nextContext.exitCode == ExitCode.Break)
+            switch (nextContext.exitCode)
             {
-                break;
-            }
-            else if (nextContext.exitCode == ExitCode.Failure)
-            {
-                return nextContext;
+                case ExitCode.Break:
+                    break forLoop;
+                case ExitCode.Failure:
+                    return nextContext;
+                case ExitCode.Skip:
+                    continue;
+                case ExitCode.Continue:
+                    break;
+                default:
+                    return nextContext;
             }
 
             loopScope[argName] = nextContext.items;
@@ -464,7 +470,6 @@ static this()
                 context.yield();
             }
         }
-        while(nextContext.exitCode == ExitCode.Continue);
 
         context.exitCode = ExitCode.CommandSuccess;
         return context;
@@ -507,17 +512,20 @@ static this()
             override CommandContext next(CommandContext context)
             {
                 auto targetContext = this.target.next(context);
-                if (targetContext.exitCode == ExitCode.Break)
+                switch (targetContext.exitCode)
                 {
-                    return targetContext;
-                }
-                else if (targetContext.exitCode != ExitCode.Continue)
-                {
-                    throw new Exception(
-                        to!string(this.target)
-                        ~ ".next returned "
-                        ~ to!string(targetContext.exitCode)
-                    );
+                    case ExitCode.Break:
+                    case ExitCode.Failure:
+                    case ExitCode.Skip:
+                        return targetContext;
+                    case ExitCode.Continue:
+                        break;
+                    default:
+                        throw new Exception(
+                            to!string(this.target)
+                            ~ ".next returned "
+                            ~ to!string(targetContext.exitCode)
+                        );
                 }
 
                 escopo[varName] = targetContext.items;
@@ -595,10 +603,14 @@ static this()
         context.exitCode = ExitCode.CommandSuccess;
         return context;
     };
-
     commands["return"] = (string path, CommandContext context)
     {
         context.exitCode = ExitCode.ReturnSuccess;
+        return context;
+    };
+    commands["skip"] = (string path, CommandContext context)
+    {
+        context.exitCode = ExitCode.Skip;
         return context;
     };
 
@@ -1082,6 +1094,9 @@ static this()
                 break;
             case "/":
                 context.push(t1.value / t2.value);
+                break;
+            case "%":
+                context.push(t1.value % t2.value);
                 break;
         }
         context.exitCode = ExitCode.CommandSuccess;

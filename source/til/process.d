@@ -376,6 +376,7 @@ class Process
                 // Loops:
                 case ExitCode.Break:
                 case ExitCode.Continue:
+                case ExitCode.Skip:
                     return context;
 
                 // -----------------

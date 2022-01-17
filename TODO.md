@@ -18,10 +18,6 @@ test "conversion to float" {
 }
 ```
 
-* ExitCode.Skip
-* Allow `transform` to skip
-* Allow `foreach` to skip
-
 * range 0 10 | zip [range 20 30] -> (0 20) , (1 21) , ...
 
 ```tcl

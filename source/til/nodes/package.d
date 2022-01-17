@@ -46,6 +46,7 @@ enum ExitCode
     CommandSuccess,   // A command was executed with success
     Break,            // Break the current loop
     Continue,         // Continue to the next iteraction
+    Skip,             // Skip this iteration and call `next` again
 }
 
 enum ObjectType
