@@ -7,7 +7,7 @@ import std.array;
 import std.conv : to, ConvException;
 import std.file : read;
 import std.stdio;
-import std.string : toLower;
+import std.string : indexOf, toLower;
 
 import til.grammar;
 
@@ -199,6 +199,23 @@ static this()
             context.push(
                 new String(l.items.map!(x => to!string(x)).join(joiner))
             );
+        }
+        context.exitCode = ExitCode.CommandSuccess;
+        return context;
+    };
+    stringCommands["find"] = (string path, CommandContext context)
+    {
+        string needle = context.pop!string();
+        // TODO: make the following code template:
+        if (context.size == 0)
+        {
+            auto msg = "`" ~ path ~ "` expects two arguments";
+            return context.error(msg, ErrorCode.InvalidSyntax, "");
+        }
+        foreach(item; context.items)
+        {
+            string haystack = item.toString();
+            context.push(haystack.indexOf(needle));
         }
         context.exitCode = ExitCode.CommandSuccess;
         return context;

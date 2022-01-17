@@ -46,4 +46,10 @@ set s [join "-" (1 2 3 4 5)]
 print "\$s ($s) is a " [typeof $s]
 assert ([join "-" (1 2 3 4 5)] == "1-2-3-4-5")
 
+# 1-2-3-4-5
+# 0123456789
+set index [find "4" $s]
+assert ($index == 6)
+assert ([find "x" $s] == -1)
+
 print "END"
