@@ -360,6 +360,21 @@ static this()
         context.exitCode = ExitCode.CommandSuccess;
         return context;
     };
+    commands["to.string"] = (string path, CommandContext context)
+    {
+        if (context.size == 0)
+        {
+            auto msg = "`" ~ path ~ "` expects at least one argument";
+            return context.error(msg, ErrorCode.InvalidSyntax, "");
+        }
+        foreach(item; context.items.retro)
+        {
+            context.push(item.toString());
+        }
+
+        context.exitCode = ExitCode.CommandSuccess;
+        return context;
+    };
 
     // ---------------------------------------------
     // Flow control
@@ -1540,7 +1555,19 @@ forLoop:
     // Dicts:
     dictCommands["set"] = (string path, CommandContext context)
     {
+        debug {
+            auto item = context.peek();
+            stderr.writeln(" dict.set peek:", item, " : ", item.type);
+        }
         auto dict = context.pop!Dict();
+
+        debug {stderr.writeln("  dict:", dict);}
+        debug {stderr.writeln("  context.size:", context.size);}
+
+        debug {
+            auto arg = context.peek();
+            stderr.writeln("  dict.set argument peek:", arg, " : ", arg.type);
+        }
 
         foreach(argument; context.items)
         {
@@ -1829,10 +1856,9 @@ forLoop:
         */
         auto name = context.pop!string();
         auto sublist = context.pop();
+
         auto subprogram = (cast(SubList)sublist).subprogram;
-
         auto newScope = new Process(context.escopo);
-
         auto newContext = context.next(newScope, context.size);
 
         // RUN!
@@ -1871,20 +1897,39 @@ forLoop:
             auto returnedObject = returnContext.pop();
 
             string prefix1 = returnedObject.typeName ~ ".";
-            string prefix2 = name ~ ".";
+            // string prefix2 = name ~ ".";
             debug {stderr.writeln("prefix1:", prefix1); }
-            debug {stderr.writeln("prefix2:", prefix2); }
+            // debug {stderr.writeln("prefix2:", prefix2); }
 
-            // set -> dict.set
-            // set -> myclass.set
+            // global "to.string" -> dict.to.string
+            // do it here because these names CAN be
+            // freely overwritten.
+            foreach(cmdName, command; commands)
+            {
+                string newName = prefix1 ~ cmdName;
+                newCommands[newName] = command;
+            }
+
+            // coordinates : dict
+            //  set -> set (from dict)
+            //  set -> dict.set
+            // returnedObject is a `dict`
+            // 
+            // position : coordinates
+            // set -> (coordinates)set
+            // set -> coordinates.set
+            // dict.set -> dict.set
+            // dict.set -> coordinates.dict.set
+            // returnedObject is a `coordinates`
+            //
             foreach(cmdName, command; returnedObject.commands)
             {
                 newCommands[cmdName] = command;
                 newCommands[prefix1 ~ cmdName] = command;
-                newCommands[prefix2 ~ cmdName] = command;
+                // newCommands[prefix2 ~ cmdName] = command;
             }
 
-            // (type.)set -> set (simple copy)
+            // set (from coordinates) -> set (simple copy)
             foreach(cmdName, command; type.commands)
             {
                 debug {stderr.writeln(cmdName, "->", command); }
@@ -1892,6 +1937,7 @@ forLoop:
             }
             returnedObject.commands = newCommands;
             returnedObject.typeName = name;
+
             returnContext.push(returnedObject);
             return returnContext;
         };

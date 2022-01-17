@@ -8,13 +8,6 @@
 
 * `zip [range 0 10] [range 20 30]` -> 0 20 , 1 21 , ...
 
-* Some ListItem methods should try to **resolve into commands** before
-  throwing Exceptions.
-    * `.to<type>` -> `"to_<type>"`
-* strings
-    * `range $string` -> iterate over each character
-    * multi-line strings
-
 * test (?) -- To create unit tests, maybe...
 
 ```tcl

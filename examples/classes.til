@@ -4,16 +4,19 @@ type coordinates {
         print "coordinates.init: $x $y"
         return [dict (x $x) (y $y)]
     }
-
     proc set (dict key value) {
         print "setting coordinates.$key=$value"
         dict.set $dict ($key $value)
     }
-
     proc print (dict) {
         set x <$dict x>
         set y <$dict y>
         print "($x,$y) <- $dict"
+    }
+    proc to.string (dict) {
+        print "coordinates.to.string"
+        set s [dict.to.string $dict]
+        return "coordinates: $s"
     }
 }
 
@@ -22,15 +25,17 @@ print $c1
 set $c1 x 12
 set $c1 y 34
 print $c1
+print "to.string test: $c1"
 
 
-print "INHERITANCE TEST"
+print "\nINHERITANCE TEST:"
+print "    position : coordinates : dict"
 
 type position {
     proc init (x y) {
+        print "position.init: $x $y"
         return [coordinates $x $y]
     }
-
     proc set (coordinates key value) {
         print "setting position.$key=$value"
         coordinates.set $coordinates $key $value

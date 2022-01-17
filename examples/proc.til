@@ -15,6 +15,7 @@ print [g "blebs"]
 print [f 100 200 300]
 
 set result [f 1 2 3] [g 4]
-set expected ">1< 2 3 >4<"
+set expected ">1<23>4<"
+print "$result == $expected?"
 assert ("$result" == $expected)
-print "$result == $expected"
+print " $result == $expected, indeed"

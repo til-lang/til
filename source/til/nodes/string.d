@@ -139,9 +139,14 @@ class SubstString : String
                     auto msg = "Variable " ~ to!string(part.value) ~ " is not set";
                     return context.error(msg, ErrorCode.InvalidArgument, "");
                 }
-                result ~= to!string(values
-                    .map!(x => to!string(x))
-                    .joiner(" "));
+
+                foreach (v; values)
+                {
+                    auto newContext = v.runCommand(context.next(), "to.string", true);
+                    result ~= to!string(newContext.items
+                        .map!(x => to!string(x))
+                        .joiner(" "));
+                    }
             }
             else
             {

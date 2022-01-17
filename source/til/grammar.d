@@ -474,15 +474,19 @@ class Parser
                     // XXX: this cases could be written at compile time.
                     case 'b':
                         token ~= '\b';
+                        consumeChar();
                         break;
                     case 'n':
                         token ~= '\n';
+                        consumeChar();
                         break;
                     case 'r':
                         token ~= '\r';
+                        consumeChar();
                         break;
                     case 't':
                         token ~= '\t';
+                        consumeChar();
                         break;
                     // TODO: \u1234
                     default:

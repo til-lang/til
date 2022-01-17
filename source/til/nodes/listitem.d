@@ -110,10 +110,19 @@ class ListItem
         return (name in this.commands);
     }
     CommandContext runCommand(
-        CommandContext context, string name
+        CommandContext context, string name, bool allowGlobal = false
     )
     {
         CommandHandler* handler = this.getCommandHandler(name);
+
+        if (handler is null && allowGlobal)
+        {
+            auto h = context.escopo.getCommand(name);
+            if (h !is null)
+            {
+                handler = &h;
+            }
+        }
 
         if (handler is null)
         {
