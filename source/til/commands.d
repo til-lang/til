@@ -241,6 +241,48 @@ static this()
         context.exitCode = ExitCode.CommandSuccess;
         return context;
     };
+    stringCommands["range"] = (string path, CommandContext context)
+    {
+        /*
+        range "12345" -> 1 , 2 , 3 , 4 , 5
+        */
+        class StringRange : Item
+        {
+            string s;
+            int currentIndex = 0;
+            ulong _length;
+
+            this(string s)
+            {
+                this.s = s;
+                this._length = s.length;
+            }
+            override string toString()
+            {
+                return "StringRange";
+            }
+            override CommandContext next(CommandContext context)
+            {
+                if (this.currentIndex >= this._length)
+                {
+                    context.exitCode = ExitCode.Break;
+                }
+                else
+                {
+                    auto chr = this.s[this.currentIndex++];
+                    debug {stderr.writeln("StringRange.push:", chr); }
+                    context.push(to!string(chr));
+                    context.exitCode = ExitCode.Continue;
+                }
+                return context;
+            }
+        }
+
+        string s = context.pop!string();
+        context.push(new StringRange(s));
+        context.exitCode = ExitCode.CommandSuccess;
+        return context;
+    };
 
     // ---------------------------------------------
     // System commands
@@ -1254,6 +1296,52 @@ forLoop:
 
         SimpleList list = context.pop!SimpleList();
         context.push(new ItemsRange(list.items));
+        context.exitCode = ExitCode.CommandSuccess;
+        return context;
+    };
+    simpleListCommands["range.enumerate"] = (string path, CommandContext context)
+    {
+        /*
+        range.enumerate (1 2 3 4 5)
+        -> 0 1 , 1 2 , 2 3 , 3 4 , 4 5
+        */
+        // TODO: make ItemsRange from "range" accessible here.
+        class ItemsRangeEnumerate : Item
+        {
+            Items list;
+            int currentIndex = 0;
+            ulong _length;
+
+            this(Items list)
+            {
+                this.list = list;
+                this._length = list.length;
+            }
+            override string toString()
+            {
+                return "ItemsRangeEnumerate";
+            }
+            override CommandContext next(CommandContext context)
+            {
+                if (this.currentIndex >= this._length)
+                {
+                    context.exitCode = ExitCode.Break;
+                }
+                else
+                {
+                    auto item = this.list[this.currentIndex];
+                    debug {stderr.writeln("ItemsRangeEnumerate.push:", item); }
+                    context.push(item);
+                    context.push(currentIndex);
+                    this.currentIndex++;
+                    context.exitCode = ExitCode.Continue;
+                }
+                return context;
+            }
+        }
+
+        SimpleList list = context.pop!SimpleList();
+        context.push(new ItemsRangeEnumerate(list.items));
         context.exitCode = ExitCode.CommandSuccess;
         return context;
     };

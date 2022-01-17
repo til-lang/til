@@ -34,5 +34,10 @@ range $lista | foreach x {
     assert ($x == $counter)
     incr $counter
 }
+print "---"
+range.enumerate $lista | foreach x {
+    set (index item) [list $x]
+    print "<\$lista $index> : $item"
+}
 
 print "END"

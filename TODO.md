@@ -1,13 +1,18 @@
 # TODO
 
-* Should commands return SimpleList or a sequence?????????
+* Should commands return SimpleList or sequence?
+    * Answer: SimpleList, because it has extractions and methods.
+* Could we get rid of `Object.type`?
+    * Probably not, unless we disallow operations between types.
+    * Should we disallow operations between types?
+
+* `zip [range 0 10] [range 20 30]` -> 0 20 , 1 21 , ...
 
 * Some ListItem methods should try to **resolve into commands** before
   throwing Exceptions.
     * `.to<type>` -> `"to_<type>"`
-* Could we get rid of `Object.type`?
-    * Probably not, unless we disallow operations between types.
 * strings
+    * `range $string` -> iterate over each character
     * multi-line strings
 
 * test (?) -- To create unit tests, maybe...
@@ -18,7 +23,6 @@ test "conversion to float" {
 }
 ```
 
-* range 0 10 | zip [range 20 30] -> (0 20) , (1 21) , ...
 
 ```tcl
 type context_manager {

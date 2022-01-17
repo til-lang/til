@@ -54,4 +54,11 @@ assert ([find "x" $s] == -1)
 
 set special_chars_string "\b\n\r\t"
 
+# Ranges:
+set output ""
+range $s | foreach x {
+    set output "$output$x"
+}
+assert ($output == $s)
+
 print "END"
