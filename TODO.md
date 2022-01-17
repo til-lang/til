@@ -1,5 +1,6 @@
 # TODO
 
+* Should commands return SimpleList or a sequence?????????
 * Some ListItem methods should try to **resolve into commands** before
   throwing Exceptions.
     * `.to<type>` -> `"to_<type>"`
@@ -7,7 +8,6 @@
     * Probably not, unless we disallow operations between types.
 * strings
     * multi-line strings
-* regexps
 * get the script's command line arguments
 
 * test (?) -- To create unit tests, maybe...

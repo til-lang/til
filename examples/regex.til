@@ -1,0 +1,12 @@
+print "START"
+
+set s "2023-12-25T12:34:56"
+set exp "[0-9]+"
+print "s:$s; exp:$exp"
+set m [matches $exp $s]
+assert ([length $m] > 0)
+range $m | foreach x {
+    print "match:$x"
+}
+
+print "END"

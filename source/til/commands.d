@@ -6,6 +6,7 @@ import std.algorithm.sorting : sort;
 import std.array;
 import std.conv : to, ConvException;
 import std.file : read;
+import std.regex : matchAll;
 import std.stdio;
 import std.string : indexOf, toLower;
 
@@ -217,6 +218,26 @@ static this()
             string haystack = item.toString();
             context.push(haystack.indexOf(needle));
         }
+        context.exitCode = ExitCode.CommandSuccess;
+        return context;
+    };
+    stringCommands["matches"] = (string path, CommandContext context)
+    {
+        string expression = context.pop!string();
+        if (context.size == 0)
+        {
+            auto msg = "`" ~ path ~ "` expects two arguments";
+            return context.error(msg, ErrorCode.InvalidSyntax, "");
+        }
+        string target = context.pop!string();
+
+        SimpleList l = new SimpleList([]);
+        foreach(m; target.matchAll(expression))
+        {
+            l.items ~= new String(m.hit);
+        }
+        context.push(l);
+
         context.exitCode = ExitCode.CommandSuccess;
         return context;
     };
@@ -1384,6 +1405,12 @@ static this()
                 .map!(x => to!string(x))
                 .canFind(to!string(item))
         );
+    };
+    simpleListCommands["length"] = (string path, CommandContext context)
+    {
+        auto l = context.pop!SimpleList();
+        context.exitCode = ExitCode.CommandSuccess;
+        return context.push(l.items.length);
     };
 
     // ---------------------------------------
