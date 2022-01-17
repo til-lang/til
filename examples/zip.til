@@ -1,0 +1,8 @@
+print "START"
+
+zip [range 0 10] [range 120 130] [range 1040 1055] | foreach x {
+    set (a b c) [list $x]
+    print "$a $b $c"
+}
+
+print "END"

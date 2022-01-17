@@ -6,8 +6,6 @@
     * Probably not, unless we disallow operations between types.
     * Should we disallow operations between types?
 
-* `zip [range 0 10] [range 20 30]` -> 0 20 , 1 21 , ...
-
 * test (?) -- To create unit tests, maybe...
 
 ```tcl
@@ -30,11 +28,6 @@ type context_manager {
     }
 }
 
-* Vectors!
-    * bytes, first, to act as generic non-encoded strings.
-    * integers
-    * floats
-
 scope "context manager test" {
     with cm [context_manager "teste"]
     # with: gets the context_manager instance,
@@ -47,6 +40,11 @@ scope "context manager test" {
 }
 # call "close $cm" when the scope ends.
 ```
+
+* Vectors!
+    * bytes, first, to act as generic non-encoded strings.
+    * integers
+    * floats
 
 * Decimal type!
 * JSON

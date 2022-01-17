@@ -1532,6 +1532,56 @@ forLoop:
     };
 
     // ---------------------------------------
+    // Sequences
+    commands["zip"] = (string path, CommandContext context)
+    {
+
+        class Zipper : Item
+        {
+            Items items;
+            this(Items items)
+            {
+                this.items = items;
+            }
+            override string toString()
+            {
+                return "Zipper";
+            }
+            override CommandContext next(CommandContext context)
+            {
+                Items iterationItems;
+                foreach (item; items.retro)
+                {
+zipIteration:
+                    while (true)
+                    {
+                        auto itemContext = item.next(context.next());
+                        switch (itemContext.exitCode)
+                        {
+                            case ExitCode.Skip:
+                                continue;
+                            case ExitCode.Break:
+                            case ExitCode.Failure:
+                                return itemContext;
+                            default:
+                                iterationItems ~= itemContext.items;
+                                break zipIteration;
+                        }
+                    }
+                }
+
+                context.push(iterationItems);
+                context.exitCode = ExitCode.Continue;
+                return context;
+            }
+        }
+
+        context.push(new Zipper(context.items));
+        context.exitCode = ExitCode.CommandSuccess;
+        return context;
+    };
+
+    // ---------------------------------------
     // Pids:
     pidCommands["send"] = (string path, CommandContext context)
     {

@@ -139,6 +139,14 @@ struct CommandContext
         size++;
         return this;
     }
+    CommandContext push(Items items)
+    {
+        foreach(item; items)
+        {
+            push(item);
+        }
+        return this;
+    }
     template push(T)
     {
         CommandContext push(T x)
@@ -156,10 +164,7 @@ struct CommandContext
     }
     CommandContext ret(Items items)
     {
-        foreach(item; items)
-        {
-            push(item);
-        }
+        this.push(items);
         exitCode = ExitCode.CommandSuccess;
         return this;
     }
