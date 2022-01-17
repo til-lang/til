@@ -52,4 +52,6 @@ set index [find "4" $s]
 assert ($index == 6)
 assert ([find "x" $s] == -1)
 
+set special_chars_string "\b\n\r\t"
+
 print "END"

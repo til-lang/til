@@ -469,7 +469,25 @@ class Parser
                 consumeChar();
 
                 // And add the next char, whatever it is:
-                token ~= consumeChar();
+                switch (currentChar)
+                {
+                    // XXX: this cases could be written at compile time.
+                    case 'b':
+                        token ~= '\b';
+                        break;
+                    case 'n':
+                        token ~= '\n';
+                        break;
+                    case 'r':
+                        token ~= '\r';
+                        break;
+                    case 't':
+                        token ~= '\t';
+                        break;
+                    // TODO: \u1234
+                    default:
+                        token ~= consumeChar();
+                }
             }
             else if (currentChar != '"')
             {
