@@ -5,7 +5,6 @@
     * `.to<type>` -> `"to_<type>"`
 * Could we get rid of `Object.type`?
     * Probably not, unless we disallow operations between types.
-* `exec` should call `on.error` if the command fails.
 * strings
     * length
     * special characters, like newline and tab.

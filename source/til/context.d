@@ -222,11 +222,14 @@ struct CommandContext
     // Errors
     CommandContext error(string message, int code, string classe)
     {
+        return this.error(message, code, classe, null);
+    }
+    CommandContext error(string message, int code, string classe, Item object)
+    {
         debug {stderr.writeln("context.error:", message);}
-        auto e = new Erro(escopo, message, code, classe);
+        auto e = new Erro(escopo, message, code, classe, object);
         push(e);
         this.exitCode = ExitCode.Failure;
-
         return this;
     }
 }

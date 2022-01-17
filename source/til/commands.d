@@ -318,9 +318,7 @@ static this()
         }
 
         auto argName = context.pop!string();
-        debug {stderr.writeln(" > ", context.escopo.peek());}
         auto argBody = context.pop!SubList();
-        debug {stderr.writeln(" > ", context.escopo.peek());}
 
         /*
         Do NOT create a new scope for the
@@ -332,7 +330,6 @@ static this()
 
         uint index = 0;
         auto target = context.pop();
-        debug {stderr.writeln("foreach target: ", target);}
 
         auto nextContext = context;
         // Remember: `context` is going to change a lot from now on.
@@ -343,7 +340,10 @@ static this()
             {
                 break;
             }
-            debug {stderr.writeln("foreach.nextContext.exitCode:", nextContext.exitCode);}
+            else if (nextContext.exitCode == ExitCode.Failure)
+            {
+                return nextContext;
+            }
 
             loopScope[argName] = nextContext.items;
 

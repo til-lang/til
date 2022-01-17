@@ -31,10 +31,16 @@ class Erro : ListItem
     int code = -1;
     string classe;
     string message;
-    Process process = null;
+    Process process;
+    Item object;
 
     this(Process process, string message, int code, string classe)
     {
+        this(process, message, code, classe, null);
+    }
+    this(Process process, string message, int code, string classe, Item object)
+    {
+        this.object = object;
         this.process = process;
         this.message = message;
         this.code = code;
@@ -68,6 +74,8 @@ class Erro : ListItem
                 return context.push(process.index);
             case "message":
                 return context.push(message);
+            case "object":
+                return context.push(object);
             default:
                 auto msg = "Invalid argument to Error extraction";
                 return context.error(msg, ErrorCode.InvalidArgument, "");

@@ -70,12 +70,8 @@ class SystemProcess : ListItem
                 }
                 else if (inputContext.exitCode != ExitCode.Continue)
                 {
-                    // TODO: throw a context.error, here.
-                    throw new Exception(
-                        to!string(this.inputStream)
-                        ~ ".next returned "
-                        ~ to!string(inputContext.exitCode)
-                    );
+                    auto msg = "Error while reading from " ~ this.toString();
+                    return context.error(msg, returnCode, "exec");
                 }
 
                 foreach (item; inputContext.items)
@@ -99,8 +95,17 @@ class SystemProcess : ListItem
                 debug {stderr.writeln(" terminated");}
                 returnCode = pid.wait();
                 isRunning = false;
-                context.exitCode = ExitCode.Break;
-                return context;
+
+                if (returnCode != 0)
+                {
+                    auto msg = "Error while executing " ~ this.toString();
+                    return context.error(msg, returnCode, "exec", this);
+                }
+                else
+                {
+                    context.exitCode = ExitCode.Break;
+                    return context;
+                }
             }
 
             line = pipes.stdout.readln();

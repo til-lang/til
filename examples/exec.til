@@ -1,6 +1,17 @@
 print "START"
 
 proc ls (path) {
+    proc on.error (error) {
+        print "on.error:"
+        print " msg: " <$error message>
+        print " code: " <$error code>
+        set obj <$error object>
+        set e <$obj error>
+        push $e | foreach line {
+            print "ls.error> $line"
+        }
+    }
+
     print "path: $path"
     set p [exec ls $path]
     push $p | foreach line {
@@ -9,10 +20,8 @@ proc ls (path) {
     print " done:" <$p returncode>
 
     if (<$p returncode> != 0) {
-        set e <$p error>
-        push $e | foreach line {
-            print "ls.error> $line"
-        }
+        print "Should not reach this line."
+        exit 1
     }
 }
 
