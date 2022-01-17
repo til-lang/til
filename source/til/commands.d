@@ -7,6 +7,7 @@ import std.array;
 import std.conv : to, ConvException;
 import std.file : read;
 import std.stdio;
+import std.string : toLower;
 
 import til.grammar;
 
@@ -156,9 +157,52 @@ static this()
     stringCommands["length"] = (string path, CommandContext context)
     {
         auto s = context.pop!String();
+        context.exitCode = ExitCode.CommandSuccess;
         return context.push(s.repr.length);
     };
+    stringCommands["split"] = (string path, CommandContext context)
+    {
+        auto s = context.pop!string;
+        if (context.size == 0)
+        {
+            auto msg = "`" ~ path ~ "` expects two arguments";
+            return context.error(msg, ErrorCode.InvalidSyntax, "");
+        }
+        auto separator = context.pop!string;
 
+        SimpleList l = new SimpleList(
+            cast(Items)(s.split(separator)
+                .map!(x => new String(x))
+                .array)
+        );
+
+        context.push(l);
+        context.exitCode = ExitCode.CommandSuccess;
+        return context;
+    };
+    stringCommands["join"] = (string path, CommandContext context)
+    {
+        string joiner = context.pop!string();
+        if (context.size == 0)
+        {
+            auto msg = "`" ~ path ~ "` expects at least two arguments";
+            return context.error(msg, ErrorCode.InvalidSyntax, "");
+        }
+        foreach (item; context.items)
+        {
+            if (item.type != ObjectType.SimpleList)
+            {
+                auto msg = "`" ~ path ~ "` expects a list of SimpleLists";
+                return context.error(msg, ErrorCode.InvalidSyntax, "");
+            }
+            SimpleList l = cast(SimpleList)item;
+            context.push(
+                new String(l.items.map!(x => to!string(x)).join(joiner))
+            );
+        }
+        context.exitCode = ExitCode.CommandSuccess;
+        return context;
+    };
 
     // ---------------------------------------------
     // System commands
@@ -184,6 +228,19 @@ static this()
 
     // ---------------------------------------------
     // Native types, nodes and conversion
+    commands["typeof"] = (string path, CommandContext context)
+    {
+        if (context.size == 0)
+        {
+            auto msg = "`" ~ path ~ "` expects one argument";
+            return context.error(msg, ErrorCode.InvalidSyntax, "");
+        }
+        Item target = context.pop();
+        context.push(new NameAtom(to!string(target.type).toLower()));
+
+        context.exitCode = ExitCode.CommandSuccess;
+        return context;
+    };
     stringCommands["to.int"] = (string path, CommandContext context)
     {
         string target = context.pop!string();
@@ -331,11 +388,11 @@ static this()
         uint index = 0;
         auto target = context.pop();
 
-        auto nextContext = context;
         // Remember: `context` is going to change a lot from now on.
+        auto nextContext = context;
         do
         {
-            nextContext = target.next(context);
+            nextContext = target.next(context.next());
             if (nextContext.exitCode == ExitCode.Break)
             {
                 break;
@@ -1133,7 +1190,9 @@ static this()
                 }
                 else
                 {
-                    context.push(this.list[this.currentIndex++]);
+                    auto item = this.list[this.currentIndex++];
+                    debug {stderr.writeln("ItemsRange.push:", item); }
+                    context.push(item);
                     context.exitCode = ExitCode.Continue;
                 }
                 return context;

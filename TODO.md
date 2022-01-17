@@ -6,12 +6,9 @@
 * Could we get rid of `Object.type`?
     * Probably not, unless we disallow operations between types.
 * strings
-    * length
+    * find
     * special characters, like newline and tab.
     * multi-line strings
-    * split
-    * join
-    * find
 * regexps
 * get the script's command line arguments
 

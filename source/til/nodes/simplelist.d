@@ -20,6 +20,8 @@ class SimpleList : BaseList
        like `if ($x > 10) {...}`.
     */
 
+    long currentItemIndex;
+
     this(Items items)
     {
         super();
