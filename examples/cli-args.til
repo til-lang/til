@@ -1,0 +1,6 @@
+print "START"
+
+print "args:" $args
+assert (<$args 1> == "examples/cli-args.til")
+
+print "END"

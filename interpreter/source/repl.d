@@ -12,9 +12,11 @@ import til.scheduler;
 import editline;
 
 
-int repl()
+int repl(Dict envVars, SimpleList argumentsList)
 {
     auto process = new Process(null);
+    process["args"] = argumentsList;
+    process["env"] = envVars;
     process.commands = commands;
     string command;
 

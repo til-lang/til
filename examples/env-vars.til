@@ -1,0 +1,5 @@
+print "START"
+
+print "HOME:" <$env "HOME">
+
+print "END"

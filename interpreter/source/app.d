@@ -1,5 +1,7 @@
+import std.array : array;
 import std.datetime.stopwatch;
 import std.file;
+import std.process : environment;
 import std.stdio;
 import std.string : stripRight;
 
@@ -68,6 +70,15 @@ int main(string[] args)
 {
     Parser parser;
 
+    SimpleList argumentsList = new SimpleList(
+        cast(Items)args.map!(x => new String(x)).array
+    );
+    Dict envVars = new Dict();
+    foreach(key, value; environment.toAA())
+    {
+        envVars[key] = new String(value);
+    }
+
     debug
     {
         auto sw = StopWatch(AutoStart.no);
@@ -76,7 +87,7 @@ int main(string[] args)
 
     if (args.length == 1)
     {
-        return repl();
+        return repl(envVars, argumentsList);
     }
 
     auto filename = args[1];
@@ -113,6 +124,8 @@ int main(string[] args)
     }
 
     auto process = new Process(null, program);
+    process["args"] = argumentsList;
+    process["env"] = envVars;
     process.commands = commands;
     process.input = new InterpreterInput(stdin);
     process.output = new InterpreterOutput(stdout);
