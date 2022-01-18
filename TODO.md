@@ -14,33 +14,6 @@ test "conversion to float" {
 }
 ```
 
-
-```tcl
-type context_manager {
-    proc init (name) {
-        return [dict (name $name)]
-    }
-    proc open (d) {
-        set $d open true
-    }
-    proc close (d error) {
-        set $d open false
-    }
-}
-
-scope "context manager test" {
-    with cm [context_manager "teste"]
-    # with: gets the context_manager instance,
-    # calls .open right away,
-    # and attribute the instance to $cm.
-
-    ...
-
-    # Also, errors are resolved by local on.error.
-}
-# call "close $cm" when the scope ends.
-```
-
 * Vectors!
     * bytes, first, to act as generic non-encoded strings.
     * integers
