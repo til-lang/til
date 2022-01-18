@@ -143,10 +143,8 @@ static this()
 
         auto code = context.pop!string();
 
-        debug {stderr.writeln("eval.code:", code);}
         auto parser = new Parser(code);
         SubProgram subprogram = parser.run();
-        debug {stderr.writeln("eval.subprogram:", subprogram);}
 
         context = context.escopo.run(subprogram);
         if (context.exitCode == ExitCode.Proceed)
@@ -270,7 +268,6 @@ static this()
                 else
                 {
                     auto chr = this.s[this.currentIndex++];
-                    debug {stderr.writeln("StringRange.push:", chr); }
                     context.push(to!string(chr));
                     context.exitCode = ExitCode.Continue;
                 }
@@ -385,9 +382,6 @@ static this()
             // NOT popping the conditions: `math` will take care of that, already.
             auto mathContext = math(context.next(1));
             auto isConditionTrue = mathContext.pop!bool();
-            debug {stderr.writeln(" isConditionTrue:", isConditionTrue);}
-            debug {stderr.writeln(" context.size:", context.size);}
-            debug {stderr.writeln(" escopo.stackPointer:", context.escopo.stackPointer);}
 
             auto thenBody = context.pop!SubList();
 
@@ -414,12 +408,6 @@ static this()
                 {
                     auto msg = "Invalid format for if/then/else clause:"
                                ~ " elseWord found was " ~ elseWord  ~ ".";
-                    debug {
-                        foreach (item; context.items)
-                        {
-                            stderr.writeln(" elseWord.item:", item);
-                        }
-                    }
                     return context.error(msg, ErrorCode.InvalidSyntax, "");
                 }
 
@@ -458,11 +446,6 @@ static this()
         /*
         range 5 | foreach x { ... }
         */
-        debug {
-            stderr.writeln("foreach context.size:", context.size);
-            stderr.writeln(" > ", context.escopo.peek());
-        }
-
         if (context.size < 2)
         {
             auto msg = "`foreach` expects two arguments";
@@ -506,7 +489,6 @@ forLoop:
             loopScope[argName] = nextContext.items;
 
             context = loopScope.run(argBody.subprogram);
-            debug {stderr.writeln("foreach.subprogram.exitCode:", context.exitCode);}
 
             if (context.exitCode == ExitCode.Break)
             {
@@ -523,7 +505,6 @@ forLoop:
 
             if ((index++ & yieldStep) == yieldStep)
             {
-                debug {stderr.writeln("foreach yieldStep");}
                 context.yield();
             }
         }
@@ -671,6 +652,48 @@ forLoop:
         return context;
     };
 
+    commands["scope"] = (string path, CommandContext context)
+    {
+        string name = context.pop!string();
+        SubList body = context.pop!SubList();
+
+        auto process = new Process(context.escopo);
+        process.variables = context.escopo.variables;
+
+        auto returnedContext = process.run(body.subprogram, context.next(process, 0));
+
+        if (returnedContext.exitCode == ExitCode.Proceed)
+        {
+            returnedContext.exitCode = ExitCode.CommandSuccess;
+        }
+
+        Items managers = process.internalVariables.require("cm", []);
+        foreach (contextManager; managers)
+        {
+            returnedContext = contextManager.runCommand(returnedContext, "close");
+        }
+
+        return returnedContext;
+    };
+    commands["with"] = (string path, CommandContext context)
+    {
+        // with cm [context_manager 1 2 3]
+        string name = context.pop!string();
+        auto contextManager = context.pop();
+
+        auto process = context.escopo;
+
+        process[name] = contextManager;
+        context = contextManager.runCommand(context, "open");
+
+        Items managers = process.internalVariables.require("cm", []);
+        managers ~= contextManager;
+        process.internalVariables["cm"] = managers;
+
+        context.exitCode = ExitCode.CommandSuccess;
+        return context;
+    };
+
     // ---------------------------------------------
     // Scope manipulation
     commands["uplevel"] = (string path, CommandContext context)
@@ -750,12 +773,10 @@ forLoop:
         if (input !is null)
         {
             // receive $queue | spawn some_procedure
-            debug {stderr.writeln("New process input is: ", input);}
             process.input = input;
         }
         else
         {
-            debug {stderr.writeln("New process input is a generic Queue");}
             process.input = new WaitingQueue(64);
         }
         process.output = new WaitingQueue(64);
@@ -946,9 +967,7 @@ forLoop:
     We can't really use module constructors inside
     til.nodes.* because then your're triggering
     cyclic dependencies all around, so we
-    implement each builtin type here.
-
-    "Built-in type" == anything that the parser is able to instantiate
+    implement each builtin type methods here.
     */
 
     // ---------------------------------------------
@@ -1072,7 +1091,6 @@ forLoop:
             }
         }
 
-        debug {stderr.writeln("range: ", start, " ", limit, " ", step);}
         auto range = new IntegerRange(start, limit, step);
         context.push(range);
         context.exitCode = ExitCode.CommandSuccess;
@@ -1099,15 +1117,6 @@ forLoop:
         Item lhs = context.pop();
 
         string op = to!string(operator);
-
-        debug {
-            stderr.writeln(
-                "IntegerAtom.operate:", lhs,
-                " (", lhs.type, ")",
-                " ", op,
-                " ", t2
-            );
-        }
 
         if (lhs.type != ObjectType.Integer)
         {
@@ -1301,7 +1310,6 @@ forLoop:
                 else
                 {
                     auto item = this.list[this.currentIndex++];
-                    debug {stderr.writeln("ItemsRange.push:", item); }
                     context.push(item);
                     context.exitCode = ExitCode.Continue;
                 }
@@ -1345,7 +1353,6 @@ forLoop:
                 else
                 {
                     auto item = this.list[this.currentIndex];
-                    debug {stderr.writeln("ItemsRangeEnumerate.push:", item); }
                     context.push(item);
                     context.push(currentIndex);
                     this.currentIndex++;
@@ -1605,19 +1612,7 @@ zipIteration:
     // Dicts:
     dictCommands["set"] = (string path, CommandContext context)
     {
-        debug {
-            auto item = context.peek();
-            stderr.writeln(" dict.set peek:", item, " : ", item.type);
-        }
         auto dict = context.pop!Dict();
-
-        debug {stderr.writeln("  dict:", dict);}
-        debug {stderr.writeln("  context.size:", context.size);}
-
-        debug {
-            auto arg = context.peek();
-            stderr.writeln("  dict.set argument peek:", arg, " : ", arg.type);
-        }
 
         foreach(argument; context.items)
         {
@@ -1924,7 +1919,6 @@ zipIteration:
             newContext.exitCode = ExitCode.CommandSuccess;
         }
 
-        debug {stderr.writeln(" creating new Type:", newScope.commands);}
         auto type = new Type(name);
         type.commands = newScope.commands;
         CommandHandler* initMethod = ("init" in newScope.commands);
@@ -1947,9 +1941,6 @@ zipIteration:
             auto returnedObject = returnContext.pop();
 
             string prefix1 = returnedObject.typeName ~ ".";
-            // string prefix2 = name ~ ".";
-            debug {stderr.writeln("prefix1:", prefix1); }
-            // debug {stderr.writeln("prefix2:", prefix2); }
 
             // global "to.string" -> dict.to.string
             // do it here because these names CAN be
@@ -1982,7 +1973,6 @@ zipIteration:
             // set (from coordinates) -> set (simple copy)
             foreach(cmdName, command; type.commands)
             {
-                debug {stderr.writeln(cmdName, "->", command); }
                 newCommands[cmdName] = command;
             }
             returnedObject.commands = newCommands;

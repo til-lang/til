@@ -41,6 +41,7 @@ class Process
     ListItem[64] stack;
     ulong stackPointer = 0;
     Items[string] variables;
+    Items[string] internalVariables;
     CommandHandlerMap commands;
 
     // PIDs
