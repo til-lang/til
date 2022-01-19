@@ -124,6 +124,7 @@ int main(string[] args)
     }
 
     auto process = new Process(null, program);
+    process.description = "main process";
     process["args"] = argumentsList;
     process["env"] = envVars;
     process.commands = commands;

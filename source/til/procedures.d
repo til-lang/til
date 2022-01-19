@@ -31,6 +31,7 @@ class Procedure
             stderr.writeln(" parameters:", parameters.items);
         }
         auto newScope = new Process(context.escopo);
+        newScope.description = name;
 
         // Empty the caller scope context/stack:
         foreach (parameter; parameters.items)

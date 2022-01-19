@@ -46,6 +46,7 @@ class Process
 
     // PIDs
     static uint counter = 0;
+    string description;
     uint index;
 
     // Scheduling

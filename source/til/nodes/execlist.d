@@ -30,6 +30,7 @@ class ExecList : BaseList
         context names, anyway.
         */
         auto escopo = new Process(context.escopo);
+        escopo.description = "ExecList.evaluate";
         return escopo.run(this.subprogram, context);
 
         // return context.escopo.run(this.subprogram, context);

@@ -15,6 +15,7 @@ import editline;
 int repl(Dict envVars, SimpleList argumentsList)
 {
     auto process = new Process(null);
+    process.description = "repl";
     process["args"] = argumentsList;
     process["env"] = envVars;
     process.commands = commands;

@@ -14,12 +14,12 @@
 
 ## Low hanging fruits
 
+* collect: `set content [exec cat $file_path | collect]`
 * Some command to list currently available commands.
 * Some command to list all currently set variables.
 
 ## A little more complex ones
 
-* `Process.description`.
 * Print `Process.description` for each process in the "stack" when an
   error occur and is not handled.
 * test (?) -- To create unit tests, maybe...
@@ -51,16 +51,16 @@ test "conversion to float" {
 ```tcl
 scope "work with files from some directory" {
     with dir [directory $path]
-    with file [open $dir $filename]
+    with file [open $dir $file_name]
 
     range $file | foreach line {
         print $line
     }
 
-    glob $dir "*.til" | foreach filename {
-        with file [open $dir $filename]
+    glob $dir "*.til" | foreach file_name {
+        with file [open $dir $file_name]
         set content [read $file]
-        print "$filename content: $content"
+        print "$file_name content: $content"
         print "---"
     }
 }

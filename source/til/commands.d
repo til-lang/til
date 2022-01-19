@@ -658,6 +658,7 @@ forLoop:
         SubList body = context.pop!SubList();
 
         auto process = new Process(context.escopo);
+        process.description = name;
         process.variables = context.escopo.variables;
 
         auto returnedContext = process.run(body.subprogram, context.next(process, 0));
@@ -768,6 +769,7 @@ forLoop:
         auto pipeline = new Pipeline([command]);
         auto subprogram = new SubProgram([pipeline]);
         auto process = new Process(context.escopo, subprogram);
+        process.description = commandName;
 
         // Piping:
         if (input !is null)
@@ -1904,6 +1906,7 @@ zipIteration:
 
         auto subprogram = (cast(SubList)sublist).subprogram;
         auto newScope = new Process(context.escopo);
+        newScope.description = name;
         auto newContext = context.next(newScope, context.size);
 
         // RUN!

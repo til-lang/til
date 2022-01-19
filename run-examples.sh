@@ -3,7 +3,7 @@
 # TODO: transcribe this script to Til, someday. :)
 
 if [[ $1 == "" ]];then
-    if [ -e "til.release"];then
+    if [ -e "til.release" ];then
         version=release
     else
         version=debug
