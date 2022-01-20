@@ -7,7 +7,7 @@ import til.commands;
 // Commands:
 static this()
 {
-    commands["dict"] = (string path, CommandContext context)
+    commands["dict"] = new Command((string path, Context context)
     {
         auto dict = new Dict();
 
@@ -26,8 +26,8 @@ static this()
 
         context.exitCode = ExitCode.CommandSuccess;
         return context;
-    };
-    dictCommands["set"] = (string path, CommandContext context)
+    });
+    dictCommands["set"] = new Command((string path, Context context)
     {
         auto dict = context.pop!Dict();
 
@@ -45,8 +45,8 @@ static this()
 
         context.exitCode = ExitCode.CommandSuccess;
         return context;
-    };
-    dictCommands["unset"] = (string path, CommandContext context)
+    });
+    dictCommands["unset"] = new Command((string path, Context context)
     {
         auto dict = context.pop!Dict();
 
@@ -73,8 +73,8 @@ static this()
 
         context.exitCode = ExitCode.CommandSuccess;
         return context;
-    };
-    dictCommands["extract"] = (string path, CommandContext context)
+    });
+    dictCommands["extract"] = new Command((string path, Context context)
     {
         Dict d = context.pop!Dict();
         auto arguments = context.items!string;
@@ -83,5 +83,5 @@ static this()
 
         context.exitCode = ExitCode.CommandSuccess;
         return context;
-    };
+    });
 }

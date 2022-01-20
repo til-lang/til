@@ -16,7 +16,7 @@ debug
 class ProcessFiber : Fiber
 {
     Process process = null;
-    CommandContext context = null;
+    Context context = null;
 
     this(Process process)
     {
@@ -105,9 +105,9 @@ class Scheduler
         return ExitCode.CommandSuccess;
     }
 
-    CommandContext[] failingContexts()
+    Context[] failingContexts()
     {
-        CommandContext[] contexts;
+        Context[] contexts;
         foreach(fiber; fibers)
         {
             if (fiber.context.exitCode == ExitCode.Failure)

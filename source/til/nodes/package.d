@@ -10,6 +10,7 @@ public import til.exceptions;
 public import til.context;
 public import til.process;
 
+public import til.command;
 public import til.nodes.listitem;
 
 public import til.nodes.baselist;
@@ -18,7 +19,6 @@ public import til.nodes.simplelist;
 public import til.nodes.execlist;
 public import til.nodes.sublist;
 
-public import til.nodes.type;
 public import til.nodes.dict;
 public import til.nodes.queue;
 
@@ -27,15 +27,13 @@ public import til.nodes.pid;
 
 public import til.nodes.subprogram;
 public import til.nodes.pipeline;
-public import til.nodes.command;
+public import til.nodes.command_call;
 public import til.nodes.string;
 public import til.nodes.atom;
 
 alias Item = ListItem;
 alias Items = ListItem[];
-alias Cmd = string;
-alias CommandHandler = CommandContext delegate(Cmd, CommandContext);
-alias CommandHandlerMap = CommandHandler[string];
+
 
 enum ExitCode
 {

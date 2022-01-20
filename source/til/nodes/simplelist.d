@@ -10,7 +10,7 @@ debug
     import std.stdio;
 }
 
-CommandHandler[string] simpleListCommands;
+CommandsMap simpleListCommands;
 
 class SimpleList : BaseList
 {
@@ -40,7 +40,7 @@ class SimpleList : BaseList
             .joiner(" ")) ~ ")";
     }
 
-    override CommandContext evaluate(CommandContext context, bool force)
+    override Context evaluate(Context context, bool force)
     {
         if (!force)
         {
@@ -51,7 +51,7 @@ class SimpleList : BaseList
             return this.forceEvaluate(context);
         }
     }
-    override CommandContext evaluate(CommandContext context)
+    override Context evaluate(Context context)
     {
         /*
         Returning itself has some advantages:
@@ -70,7 +70,7 @@ class SimpleList : BaseList
         context.exitCode = ExitCode.Proceed;
         return context;
     }
-    CommandContext forceEvaluate(CommandContext context)
+    Context forceEvaluate(Context context)
     {
         long listSize = 0;
         foreach(item; this.items.retro)

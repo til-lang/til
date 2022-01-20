@@ -20,14 +20,8 @@ import til.procedures;
 import til.sharedlibs;
 
 
-CommandHandlerMap commands;
-
-
-SubProgram parse(string code)
-{
-    auto parser = new Parser(code);
-    return parser.run();
-}
+// Global variable:
+CommandsMap commands;
 
 
 // Commands:
@@ -35,28 +29,25 @@ static this()
 {
     // ---------------------------------------------
     // Stack
-    commands["push"] = (string path, CommandContext context)
+    commands["push"] = new Command((string path, Context context)
     {
         // Do nothing, the value is already on stack.
-        context.exitCode = ExitCode.CommandSuccess;
         return context;
-    };
-    commands["pop"] = (string path, CommandContext context)
+    });
+    commands["pop"] = new Command((string path, Context context)
     {
         context.size++;
-        context.exitCode = ExitCode.CommandSuccess;
         return context;
-    };
-    commands["stack"] = (string path, CommandContext context)
+    });
+    commands["stack"] = new Command((string path, Context context)
     {
         context.size = cast(int)context.escopo.stackPointer;
-        context.exitCode = ExitCode.CommandSuccess;
         return context;
-    };
+    });
 
     // ---------------------------------------------
     // Modules / includes
-    stringCommands["include"] = (string path, CommandContext context)
+    stringCommands["include"] = new Command((string path, Context context)
     {
         import std.stdio;
         import std.file;
@@ -64,7 +55,8 @@ static this()
         string filePath = context.pop!string();
         debug {stderr.writeln("include.filePath:", filePath);}
 
-        auto program = parse(to!string(read(filePath)));
+        auto parser = new Parser(to!string(read(filePath)));
+        auto program = parser.run();
         if (program is null)
         {
             auto msg = "Program in " ~ filePath ~ " is invalid";
@@ -78,8 +70,8 @@ static this()
             context.exitCode = ExitCode.CommandSuccess;
         }
         return context;
-    };
-    nameCommands["import"] = (string path, CommandContext context)
+    });
+    nameCommands["import"] = new Command((string path, Context context)
     {
         // import std.io as x
         auto modulePath = context.pop!string();
@@ -103,12 +95,11 @@ static this()
             return context.error(msg, ErrorCode.InvalidArgument, "");
         }
 
-        context.exitCode = ExitCode.CommandSuccess;
         return context;
-    };
+    });
 
     // ---------------------------------------------
-    stringCommands["eval"] = (string path, CommandContext context)
+    stringCommands["eval"] = new Command((string path, Context context)
     {
         import til.grammar;
 
@@ -123,11 +114,11 @@ static this()
             context.exitCode = ExitCode.CommandSuccess;
         }
         return context;
-    };
+    });
 
     // ---------------------------------------------
     // System commands
-    commands["exec"] = (string path, CommandContext context)
+    commands["exec"] = new Command((string path, Context context)
     {
         string[] command;
         ListItem inputStream;
@@ -143,26 +134,19 @@ static this()
         }
 
         context.push(new SystemProcess(command, inputStream));
-        context.exitCode = ExitCode.CommandSuccess;
         return context;
-    };
+    });
 
     // ---------------------------------------------
     // Native types, nodes and conversion
-    commands["typeof"] = (string path, CommandContext context)
+    commands["typeof"] = new Command((string path, Context context)
     {
-        if (context.size == 0)
-        {
-            auto msg = "`" ~ path ~ "` expects one argument";
-            return context.error(msg, ErrorCode.InvalidSyntax, "");
-        }
         Item target = context.pop();
         context.push(new NameAtom(to!string(target.type).toLower()));
 
-        context.exitCode = ExitCode.CommandSuccess;
         return context;
-    };
-    stringCommands["to.int"] = (string path, CommandContext context)
+    });
+    stringCommands["to.int"] = new Command((string path, Context context)
     {
         string target = context.pop!string();
 
@@ -174,10 +158,9 @@ static this()
         }
 
         context.push(result.value);
-        context.exitCode = ExitCode.CommandSuccess;
         return context;
-    };
-    stringCommands["to.float"] = (string path, CommandContext context)
+    });
+    stringCommands["to.float"] = new Command((string path, Context context)
     {
         string target = context.pop!string();
 
@@ -198,28 +181,21 @@ static this()
         }
 
         context.push(result);
-        context.exitCode = ExitCode.CommandSuccess;
         return context;
-    };
-    commands["to.string"] = (string path, CommandContext context)
+    });
+    commands["to.string"] = new Command((string path, Context context)
     {
-        if (context.size == 0)
-        {
-            auto msg = "`" ~ path ~ "` expects at least one argument";
-            return context.error(msg, ErrorCode.InvalidSyntax, "");
-        }
         foreach(item; context.items.retro)
         {
             context.push(item.toString());
         }
 
-        context.exitCode = ExitCode.CommandSuccess;
         return context;
-    };
+    });
 
     // ---------------------------------------------
     // Flow control
-    simpleListCommands["if"] = (string path, CommandContext context)
+    simpleListCommands["if"] = new Command((string path, Context context)
     {
         while(true)
         {
@@ -283,18 +259,12 @@ static this()
             context.exitCode = ExitCode.CommandSuccess;
         }
         return context;
-    };
-    nameCommands["foreach"] = (string path, CommandContext context)
+    });
+    nameCommands["foreach"] = new Command((string path, Context context)
     {
         /*
         range 5 | foreach x { ... }
         */
-        if (context.size < 2)
-        {
-            auto msg = "`foreach` expects two arguments";
-            return context.error(msg, ErrorCode.InvalidSyntax, "");
-        }
-
         auto argName = context.pop!string();
         auto argBody = context.pop!SubList();
 
@@ -354,18 +324,18 @@ forLoop:
 
         context.exitCode = ExitCode.CommandSuccess;
         return context;
-    };
-    commands["break"] = (string path, CommandContext context)
+    });
+    commands["break"] = new Command((string path, Context context)
     {
         context.exitCode = ExitCode.Break;
         return context;
-    };
-    commands["continue"] = (string path, CommandContext context)
+    });
+    commands["continue"] = new Command((string path, Context context)
     {
         context.exitCode = ExitCode.Continue;
         return context;
-    };
-    commands["transform"] = (string path, CommandContext context)
+    });
+    commands["transform"] = new Command((string path, Context context)
     {
         class Transformer : Item
         {
@@ -388,7 +358,7 @@ forLoop:
                 return "transform";
             }
 
-            override CommandContext next(CommandContext context)
+            override Context next(Context context)
             {
                 auto targetContext = this.target.next(context);
                 switch (targetContext.exitCode)
@@ -426,11 +396,6 @@ forLoop:
             }
         }
 
-        if (context.size < 2)
-        {
-            auto msg = "`transform` expects two arguments";
-            return context.error(msg, ErrorCode.InvalidSyntax, "");
-        }
         auto varName = context.pop!string();
         auto body = context.pop!SubList();
 
@@ -445,23 +410,16 @@ forLoop:
             target, varName, body, context.escopo
         );
         context.push(iterator);
-        context.exitCode = ExitCode.CommandSuccess;
         return context;
-    };
+    });
 
     // ---------------------------------------------
     // Procedures-related
-    nameCommands["proc"] = (string path, CommandContext context)
+    nameCommands["proc"] = new Command((string path, Context context)
     {
         // proc name (parameters) {body}
-
-        if (context.size != 3)
-        {
-            auto msg = "`proc` expects three arguments";
-            return context.error(msg, ErrorCode.InvalidArgument, "");
-        }
-
         string name = context.pop!string();
+
         auto parameters = context.pop!SimpleList();
         auto body = context.pop!SubList();
 
@@ -471,28 +429,21 @@ forLoop:
             body
         );
 
-        CommandContext closure(string path, CommandContext context)
-        {
-            return proc.run(path, context);
-        }
+        context.escopo.commands[name] = new Command(&runProc, proc);
 
-        // Make the procedure available:
-        context.escopo.commands[name] = &closure;
-
-        context.exitCode = ExitCode.CommandSuccess;
         return context;
-    };
-    commands["return"] = (string path, CommandContext context)
+    });
+    commands["return"] = new Command((string path, Context context)
     {
         context.exitCode = ExitCode.ReturnSuccess;
         return context;
-    };
-    commands["skip"] = (string path, CommandContext context)
+    });
+    commands["skip"] = new Command((string path, Context context)
     {
         context.exitCode = ExitCode.Skip;
         return context;
-    };
-    commands["scope"] = (string path, CommandContext context)
+    });
+    commands["scope"] = new Command((string path, Context context)
     {
         string name = context.pop!string();
         SubList body = context.pop!SubList();
@@ -511,12 +462,12 @@ forLoop:
         Items managers = process.internalVariables.require("cm", []);
         foreach (contextManager; managers)
         {
-            returnedContext = contextManager.runCommand(returnedContext, "close");
+            returnedContext = contextManager.runCommand("close", returnedContext);
         }
 
         return returnedContext;
-    };
-    commands["with"] = (string path, CommandContext context)
+    });
+    commands["with"] = new Command((string path, Context context)
     {
         // with cm [context_manager 1 2 3]
         string name = context.pop!string();
@@ -525,7 +476,7 @@ forLoop:
         auto process = context.escopo;
 
         process[name] = contextManager;
-        context = contextManager.runCommand(context, "open");
+        context = contextManager.runCommand("open", context);
 
         Items managers = process.internalVariables.require("cm", []);
         managers ~= contextManager;
@@ -533,8 +484,8 @@ forLoop:
 
         context.exitCode = ExitCode.CommandSuccess;
         return context;
-    };
-    commands["uplevel"] = (string path, CommandContext context)
+    });
+    commands["uplevel"] = new Command((string path, Context context)
     {
         /*
         uplevel set parent_value x
@@ -566,8 +517,8 @@ forLoop:
         */
         auto cmdArguments = context.items;
 
-        // 1- create a new Command
-        auto command = new Command(cmdName, cmdArguments);
+        // 1- create a new CommandCall
+        auto command = new CommandCall(cmdName, cmdArguments);
 
         // 2- create a new context, with the parent
         //    scope as the context.escopo
@@ -583,11 +534,11 @@ forLoop:
             context.exitCode = ExitCode.CommandSuccess;
         }
         return context;
-    };
+    });
 
     // ---------------------------------------------
     // Scheduler-related:
-    nameCommands["spawn"] = (string path, CommandContext context)
+    nameCommands["spawn"] = new Command((string path, Context context)
     {
         // set pid [spawn f $x]
         // spawn f | read | foreach x { ... }
@@ -602,7 +553,7 @@ forLoop:
             arguments.popBack();
         }
 
-        auto command = new Command(commandName, arguments);
+        auto command = new CommandCall(commandName, arguments);
         auto pipeline = new Pipeline([command]);
         auto subprogram = new SubProgram([pipeline]);
         auto process = new Process(context.escopo, subprogram);
@@ -626,32 +577,27 @@ forLoop:
         // Give some time for the new process to start:
         context.yield();
 
-        context.exitCode = ExitCode.CommandSuccess;
         return context;
-    };
+    });
 
     // ---------------------------------------------
     // Printing:
-    commands["print"] = (string path, CommandContext context)
+    commands["print"] = new Command((string path, Context context)
     {
         while(context.size) stdout.write(context.pop!string());
         stdout.writeln();
-
-        context.exitCode = ExitCode.CommandSuccess;
         return context;
-    };
-    commands["print.error"] = (string path, CommandContext context)
+    });
+    commands["print.error"] = new Command((string path, Context context)
     {
         while(context.size) stderr.write(context.pop!string());
         stderr.writeln();
-
-        context.exitCode = ExitCode.CommandSuccess;
         return context;
-    };
+    });
 
     // ---------------------------------------------
     // Piping
-    commands["read"] = (string path, CommandContext context)
+    commands["read"] = new Command((string path, Context context)
     {
         if (context.escopo.input is null)
         {
@@ -660,10 +606,9 @@ forLoop:
         }
         // Probably a WaitingQueue:
         context.push(context.escopo.input);
-        context.exitCode = ExitCode.CommandSuccess;
         return context;
-    };
-    commands["read.no_wait"] = (string path, CommandContext context)
+    });
+    commands["read.no_wait"] = new Command((string path, Context context)
     {
         if (context.escopo.input is null)
         {
@@ -674,10 +619,9 @@ forLoop:
         // a regular Queue:
         auto q = cast(WaitingQueue)context.escopo.input;
         context.push(new Queue(q));
-        context.exitCode = ExitCode.CommandSuccess;
         return context;
-    };
-    commands["write"] = (string path, CommandContext context)
+    });
+    commands["write"] = new Command((string path, Context context)
     {
         if (context.size > 1)
         {
@@ -686,13 +630,11 @@ forLoop:
         }
         Queue output = cast(Queue)context.escopo.output;
         output.push(context.pop());
-
-        context.exitCode = ExitCode.CommandSuccess;
         return context;
-    };
+    });
     // ---------------------------------------------
     // Time
-    integerCommands["sleep"] = (string path, CommandContext context)
+    integerCommands["sleep"] = new Command((string path, Context context)
     {
         import std.datetime.stopwatch;
 
@@ -711,12 +653,11 @@ forLoop:
                 context.yield();
             }
         }
-        context.exitCode = ExitCode.CommandSuccess;
         return context;
-    };
+    });
     // ---------------------------------------------
     // Errors
-    commands["error"] = (string path, CommandContext context)
+    commands["error"] = new Command((string path, Context context)
     {
         string classe = "";
         int code = -1;
@@ -740,11 +681,11 @@ forLoop:
         }
 
         return context.error(message, code, classe);
-    };
+    });
 
     // ---------------------------------------------
     // Debugging
-    commands["assert"] = (string path, CommandContext context)
+    commands["assert"] = new Command((string path, Context context)
     {
         while (context.size)
         {
@@ -758,9 +699,8 @@ forLoop:
             }
         }
 
-        context.exitCode = ExitCode.CommandSuccess;
         return context;
-    };
+    });
 
     /*
     We can't really use module constructors inside
@@ -770,7 +710,7 @@ forLoop:
     */
 
     // ---------------------------------------------
-    integerCommands["exit"] = (string path, CommandContext context)
+    integerCommands["exit"] = new Command((string path, Context context)
     {
         string classe = "";
         string message = "Process was stopped";
@@ -783,13 +723,11 @@ forLoop:
         }
 
         return context.error(message, cast(int)code.value, classe);
-    };
+    });
 
     // Names:
-    commands["set"] = (string path, CommandContext context)
+    commands["set"] = new Command((string path, Context context)
     {
-        string[] names;
-
         if (context.size < 2)
         {
             auto msg = "`name.set` must receive at least two arguments.";
@@ -799,22 +737,16 @@ forLoop:
         auto key = context.pop!string();
         context.escopo[key] = context.items;
 
-        context.exitCode = ExitCode.CommandSuccess;
         return context;
-    };
-    nameCommands["unset"] = (string path, CommandContext context)
+    });
+    nameCommands["unset"] = new Command((string path, Context context)
     {
-        string[] names;
-
         auto firstArgument = context.pop();
-
         context.escopo.variables.remove(to!string(firstArgument));
-
-        context.exitCode = ExitCode.CommandSuccess;
         return context;
-    };
+    });
 
-    simpleListCommands["math"] = (string path, CommandContext context)
+    simpleListCommands["math"] = new Command((string path, Context context)
     {
         // NOT popping the SimpleList: `math` will handle that, already:
         context = math(context.next(1));
@@ -827,13 +759,12 @@ forLoop:
         }
 
         // NOT pushing the result: `math` already did that.
-        context.exitCode = ExitCode.CommandSuccess;
         return context;
-    };
+    });
 
     // ---------------------------------------
     // Sequences
-    commands["zip"] = (string path, CommandContext context)
+    commands["zip"] = new Command((string path, Context context)
     {
 
         class Zipper : Item
@@ -847,7 +778,7 @@ forLoop:
             {
                 return "Zipper";
             }
-            override CommandContext next(CommandContext context)
+            override Context next(Context context)
             {
                 Items iterationItems;
                 foreach (item; items.retro)
@@ -879,11 +810,11 @@ zipIteration:
         context.push(new Zipper(context.items));
         context.exitCode = ExitCode.CommandSuccess;
         return context;
-    };
+    });
 
     // ---------------------------------------
     // Pids:
-    pidCommands["send"] = (string path, CommandContext context)
+    pidCommands["send"] = new Command((string path, Context context)
     {
         if (context.size > 2)
         {
@@ -897,7 +828,6 @@ zipIteration:
         Queue input = cast(Queue)pid.process.input;
         input.push(value);
 
-        context.exitCode = ExitCode.CommandSuccess;
         return context;
-    };
+    });
 }

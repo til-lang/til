@@ -3,11 +3,11 @@ import std.stdio : writeln;
 import til.nodes;
 
 
-extern (C) CommandHandlerMap getCommands(Process escopo)
+extern (C) CommandsMap getCommands(Process escopo)
 {
-    CommandHandlerMap commands;
+    CommandsMap commands;
 
-    commands["print"] = (string path, CommandContext context)
+    commands["print"] = new Command((string path, Context context)
     {
         Items arguments = context.items;
         foreach(arg; arguments)
@@ -15,9 +15,8 @@ extern (C) CommandHandlerMap getCommands(Process escopo)
             writeln(arg.toString);
         }
 
-        context.exitCode = ExitCode.CommandSuccess;
         return context;
-    };
+    });
 
     return commands;
 }

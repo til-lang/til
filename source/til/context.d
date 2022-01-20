@@ -9,9 +9,10 @@ debug
     import std.stdio;
 }
 
-struct CommandContext
+struct Context
 {
     Process escopo;
+    Command command;
     ExitCode exitCode = ExitCode.Proceed;
     bool hasInput = false;
 
@@ -32,22 +33,22 @@ struct CommandContext
         this.escopo = escopo;
         this.size = argumentCount;
     }
-    CommandContext next()
+    Context next()
     {
         return this.next(0);
     }
-    CommandContext next(int argumentCount)
+    Context next(int argumentCount)
     {
         return this.next(escopo, argumentCount);
     }
-    CommandContext next(Process escopo)
+    Context next(Process escopo)
     {
         return this.next(escopo, 0);
     }
-    CommandContext next(Process escopo, int argumentCount)
+    Context next(Process escopo, int argumentCount)
     {
         this.size -= argumentCount;
-        auto newContext = CommandContext(escopo, argumentCount);
+        auto newContext = Context(escopo, argumentCount);
         return newContext;
     }
 
@@ -133,13 +134,13 @@ struct CommandContext
         }
     }
 
-    CommandContext push(ListItem item)
+    Context push(ListItem item)
     {
         escopo.push(item);
         size++;
         return this;
     }
-    CommandContext push(Items items)
+    Context push(Items items)
     {
         foreach(item; items)
         {
@@ -149,20 +150,20 @@ struct CommandContext
     }
     template push(T)
     {
-        CommandContext push(T x)
+        Context push(T x)
         {
             escopo.push(x);
             size++;
             return this;
         }
     }
-    CommandContext ret(ListItem item)
+    Context ret(ListItem item)
     {
         push(item);
         exitCode = ExitCode.CommandSuccess;
         return this;
     }
-    CommandContext ret(Items items)
+    Context ret(Items items)
     {
         this.push(items);
         exitCode = ExitCode.CommandSuccess;
@@ -197,7 +198,7 @@ struct CommandContext
         }
     }
 
-    void assimilate(CommandContext other)
+    void assimilate(Context other)
     {
         this.size += other.size;
     }
@@ -209,27 +210,27 @@ struct CommandContext
     }
 
     // Execution
-    void run(CommandContext function(CommandContext) f)
+    void run(Context function(Context) f)
     {
         return this.run(f, 0);
     }
-    void run(CommandContext function(CommandContext) f, int argumentCount)
+    void run(Context function(Context) f, int argumentCount)
     {
         auto rContext = f(this.next(argumentCount));
         this.assimilate(rContext);
     }
-    void run(CommandContext delegate(CommandContext) f)
+    void run(Context delegate(Context) f)
     {
         auto rContext = f(this.next);
         this.assimilate(rContext);
     }
 
     // Errors
-    CommandContext error(string message, int code, string classe)
+    Context error(string message, int code, string classe)
     {
         return this.error(message, code, classe, null);
     }
-    CommandContext error(string message, int code, string classe, Item object)
+    Context error(string message, int code, string classe, Item object)
     {
         debug {stderr.writeln("context.error:", message);}
         auto e = new Erro(escopo, message, code, classe, object);

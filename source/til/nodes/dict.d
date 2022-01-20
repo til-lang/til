@@ -8,7 +8,7 @@ debug
     import std.stdio;
 }
 
-CommandHandler[string] dictCommands;
+CommandsMap dictCommands;
 
 
 class Dict : ListItem

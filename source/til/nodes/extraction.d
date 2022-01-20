@@ -16,7 +16,7 @@ class Extraction : BaseList
         return "<" ~ to!string(items) ~ ">";
     }
 
-    override CommandContext evaluate(CommandContext context)
+    override Context evaluate(Context context)
     {
         context.size = 0;
         foreach(item; this.items.retro)

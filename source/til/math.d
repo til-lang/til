@@ -33,7 +33,7 @@ SimpleList applyPrecedenceRules(SimpleList list)
     return list;
 }
 
-CommandContext math(CommandContext context)
+Context math(Context context)
 {
     // There should be a SimpleList at the top of the stack.
     auto list = cast(SimpleList)context.pop();

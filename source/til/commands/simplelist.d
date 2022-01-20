@@ -11,7 +11,7 @@ import til.commands;
 // Commands:
 static this()
 {
-    commands["list"] = (string path, CommandContext context)
+    commands["list"] = new Command((string path, Context context)
     {
         /*
         set l [list 1 2 3 4]
@@ -19,8 +19,8 @@ static this()
         */
         context.exitCode = ExitCode.CommandSuccess;
         return context.push(new SimpleList(context.items));
-    };
-    simpleListCommands["set"] = (string path, CommandContext context)
+    });
+    simpleListCommands["set"] = new Command((string path, Context context)
     {
         string[] names;
 
@@ -69,8 +69,8 @@ static this()
 
         context.exitCode = ExitCode.CommandSuccess;
         return context;
-    };
-    simpleListCommands["range"] = (string path, CommandContext context)
+    });
+    simpleListCommands["range"] = new Command((string path, Context context)
     {
         /*
         range (1 2 3 4 5)
@@ -90,7 +90,7 @@ static this()
             {
                 return "ItemsRange";
             }
-            override CommandContext next(CommandContext context)
+            override Context next(Context context)
             {
                 if (this.currentIndex >= this._length)
                 {
@@ -110,8 +110,8 @@ static this()
         context.push(new ItemsRange(list.items));
         context.exitCode = ExitCode.CommandSuccess;
         return context;
-    };
-    simpleListCommands["range.enumerate"] = (string path, CommandContext context)
+    });
+    simpleListCommands["range.enumerate"] = new Command((string path, Context context)
     {
         /*
         range.enumerate (1 2 3 4 5)
@@ -133,7 +133,7 @@ static this()
             {
                 return "ItemsRangeEnumerate";
             }
-            override CommandContext next(CommandContext context)
+            override Context next(Context context)
             {
                 if (this.currentIndex >= this._length)
                 {
@@ -155,8 +155,8 @@ static this()
         context.push(new ItemsRangeEnumerate(list.items));
         context.exitCode = ExitCode.CommandSuccess;
         return context;
-    };
-    simpleListCommands["extract"] = (string path, CommandContext context)
+    });
+    simpleListCommands["extract"] = new Command((string path, Context context)
     {
         SimpleList l = context.pop!SimpleList();
 
@@ -186,8 +186,8 @@ static this()
 
         context.exitCode = ExitCode.CommandSuccess;
         return context;
-    };
-    simpleListCommands["eval"] = (string path, CommandContext context)
+    });
+    simpleListCommands["eval"] = new Command((string path, Context context)
     {
         auto list = context.pop();
 
@@ -196,8 +196,8 @@ static this()
 
         newContext.exitCode = ExitCode.CommandSuccess;
         return newContext;
-    };
-    simpleListCommands["expand"] = (string path, CommandContext context)
+    });
+    simpleListCommands["expand"] = new Command((string path, Context context)
     {
         SimpleList list = context.pop!SimpleList();
 
@@ -208,8 +208,8 @@ static this()
 
         context.exitCode = ExitCode.CommandSuccess;
         return context;
-    };
-    simpleListCommands["push"] = (string path, CommandContext context)
+    });
+    simpleListCommands["push"] = new Command((string path, Context context)
     {
         SimpleList list = context.pop!SimpleList();
 
@@ -218,8 +218,8 @@ static this()
 
         context.exitCode = ExitCode.CommandSuccess;
         return context;
-    };
-    simpleListCommands["pop"] = (string path, CommandContext context)
+    });
+    simpleListCommands["pop"] = new Command((string path, Context context)
     {
         SimpleList list = context.pop!SimpleList();
 
@@ -235,16 +235,16 @@ static this()
 
         context.exitCode = ExitCode.CommandSuccess;
         return context;
-    };
-    simpleListCommands["sort"] = (string path, CommandContext context)
+    });
+    simpleListCommands["sort"] = new Command((string path, Context context)
     {
         SimpleList list = context.pop!SimpleList();
 
         class Comparator
         {
             ListItem item;
-            CommandContext context;
-            this(CommandContext context, ListItem item)
+            Context context;
+            this(Context context, ListItem item)
             {
                 this.context = context;
                 this.item = item;
@@ -275,16 +275,16 @@ static this()
         context.push(new SimpleList(sorted));
         context.exitCode = ExitCode.CommandSuccess;
         return context;
-    };
-    simpleListCommands["reverse"] = (string path, CommandContext context)
+    });
+    simpleListCommands["reverse"] = new Command((string path, Context context)
     {
         SimpleList list = context.pop!SimpleList();
         Items reversed = list.items.retro.array;
         context.push(new SimpleList(reversed));
         context.exitCode = ExitCode.CommandSuccess;
         return context;
-    };
-    simpleListCommands["contains"] = (string path, CommandContext context)
+    });
+    simpleListCommands["contains"] = new Command((string path, Context context)
     {
         if (context.size != 2)
         {
@@ -301,11 +301,11 @@ static this()
                 .map!(x => to!string(x))
                 .canFind(to!string(item))
         );
-    };
-    simpleListCommands["length"] = (string path, CommandContext context)
+    });
+    simpleListCommands["length"] = new Command((string path, Context context)
     {
         auto l = context.pop!SimpleList();
         context.exitCode = ExitCode.CommandSuccess;
         return context.push(l.items.length);
-    };
+    });
 }

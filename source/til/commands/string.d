@@ -10,7 +10,7 @@ import til.nodes;
 // Commands:
 static this()
 {
-    stringCommands["extract"] = (string path, CommandContext context)
+    stringCommands["extract"] = new Command((string path, Context context)
     {
         String s = context.pop!String();
 
@@ -35,14 +35,14 @@ static this()
         context.exitCode = ExitCode.CommandSuccess;
         context.push(new String(s.repr[start..end]));
         return context;
-    };
-    stringCommands["length"] = (string path, CommandContext context)
+    });
+    stringCommands["length"] = new Command((string path, Context context)
     {
         auto s = context.pop!String();
         context.exitCode = ExitCode.CommandSuccess;
         return context.push(s.repr.length);
-    };
-    stringCommands["split"] = (string path, CommandContext context)
+    });
+    stringCommands["split"] = new Command((string path, Context context)
     {
         auto s = context.pop!string;
         if (context.size == 0)
@@ -61,8 +61,8 @@ static this()
         context.push(l);
         context.exitCode = ExitCode.CommandSuccess;
         return context;
-    };
-    stringCommands["join"] = (string path, CommandContext context)
+    });
+    stringCommands["join"] = new Command((string path, Context context)
     {
         string joiner = context.pop!string();
         if (context.size == 0)
@@ -84,8 +84,8 @@ static this()
         }
         context.exitCode = ExitCode.CommandSuccess;
         return context;
-    };
-    stringCommands["find"] = (string path, CommandContext context)
+    });
+    stringCommands["find"] = new Command((string path, Context context)
     {
         string needle = context.pop!string();
         // TODO: make the following code template:
@@ -101,8 +101,8 @@ static this()
         }
         context.exitCode = ExitCode.CommandSuccess;
         return context;
-    };
-    stringCommands["matches"] = (string path, CommandContext context)
+    });
+    stringCommands["matches"] = new Command((string path, Context context)
     {
         string expression = context.pop!string();
         if (context.size == 0)
@@ -121,8 +121,8 @@ static this()
 
         context.exitCode = ExitCode.CommandSuccess;
         return context;
-    };
-    stringCommands["range"] = (string path, CommandContext context)
+    });
+    stringCommands["range"] = new Command((string path, Context context)
     {
         /*
         range "12345" -> 1 , 2 , 3 , 4 , 5
@@ -142,7 +142,7 @@ static this()
             {
                 return "StringRange";
             }
-            override CommandContext next(CommandContext context)
+            override Context next(Context context)
             {
                 if (this.currentIndex >= this._length)
                 {
@@ -162,5 +162,5 @@ static this()
         context.push(new StringRange(s));
         context.exitCode = ExitCode.CommandSuccess;
         return context;
-    };
+    });
 }

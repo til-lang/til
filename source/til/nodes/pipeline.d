@@ -9,31 +9,31 @@ debug
 
 class Pipeline
 {
-    Command[] commands;
+    CommandCall[] commandCalls;
 
-    this(Command[] commands)
+    this(CommandCall[] commandCalls)
     {
-        this.commands = commands;
+        this.commandCalls = commandCalls;
     }
 
     ulong size()
     {
-        return this.commands.length;
+        return commandCalls.length;
     }
 
     override string toString()
     {
-        return to!string(commands
+        return to!string(commandCalls
             .map!(x => to!string(x))
             .joiner(" | "));
     }
 
-    CommandContext run(CommandContext context)
+    Context run(Context context)
     {
         debug {stderr.writeln("Running Pipeline ", this);}
 
         bool hasInput = false;
-        foreach(index, command; commands)
+        foreach(index, command; commandCalls)
         {
             context = command.run(context, hasInput);
 

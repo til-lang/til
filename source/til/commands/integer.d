@@ -7,7 +7,7 @@ import til.nodes;
 static this()
 {
     // (Please notice: `incr` and `decr` do NOT conform to Tcl "equivalents"!)
-    integerCommands["incr"] = (string path, CommandContext context)
+    integerCommands["incr"] = new Command((string path, Context context)
     {
         if (context.size != 1)
         {
@@ -25,8 +25,8 @@ static this()
         context.push(integer);
         context.exitCode = ExitCode.CommandSuccess;
         return context;
-    };
-    integerCommands["decr"] = (string path, CommandContext context)
+    });
+    integerCommands["decr"] = new Command((string path, Context context)
     {
         if (context.size != 1)
         {
@@ -43,8 +43,8 @@ static this()
         context.push(integer);
         context.exitCode = ExitCode.CommandSuccess;
         return context;
-    };
-    integerCommands["range"] = (string path, CommandContext context)
+    });
+    integerCommands["range"] = new Command((string path, Context context)
     {
         /*
            range 10       # [zero, 10]
@@ -108,7 +108,7 @@ static this()
                     ~ ")";
             }
 
-            override CommandContext next(CommandContext context)
+            override Context next(Context context)
             {
                 long value = current;
                 if (value > limit)
@@ -129,8 +129,8 @@ static this()
         context.push(range);
         context.exitCode = ExitCode.CommandSuccess;
         return context;
-    };
-    integerCommands["operate"] = (string path, CommandContext context)
+    });
+    integerCommands["operate"] = new Command((string path, Context context)
     {
         IntegerAtom t2 = context.pop!IntegerAtom();
         Item operator = context.pop();
@@ -187,6 +187,5 @@ static this()
         }
         context.exitCode = ExitCode.CommandSuccess;
         return context;
-    };
-
+    });
 }

@@ -44,7 +44,7 @@ class SystemProcess : ListItem
         return this.command.join(" ");
     }
 
-    override CommandContext next(CommandContext context)
+    override Context next(Context context)
     {
         if (!isRunning)
         {
@@ -127,7 +127,7 @@ class SystemProcess : ListItem
         return context;
     }
 
-    override CommandContext extract(CommandContext context)
+    override Context extract(Context context)
     {
         if (context.size == 0)
         {
@@ -188,7 +188,7 @@ class SystemProcessError : ListItem
         return "error stream for " ~ this.parent.toString();
     }
 
-    override CommandContext next(CommandContext context)
+    override Context next(Context context)
     {
         // For the output:
         string line = null;

@@ -7,50 +7,49 @@ import til.commands;
 import til.sharedlibs;
 
 
+// Helper commands:
+Context callAlias(string path, Context context)
+{
+    // h.call "hello"
+    // path = "h.call"
+    // libraryPath = "h"
+    // cmdName = "hello"
+
+    string libraryName = path.split(".")[0];
+
+    auto lib = sharedLibraries.get(libraryName, null);
+    if (lib is null)
+    {
+        auto msg = libraryName ~ " was not loaded";
+        return context.error(msg, ErrorCode.InvalidArgument, "");
+    }
+
+    auto functionName = context.pop!string;
+
+    lib.call(functionName);
+
+    context.exitCode = ExitCode.CommandSuccess;
+    return context;
+}
+Context unloadAlias(string path, Context context)
+{
+    // h.unload "hello"
+    // path = "h.call"
+    // libraryPath = "h"
+    // cmdName = "hello"
+
+    string libraryName = path.split(".")[0];
+    lhUnload(libraryName);
+
+    context.exitCode = ExitCode.CommandSuccess;
+    return context;
+}
+
 // Commands:
 static this()
 {
-
-    // Helper "commands":
-    CommandContext callAlias(string path, CommandContext context)
-    {
-        // h.call "hello"
-        // path = "h.call"
-        // libraryPath = "h"
-        // cmdName = "hello"
-
-        string libraryName = path.split(".")[0];
-
-        auto lib = sharedLibraries.get(libraryName, null);
-        if (lib is null)
-        {
-            auto msg = libraryName ~ " was not loaded";
-            return context.error(msg, ErrorCode.InvalidArgument, "");
-        }
-
-        auto functionName = context.pop!string;
-
-        lib.call(functionName);
-
-        context.exitCode = ExitCode.CommandSuccess;
-        return context;
-    }
-    CommandContext unloadAlias(string path, CommandContext context)
-    {
-        // h.unload "hello"
-        // path = "h.call"
-        // libraryPath = "h"
-        // cmdName = "hello"
-
-        string libraryName = path.split(".")[0];
-        lhUnload(libraryName);
-
-        context.exitCode = ExitCode.CommandSuccess;
-        return context;
-    }
-
     // "Static" commands:
-    commands["load"] = (string path, CommandContext context)
+    commands["load"] = new Command((string path, Context context)
     {
         // sharedlib.load "libhello.so" as h
         auto libraryPath = context.pop!string;
@@ -85,21 +84,21 @@ static this()
         // TODO: create a type for dynamic libraries and
         // use METHODS, like `call $dlib function_name`
         // or `unload $dlib`.
-        context.escopo.commands[cmdName ~ ".call"] = &callAlias;
-        context.escopo.commands[cmdName ~ ".unload"] = &unloadAlias;
+        context.escopo.commands[cmdName ~ ".call"] = new Command(&callAlias);
+        context.escopo.commands[cmdName ~ ".unload"] = new Command(&unloadAlias);
 
         context.exitCode = ExitCode.CommandSuccess;
         return context;
-    };
-    commands["unload"] = (string path, CommandContext context)
+    });
+    commands["unload"] = new Command((string path, Context context)
     {
         auto libraryName = context.pop!string;
         lhUnload(libraryName);
 
         context.exitCode = ExitCode.CommandSuccess;
         return context;
-    };
-    commands["call"] = (string path, CommandContext context)
+    });
+    commands["call"] = new Command((string path, Context context)
     {
         auto cmdName = context.pop!string;
         auto lib = sharedLibraries.get(cmdName, null);
@@ -124,5 +123,5 @@ static this()
 
         context.exitCode = ExitCode.CommandSuccess;
         return context;
-    };
+    });
 }

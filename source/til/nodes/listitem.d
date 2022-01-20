@@ -1,6 +1,5 @@
 module til.nodes.listitem;
 
-
 import til.nodes;
 
 debug
@@ -24,7 +23,7 @@ class ListItem
 {
     ObjectType type;
     string typeName;
-    CommandHandlerMap commands;
+    CommandsMap commands;
 
     // Operators:
     template opUnary(string operator)
@@ -71,60 +70,62 @@ class ListItem
         );
     }
 
-    CommandContext evaluate(CommandContext context, bool force)
+    Context evaluate(Context context, bool force)
     {
         return this.evaluate(context);
     }
-    CommandContext evaluate(CommandContext context)
+    Context evaluate(Context context)
     {
         context.push(this);
         return context;
     }
-    CommandContext operate(CommandContext context)
+    Context operate(Context context)
     {
         debug {
             auto info = typeid(this);
             stderr.writeln(to!string(info), ".operate!");
         }
-        context = runCommand(context, "operate");
+        context = runCommand("operate", context);
         return context;
     }
-    CommandContext reverseOperate(CommandContext context)
+    Context reverseOperate(Context context)
     {
-        context = runCommand(context, "operate.reverse");
+        context = runCommand("operate.reverse", context);
         return context;
     }
-    CommandContext next(CommandContext context)
+    Context next(Context context)
     {
-        context = runCommand(context, "next");
+        context = runCommand("next", context);
         return context;
     }
-    CommandContext extract(CommandContext context)
+    Context extract(Context context)
     {
-        context = runCommand(context, "extract");
+        context = runCommand("extract", context);
         return context;
     }
 
-    CommandHandler* getCommandHandler(string name)
+    Command getCommand(string name)
     {
-        return (name in this.commands);
-    }
-    CommandContext runCommand(
-        CommandContext context, string name, bool allowGlobal = false
-    )
-    {
-        CommandHandler* handler = this.getCommandHandler(name);
-
-        if (handler is null && allowGlobal)
+        auto cmd = (name in this.commands);
+        if (cmd is null)
         {
-            auto h = context.escopo.getCommand(name);
-            if (h !is null)
-            {
-                handler = &h;
-            }
+            return null;
+        }
+        else
+        {
+            return *cmd;
+        }
+    }
+    Context runCommand(CommandName name, Context context, bool allowGlobal=false)
+    {
+        Command cmd = this.getCommand(name);
+
+        if (cmd is null && allowGlobal)
+        {
+            cmd = context.escopo.getCommand(name);
         }
 
-        if (handler is null)
+        if (cmd is null)
         {
             auto info = typeid(this);
             throw new NotImplementedError(
@@ -134,26 +135,7 @@ class ListItem
             );
         }
 
-        // Run the command:
-        // We set the exitCode to Undefined as a flag
-        // to check if the handler is really doing
-        // the basics, at least.
         context.push(this);
-        context.exitCode = ExitCode.Undefined;
-        context = (*handler)(name, context);
-
-        debug
-        {
-            if (context.exitCode == ExitCode.Undefined)
-            {
-                throw new Exception(
-                    "Command "
-                    ~ to!string(name)
-                    ~ " returned Undefined. The implementation"
-                    ~ " is probably wrong."
-                );
-            }
-        }
-        return context;
+        return cmd.run(name, context);
     }
 }

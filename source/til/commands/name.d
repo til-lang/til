@@ -6,7 +6,7 @@ import til.nodes;
 // Commands:
 static this()
 {
-    nameCommands["operate"] = (string path, CommandContext context)
+    nameCommands["operate"] = new Command((string path, Context context)
     {
         Item rhs = context.pop();
         Item operator = context.pop();
@@ -27,5 +27,5 @@ static this()
         }
         context.exitCode = ExitCode.CommandSuccess;
         return context;
-    };
+    });
 }

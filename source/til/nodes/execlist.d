@@ -21,7 +21,7 @@ class ExecList : BaseList
         return "[" ~ s ~ "]";
     }
 
-    override CommandContext evaluate(CommandContext context)
+    override Context evaluate(Context context)
     {
         /*
         We must run in a sub-Escopo because of how `on.error`

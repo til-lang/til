@@ -9,9 +9,9 @@ debug
     import std.stdio;
 }
 
-CommandHandler[string] integerCommands;
-CommandHandler[string] floatCommands;
-CommandHandler[string] nameCommands;
+CommandsMap integerCommands;
+CommandsMap floatCommands;
+CommandsMap nameCommands;
 
 
 class Atom : ListItem
@@ -37,7 +37,7 @@ class NameAtom : Atom
         return this.value;
     }
 
-    override CommandContext evaluate(CommandContext context)
+    override Context evaluate(Context context)
     {
         context.push(this);
         context.exitCode = ExitCode.Proceed;
@@ -54,7 +54,7 @@ class SubstAtom : NameAtom
         super(s);
     }
 
-    override CommandContext evaluate(CommandContext context)
+    override Context evaluate(Context context)
     {
         Items values;
         try
@@ -159,7 +159,7 @@ class FloatAtom : Atom
         return new FloatAtom(-value);
     }
 
-    override CommandContext reverseOperate(CommandContext context)
+    override Context reverseOperate(Context context)
     {
         auto operator = context.pop();
         auto rhs = context.pop();
@@ -184,7 +184,7 @@ class FloatAtom : Atom
         return t2.operate(context);
 
     }
-    override CommandContext operate(CommandContext context)
+    override Context operate(Context context)
     {
         auto operator = context.pop();
         auto lhs = context.pop();
@@ -293,7 +293,7 @@ class BooleanAtom : Atom
     {
         return to!string(value);
     }
-    override CommandContext operate(CommandContext context)
+    override Context operate(Context context)
     {
         auto operator = context.pop();
         auto lhs = context.pop();

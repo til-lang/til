@@ -3,8 +3,9 @@ module til.process;
 import std.array : join, split;
 import std.container : DList;
 
-import til.nodes;
 import til.modules;
+import til.nodes;
+import til.procedures;
 import til.scheduler;
 
 debug
@@ -31,6 +32,23 @@ class NotFoundError : Exception
 }
 
 
+abstract class Runnable
+{
+    string name;
+    this(string name)
+    {
+        this.name = name;
+    }
+
+    abstract Context run(string path, Context context);
+
+    override string toString()
+    {
+        return "Runnable " ~ this.name;
+    }
+}
+
+
 class Process
 {
     SubProgram program;
@@ -42,7 +60,7 @@ class Process
     ulong stackPointer = 0;
     Items[string] variables;
     Items[string] internalVariables;
-    CommandHandlerMap commands;
+    CommandsMap commands;
 
     // PIDs
     static uint counter = 0;
@@ -56,7 +74,7 @@ class Process
     Item input = null;
     Item output = null;
 
-    this(Process parent)
+    this(Process parent, bool shareStack=false)
     {
         this.index = this.counter++;
         this.parent = parent;
@@ -66,12 +84,29 @@ class Process
             this.input = parent.input;
             this.output = parent.output;
             this.program = parent.program;
+
+            if (shareStack)
+            {
+                this.stack = parent.stack[];
+                this.stackPointer = parent.stackPointer;
+            }
         }
     }
     this(Process parent, SubProgram program)
     {
         this(parent);
         this.program = program;
+    }
+
+    static Process clone(Process other)
+    {
+        auto p = new Process(other);
+
+        p.stack = other.stack;
+        p.stackPointer = other.stackPointer;
+        p.commands = other.commands;
+
+        return p;
     }
 
     // The "heap":
@@ -233,36 +268,27 @@ class Process
         return s;
     }
 
-    // Commands
-    CommandHandler getCommand(string name)
+    // Commands and procedures
+    Command getCommand(string name)
     {
-        /*
-        This codebase is not much inclined to
-        *early returns*, but in this case
-        that is the option that makes
-        more sense.
-        */
+        Command cmd;
 
-        debug {stderr.writeln("getCommand ", name, " in ", this);}
+        // If it's a local command:
+        auto c = (name in commands);
+        if (c !is null) return *c;
 
-        CommandHandler* handler;
-
-        // Local command:
-        handler = (name in commands);
-        if (handler !is null) return *handler;
-
-        // Parent:
+        // It it's present on parent:
         if (this.parent !is null)
         {
-            auto h = parent.getCommand(name);
-            if (h !is null)
+            cmd = parent.getCommand(name);
+            if (cmd !is null)
             {
-                commands[name] = h;
-                return h;
+                commands[name] = cmd;
+                return cmd;
             }
         }
 
-        // AUTO-IMPORT:
+        // If the command is present in an external module:
         bool success = {
             // std.io.out → std.io
             string modulePath = to!string(name.split(".")[0..$-1].join("."));
@@ -292,29 +318,33 @@ class Process
             // We imported the module, but we're not sure if this
             // name actually exists inside it:
             // (Important: do NOT call this method recursively!)
-            handler = (name in commands);
-            if (handler !is null)
+            c = (name in commands);
+            if (c !is null)
             {
-                commands[name] = *handler;
-                return *handler;
+                commands[name] = *c;
             }
         }
-        return null;
+
+        // If such command doesn't seem to exist, `cmd` will be null:
+        return cmd;
     }
 
     // Execution
-    CommandContext run()
+    Context run()
     {
-        auto context = CommandContext(this);
-        if (this.program is null) {throw new Exception("process.program cannot be null");}
+        auto context = Context(this);
+        if (this.program is null)
+        {
+            throw new Exception("Process.program cannot be null");
+        }
         return this.run(this.program, context);
     }
-    CommandContext run(SubProgram subprogram)
+    Context run(SubProgram subprogram)
     {
-        auto context = CommandContext(this);
+        auto context = Context(this);
         return this.run(subprogram, context);
     }
-    CommandContext run(SubProgram subprogram, CommandContext context)
+    Context run(SubProgram subprogram, Context context)
     {
         this.state = ProcessState.Running;
 
@@ -348,14 +378,16 @@ class Process
                     2- Or, if it doesn't exist, return `context`
                        as we would already do.
                     */
-                    CommandHandler* errorHandler = ("on.error" in commands);
+                    Command* errorHandler = ("on.error" in commands);
                     if (errorHandler !is null)
                     {
                         debug {
                             stderr.writeln("Calling on.error");
                             stderr.writeln(" context: ", context);
+                            stderr.writeln(" ...");
                         }
-                        context = (*errorHandler)("on.error", context);
+                        context = (*errorHandler).run("on.error", context);
+                        debug {stderr.writeln(" returned context:", context);}
                         /*
                         errorHandler can simply "rethrow"
                         the Error or even return a new

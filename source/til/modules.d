@@ -15,7 +15,6 @@ debug
 }
 
 
-CommandHandler[string][string] sourcesCache;
 string[] modulesPath;
 
 
@@ -41,7 +40,7 @@ bool importModule(Process escopo, string modulePath)
 }
 bool importModule(Process escopo, string modulePath, string prefix)
 {
-    CommandHandler[string] source;
+    CommandsMap source;
 
     try {
         source = importFromSharedLibrary(escopo, modulePath, prefix);
@@ -54,12 +53,11 @@ bool importModule(Process escopo, string modulePath, string prefix)
 
     // Save on cache:
     escopo.importNamesFrom(source, prefix);
-    sourcesCache[modulePath] = source;
     return true;
 }
 
 // Import commands from a .so:
-CommandHandler[string] importFromSharedLibrary(
+CommandsMap importFromSharedLibrary(
     Process escopo, string libraryPath, string moduleAlias
 )
 {
@@ -96,7 +94,7 @@ CommandHandler[string] importFromSharedLibrary(
             }
 
             // Get the commands from inside the shared object:
-            auto getCommands = cast(CommandHandlerMap function(Process))dlsym(
+            auto getCommands = cast(CommandsMap function(Process))dlsym(
                 lh, "getCommands"
             );
 
@@ -115,7 +113,7 @@ CommandHandler[string] importFromSharedLibrary(
 
 
 void importNamesFrom(
-    Process escopo, CommandHandlerMap source, string prefix
+    Process escopo, CommandsMap source, string prefix
 )
 {
     foreach(name, command; source)

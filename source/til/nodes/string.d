@@ -8,7 +8,7 @@ debug
 }
 
 
-CommandHandler[string] stringCommands;
+CommandsMap stringCommands;
 
 
 // A string without substitutions:
@@ -30,7 +30,7 @@ class String : ListItem
     }
 
     // Operators:
-    override CommandContext operate(CommandContext context)
+    override Context operate(Context context)
     {
         auto operator = context.pop();
         auto rhs = context.pop();
@@ -52,7 +52,7 @@ class String : ListItem
 
 
     // 
-    override CommandContext evaluate(CommandContext context)
+    override Context evaluate(Context context)
     {
         context.push(this);
         return context;
@@ -120,7 +120,7 @@ class SubstString : String
             .joiner(""));
     }
 
-    override CommandContext evaluate(CommandContext context)
+    override Context evaluate(Context context)
     {
         string result;
         string value;
@@ -142,7 +142,7 @@ class SubstString : String
 
                 foreach (v; values)
                 {
-                    auto newContext = v.runCommand(context.next(), "to.string", true);
+                    auto newContext = v.runCommand("to.string", context.next(), true);
                     result ~= to!string(newContext.items
                         .map!(x => to!string(x))
                         .joiner(" "));

@@ -60,7 +60,7 @@ class Erro : ListItem
     }
 
     // Extractions:
-    override CommandContext extract(CommandContext context)
+    override Context extract(Context context)
     {
         if (context.size == 0) return context.push(this);
         auto args = context.items!string;

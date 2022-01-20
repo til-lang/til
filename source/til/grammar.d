@@ -240,13 +240,13 @@ class Parser
     Pipeline consumePipeline()
     {
         push("pipeline");
-        Command[] commands;
+        CommandCall[] commands;
 
         consumeWhitespaces();
 
         while (!isEndOfLine && !isStopper)
         {
-            auto command = consumeCommand();
+            auto command = consumeCommandCall();
             commands ~= command;
 
             if (currentChar == PIPE) {
@@ -264,7 +264,7 @@ class Parser
         return new Pipeline(commands);
     }
 
-    Command consumeCommand()
+    CommandCall consumeCommandCall()
     {
         push("command");
         NameAtom commandName = cast(NameAtom)consumeAtom();
@@ -301,7 +301,7 @@ class Parser
             }
         }
         pop();
-        return new Command(commandName.toString(), arguments);
+        return new CommandCall(commandName.toString(), arguments);
     }
 
     ListItem consumeListItem()

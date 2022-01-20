@@ -4,16 +4,26 @@
 
 * Should commands return SimpleList or sequence?
     * Answer: SimpleList, because it has extractions and methods.
+
+* Why are commands (D) delegates???
+    * Answer: basically because the way we implemented `proc`.
+    * **FIXED!**
+
 * Could we get rid of `Object.type`?
     * Probably not, unless we disallow operations between types.
-    * Should we disallow operations between types?
+    * **Should we disallow operations between types?**
 * Procs can be considered "higher order" or not? Do they need to?
 * Should we be able to "append" new methods to already defined types?
+    * In some scenarios it could be nice, but in most cases it would tend
+      to be simply confusing (methods all over the place).
 * Should procs also act as delegates?
     * It's kinda easy to save a reference to the escopo/process...
+    * But do we **want** that? It seems confusing for most programmers.
+    * And makes the code more complex.
 
 ## Low hanging fruits
 
+* Make **all** examples `assert` things instead of simply printing.
 * collect: `set content [exec cat $file_path | collect]`
 * Some command to list currently available commands.
 * Some command to list all currently set variables.
@@ -44,47 +54,11 @@ test "conversion to float" {
     * `--usage`
         * Getting command line flags/options should be trivial
 
-## Quite some work
+## Very important for 1.0
 
-* Python's `PosixPath`-like object, with related methods.
-
-```tcl
-scope "work with files from some directory" {
-    with dir [directory $path]
-    with file [open $dir $file_name]
-
-    range $file | foreach line {
-        print $line
-    }
-
-    glob $dir "*.til" | foreach file_name {
-        with file [open $dir $file_name]
-        set content [read $file]
-        print "$file_name content: $content"
-        print "---"
-    }
-}
-```
-
-* Decimal type!
-
-```tcl
-# Draft:
-set a [dec 1.200]  # decimal with 3 digits mantissa
-set b [dec 2.300]
-print [math ($a + $b)]
-# 3.500
-```
-
-* Vectors!
-    * bytes, first, to act as generic non-encoded strings.
-    * integers
-    * floats
-* JSON
-    * Save `.representation` together with native types, maybe.
-    * extract: allow `jq` syntax: `<$json ".data.entries[0].id">`
-* curl
-* Jinja-like templates
-* protobuf
-* gRPC
-
+* Make sure it's **easy** to install and use external modules!
+* Make sure it's **easy** to distribute external modules.
+    * Allow modules to assert the interpreter's **version**, maybe?
+* Make the language feel comfortable enough as a **shell** - we won't have
+  many external modules, so it's important to make the best with available
+  Unix tools.

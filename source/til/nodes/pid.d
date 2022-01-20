@@ -11,7 +11,7 @@ debug
     import std.stdio;
 }
 
-CommandHandler[string] pidCommands;
+CommandsMap pidCommands;
 
 
 class Pid : ListItem
@@ -26,7 +26,7 @@ class Pid : ListItem
         this.commands = pidCommands;
     }
 
-    override CommandContext extract(CommandContext context)
+    override Context extract(Context context)
     {
         if (context.size == 0) return context.push(this);
 
@@ -40,7 +40,7 @@ class Pid : ListItem
                 return context.push(process.state != ProcessState.Finished);
 
             case "exit_code":
-                CommandContext processContext = fiber.context;
+                Context processContext = fiber.context;
 
                 // XXX: is it correct???
                 if (&processContext is null)
@@ -61,7 +61,7 @@ class Pid : ListItem
     {
         return "Pid for Process " ~ to!string(this.process.index);
     }
-    override CommandContext next(CommandContext context)
+    override Context next(Context context)
     {
         return this.process.output.next(context);
     }

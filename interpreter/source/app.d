@@ -23,7 +23,7 @@ class InterpreterInput : Item
         this.inputFile = inputFile;
     }
 
-    override CommandContext next(CommandContext context)
+    override Context next(Context context)
     {
         if (inputFile.eof)
         {

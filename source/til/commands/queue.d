@@ -7,7 +7,7 @@ import til.commands;
 // Commands:
 static this()
 {
-    commands["queue"] = (string path, CommandContext context)
+    commands["queue"] = new Command((string path, Context context)
     {
         ulong size = 64;
         if (context.size > 0)
@@ -20,8 +20,8 @@ static this()
 
         context.exitCode = ExitCode.CommandSuccess;
         return context;
-    };
-    queueCommands["push"] = (string path, CommandContext context)
+    });
+    queueCommands["push"] = new Command((string path, Context context)
     {
         auto queue = context.pop!Queue();
 
@@ -36,8 +36,8 @@ static this()
 
         context.exitCode = ExitCode.CommandSuccess;
         return context;
-    };
-    queueCommands["push.no_wait"] = (string path, CommandContext context)
+    });
+    queueCommands["push.no_wait"] = new Command((string path, Context context)
     {
         auto queue = context.pop!Queue();
 
@@ -53,8 +53,8 @@ static this()
 
         context.exitCode = ExitCode.CommandSuccess;
         return context;
-    };
-    queueCommands["pop"] = (string path, CommandContext context)
+    });
+    queueCommands["pop"] = new Command((string path, Context context)
     {
         auto queue = context.pop!Queue();
         long howMany = 1;
@@ -74,8 +74,8 @@ static this()
 
         context.exitCode = ExitCode.CommandSuccess;
         return context;
-    };
-    queueCommands["pop.no_wait"] = (string path, CommandContext context)
+    });
+    queueCommands["pop.no_wait"] = new Command((string path, Context context)
     {
         auto queue = context.pop!Queue();
         long howMany = 1;
@@ -96,8 +96,8 @@ static this()
 
         context.exitCode = ExitCode.CommandSuccess;
         return context;
-    };
-    queueCommands["send"] = (string path, CommandContext context)
+    });
+    queueCommands["send"] = new Command((string path, Context context)
     {
         auto queue = context.pop!Queue();
 
@@ -128,8 +128,8 @@ static this()
 
         context.exitCode = ExitCode.CommandSuccess;
         return context;
-    };
-    queueCommands["send.no_wait"] = (string path, CommandContext context)
+    });
+    queueCommands["send.no_wait"] = new Command((string path, Context context)
     {
         auto queue = context.pop!Queue();
 
@@ -160,8 +160,8 @@ static this()
 
         context.exitCode = ExitCode.CommandSuccess;
         return context;
-    };
-    queueCommands["receive"] = (string path, CommandContext context)
+    });
+    queueCommands["receive"] = new Command((string path, Context context)
     {
         if (context.size != 1)
         {
@@ -180,7 +180,7 @@ static this()
             {
                 return "QueueIterator";
             }
-            override CommandContext next(CommandContext context)
+            override Context next(Context context)
             {
                 while (queue.isEmpty)
                 {
@@ -197,8 +197,8 @@ static this()
         context.push(new QueueIterator(queue));
         context.exitCode = ExitCode.CommandSuccess;
         return context;
-    };
-    queueCommands["receive.no_wait"] = (string path, CommandContext context)
+    });
+    queueCommands["receive.no_wait"] = new Command((string path, Context context)
     {
         if (context.size != 1)
         {
@@ -217,7 +217,7 @@ static this()
             {
                 return "QueueIteratorNoWait";
             }
-            override CommandContext next(CommandContext context)
+            override Context next(Context context)
             {
                 if (queue.isEmpty)
                 {
@@ -237,5 +237,5 @@ static this()
         context.push(new QueueIteratorNoWait(queue));
         context.exitCode = ExitCode.CommandSuccess;
         return context;
-    };
+    });
 }

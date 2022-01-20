@@ -10,21 +10,34 @@ debug
     import std.stdio;
 }
 
-
-class Procedure
+Context runProc(string path, Context context)
 {
-    string name;
+    // `runnable` should NEVER be null, actually...
+    if (context.command is null && context.command.runnable is null)
+    {
+        auto msg = "Procedure " ~ path ~ " not found!";
+        return context.error(msg, ErrorCode.InvalidSyntax, "");
+    }
+
+    auto runnable = context.command.runnable;
+    auto proc = cast(Procedure)runnable;
+    debug {stderr.writeln(" runProc.procedure:", proc);}
+    return proc.run(path, context);
+}
+
+class Procedure : Runnable
+{
     SimpleList parameters;
     SubList body;
 
     this(string name, SimpleList parameters, SubList body)
     {
-        this.name = name;
+        super(name);
         this.parameters = parameters;
         this.body = body;
     }
 
-    CommandContext run(string name, CommandContext context)
+    override Context run(string name, Context context)
     {
         debug {
             stderr.writeln("proc.run:", name, " ", context);

@@ -1,4 +1,5 @@
 print "START"
+
 type coordinates {
     proc init (x y) {
         print "coordinates.init: $x $y"
@@ -21,6 +22,7 @@ type coordinates {
 }
 
 set c1 [coordinates 1 2]
+print " coordinates instantiated successfully"
 print $c1
 set $c1 x 12
 set $c1 y 34

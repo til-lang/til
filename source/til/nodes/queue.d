@@ -10,7 +10,7 @@ debug
 }
 
 
-CommandHandler[string] queueCommands;
+CommandsMap queueCommands;
 
 class Queue : ListItem
 {
@@ -74,7 +74,7 @@ class Queue : ListItem
     }
 
     // Acting as an Iterator:
-    override CommandContext next(CommandContext context)
+    override Context next(Context context)
     {
         // Queue.next is "no_wait".
         if (isEmpty)
@@ -109,7 +109,7 @@ class WaitingQueue : Queue
         super(size);
     }
 
-    override CommandContext next(CommandContext context)
+    override Context next(Context context)
     {
         while (isEmpty)
         {

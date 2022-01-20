@@ -21,11 +21,11 @@ class SubList : BaseList
         return "{" ~ to!string(this.subprogram) ~ "}";
     }
 
-    override CommandContext evaluate(CommandContext context)
+    override Context evaluate(Context context)
     {
         return this.evaluate(context, false);
     }
-    override CommandContext evaluate(CommandContext context, bool force)
+    override Context evaluate(Context context, bool force)
     {
         if (!force)
         {
