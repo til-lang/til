@@ -36,6 +36,11 @@ static this()
     });
     commands["pop"] = new Command((string path, Context context)
     {
+        if (context.escopo.stackPointer == 0)
+        {
+            auto msg = "Stack is empty";
+            return context.error(msg, ErrorCode.SemanticError, "");
+        }
         context.size++;
         return context;
     });

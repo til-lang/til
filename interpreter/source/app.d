@@ -97,7 +97,19 @@ int main(string[] args)
     }
     else
     {
-        parser = new Parser(to!string(read(filename)));
+        try
+        {
+            parser = new Parser(to!string(read(filename)));
+        }
+        catch (FileException ex)
+        {
+            stderr.writeln(
+                "Error ",
+                ex.errno, ": ",
+                ex.msg
+            );
+            return ex.errno;
+        }
     }
 
     debug

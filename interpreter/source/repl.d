@@ -50,35 +50,48 @@ mainLoop:
                 prompt = "... ";
                 continue;
             }
+            catch (Exception ex)
+            {
+                stdout.writeln("Exception: ", ex.msg);
+                process.program = null;
+            }
             break;
         }
 
-        stdout.writeln("[" ~ command ~ "]");
-        add_history(command.toStringz());
+        if (command.length > 0)
+        {
+            add_history(command.toStringz());
+        }
+        command = "";
+
+        if (process.program is null)
+        {
+            continue;
+        }
 
         process.state = ProcessState.New;
         auto scheduler = new Scheduler(process);
         ExitCode exitCode = scheduler.run();
-        command = "";
 
+        File output = stdin;
         foreach (fiber; scheduler.fibers)
         {
             if (fiber.context.exitCode != ExitCode.Proceed)
             {
                 stdout.writeln("Process ", fiber.process.index, ":");
                 stderr.writeln(" exitCode ", fiber.context.exitCode);
-                foreach (item; fiber.context.items)
-                {
-                    stderr.writeln(" ", item);
-                }
+                output = stderr;
             }
             else
             {
-                foreach (item; fiber.context.items)
-                {
-                    stdout.writeln(" ", item);
-                }
+                output = stdout;
             }
+
+            foreach (item; fiber.context.items)
+            {
+                output.writeln(" ", item);
+            }
+
         }
     }
     clear_history();
