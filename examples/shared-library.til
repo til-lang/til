@@ -1,4 +1,4 @@
-import std.sharedlib as sl
+import std.sharedlib sl
 
 sl.load "libhello.so" as h
 # These two do the same thing:

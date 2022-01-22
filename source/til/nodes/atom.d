@@ -23,6 +23,7 @@ class NameAtom : Atom
     // x
 
     string value;
+    string typeName = "atom";
 
     this(string s)
     {
@@ -48,6 +49,7 @@ class NameAtom : Atom
 class SubstAtom : NameAtom
 {
     // $x
+    string typeName = "subst_atom";
 
     this(string s)
     {
@@ -82,12 +84,12 @@ class IntegerAtom : Atom
     // 10
 
     long value;
+    string typeName = "integer";
 
     this(long value)
     {
         this.value = value;
         this.type = ObjectType.Integer;
-        this.typeName = "integer";
         this.commands = integerCommands;
     }
     IntegerAtom opUnary(string operator)
@@ -124,6 +126,7 @@ class FloatAtom : Atom
     // 12.34
 
     float value;
+    string typeName = "float";
     this(float value)
     {
         this.value = value;
@@ -272,6 +275,7 @@ class BooleanAtom : Atom
     // false
 
     bool value;
+    string typeName = "boolean";
     this(bool value)
     {
         this.value = value;
@@ -321,7 +325,7 @@ class OperatorAtom : Atom
     // +
 
     string value;
-
+    string typeName = "operator";
     this(string s)
     {
         value = s;

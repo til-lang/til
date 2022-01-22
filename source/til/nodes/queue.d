@@ -16,6 +16,7 @@ class Queue : ListItem
 {
     ulong size;
     Items values;
+    string typeName = "queue";
 
     this(ulong size)
     {

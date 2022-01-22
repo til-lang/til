@@ -6,6 +6,7 @@ import til.nodes;
 class SubList : BaseList
 {
     SubProgram subprogram;
+    string typeName = "sub_list";
 
     this(SubProgram subprogram)
     {

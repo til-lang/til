@@ -24,12 +24,21 @@
 ## Low hanging fruits
 
 * Make **all** examples `assert` things instead of simply printing.
-* collect: `set content [exec cat $file_path | collect]`
+* collect: `set content [exec cat $file_path | collect]` - ?
 * Some command to list currently available commands.
 * Some command to list all currently set variables.
+* regex command that only matches the first occurrence.
 
 ## A little more complex ones
 
+* Vectors
+    * Specially for bytes.
+* Improve **string handling**!
+* Make the REPL a command.
+    * `repl $prompt_string $handler_command`
+    * Don't execute the input, just pass that to the handler command.
+    * Allow to configure the prompt while using it, like changing the
+      prompt string.
 * Print `Process.description` for each process in the "stack" when an
   error occur and is not handled.
 * test (?) -- To create unit tests, maybe...
@@ -39,6 +48,8 @@ test "conversion to float" {
     assert ([to.float "1.23"] == 1.23])
 }
 ```
+
+## Complex
 
 * Step-by-step debugging.
 * Profiling!

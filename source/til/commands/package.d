@@ -70,6 +70,8 @@ static this()
 
         context = context.escopo.run(program, context);
 
+        // XXX: maybe this is wrong.
+        // What if I want to include a code that returns Continue?
         if (context.exitCode != ExitCode.Failure)
         {
             context.exitCode = ExitCode.CommandSuccess;
@@ -82,15 +84,9 @@ static this()
         auto modulePath = context.pop!string();
         string newName = modulePath;
 
-        // import std.io as x
-        if (context.size == 2)
+        // import std.io x
+        if (context.size == 1)
         {
-            string asWord = context.pop!string();
-            if (asWord != "as")
-            {
-                auto msg = "Invalid syntax for import";
-                return context.error(msg, ErrorCode.InvalidArgument, "");
-            }
             newName = context.pop!string();
         }
 
@@ -814,25 +810,6 @@ zipIteration:
 
         context.push(new Zipper(context.items));
         context.exitCode = ExitCode.CommandSuccess;
-        return context;
-    });
-
-    // ---------------------------------------
-    // Pids:
-    pidCommands["send"] = new Command((string path, Context context)
-    {
-        if (context.size > 2)
-        {
-            auto msg = "`send` expects only two arguments";
-            return context.error(msg, ErrorCode.InvalidArgument, "");
-        }
-        Pid pid = cast(Pid)context.pop();
-        auto value = context.pop();
-
-        // Process input should be a Queue:
-        Queue input = cast(Queue)pid.process.input;
-        input.push(value);
-
         return context;
     });
 }

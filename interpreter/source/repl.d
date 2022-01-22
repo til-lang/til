@@ -21,7 +21,15 @@ int repl(Dict envVars, SimpleList argumentsList)
     process.commands = commands;
     string command;
 
-    process["prompt"] = new String("> ");
+    ListItem* promptString = ("TIL_PROMPT" in envVars.values);
+    if (promptString !is null)
+    {
+        process["prompt"] = *promptString;
+    }
+    else
+    {
+        process["prompt"] = new String("> ");
+    }
 
 mainLoop:
     while (true)

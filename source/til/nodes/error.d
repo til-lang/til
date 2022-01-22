@@ -31,6 +31,7 @@ class Erro : ListItem
     int code = -1;
     string classe;
     string message;
+    string typeName = "error";
     Process process;
     Item object;
 

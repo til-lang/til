@@ -15,6 +15,7 @@ CommandsMap stringCommands;
 class String : ListItem
 {
     string repr;
+    string typeName = "string";
 
     this(string s)
     {
