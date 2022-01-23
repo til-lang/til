@@ -121,6 +121,8 @@ static this()
     // System commands
     commands["exec"] = new Command((string path, Context context)
     {
+        import std.process : ProcessException;
+
         string[] command;
         ListItem inputStream;
 
@@ -134,7 +136,14 @@ static this()
             command = context.items.map!(x => to!string(x)).array;
         }
 
-        context.push(new SystemProcess(command, inputStream));
+        try
+        {
+            context.push(new SystemProcess(command, inputStream));
+        }
+        catch (ProcessException ex)
+        {
+            return context.error(ex.msg, ErrorCode.Unknown, "");
+        }
         return context;
     });
 
@@ -144,6 +153,13 @@ static this()
     {
         Item target = context.pop();
         context.push(new NameAtom(to!string(target.type).toLower()));
+
+        return context;
+    });
+    commands["type.name"] = new Command((string path, Context context)
+    {
+        Item target = context.pop();
+        context.push(new NameAtom(to!string(target.typeName).toLower()));
 
         return context;
     });
@@ -326,16 +342,6 @@ forLoop:
         context.exitCode = ExitCode.CommandSuccess;
         return context;
     });
-    commands["break"] = new Command((string path, Context context)
-    {
-        context.exitCode = ExitCode.Break;
-        return context;
-    });
-    commands["continue"] = new Command((string path, Context context)
-    {
-        context.exitCode = ExitCode.Continue;
-        return context;
-    });
     commands["transform"] = new Command((string path, Context context)
     {
         class Transformer : Item
@@ -413,6 +419,21 @@ forLoop:
         context.push(iterator);
         return context;
     });
+    commands["break"] = new Command((string path, Context context)
+    {
+        context.exitCode = ExitCode.Break;
+        return context;
+    });
+    commands["continue"] = new Command((string path, Context context)
+    {
+        context.exitCode = ExitCode.Continue;
+        return context;
+    });
+    commands["skip"] = new Command((string path, Context context)
+    {
+        context.exitCode = ExitCode.Skip;
+        return context;
+    });
 
     // ---------------------------------------------
     // Procedures-related
@@ -437,11 +458,6 @@ forLoop:
     commands["return"] = new Command((string path, Context context)
     {
         context.exitCode = ExitCode.ReturnSuccess;
-        return context;
-    });
-    commands["skip"] = new Command((string path, Context context)
-    {
-        context.exitCode = ExitCode.Skip;
         return context;
     });
     commands["scope"] = new Command((string path, Context context)
@@ -767,7 +783,6 @@ forLoop:
     // Sequences
     commands["zip"] = new Command((string path, Context context)
     {
-
         class Zipper : Item
         {
             Items items;

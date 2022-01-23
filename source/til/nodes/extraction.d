@@ -26,7 +26,14 @@ class Extraction : BaseList
 
         ListItem target = context.pop();
 
-        context = target.extract(context);
+        try
+        {
+            context = target.extract(context);
+        }
+        catch (Exception ex)
+        {
+            return context.error(ex.msg, ErrorCode.Unknown, "");
+        }
 
         context.exitCode = ExitCode.Proceed;
         return context;

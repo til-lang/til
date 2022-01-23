@@ -35,6 +35,7 @@ class SystemProcess : ListItem
         {
             pipes = pipeProcess(command, Redirect.all);
         }
+
         this.pid = pipes.pid;
         this.isRunning = true;
     }
