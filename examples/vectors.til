@@ -1,0 +1,6 @@
+print "START"
+
+set b [bytes 1 2 3]
+assert ([length $b] == 3)
+
+print "END"

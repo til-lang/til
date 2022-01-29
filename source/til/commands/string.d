@@ -1,7 +1,7 @@
 module til.commands.string;
 
 import std.array;
-import std.regex : matchAll;
+import std.regex : matchAll, matchFirst;
 import std.string : indexOf;
 
 import til.nodes;
@@ -119,7 +119,23 @@ static this()
         }
         context.push(l);
 
-        context.exitCode = ExitCode.CommandSuccess;
+        return context;
+    });
+    stringCommands["match"] = new Command((string path, Context context)
+    {
+        string expression = context.pop!string();
+        if (context.size == 0)
+        {
+            auto msg = "`" ~ path ~ "` expects two arguments";
+            return context.error(msg, ErrorCode.InvalidSyntax, "");
+        }
+        string target = context.pop!string();
+
+        foreach(m; target.matchFirst(expression))
+        {
+            context.push(m);
+        }
+
         return context;
     });
     stringCommands["range"] = new Command((string path, Context context)

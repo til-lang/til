@@ -9,4 +9,7 @@ range $m | foreach x {
     print "match:$x"
 }
 
+set m [match $exp $s]
+print "match: $m"
+
 print "END"

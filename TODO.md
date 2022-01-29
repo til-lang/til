@@ -27,12 +27,9 @@
 
 * Command to convert from int to float and vice-versa.
 * collect: `set content [exec cat $file_path | collect]` - ?
-* regex command that only matches the first occurrence.
 
 ## A little more complex ones
 
-* Vectors
-    * Specially for bytes.
 * Improve **string handling**!
 * Make the REPL a command.
     * `repl $prompt_string $handler_command`

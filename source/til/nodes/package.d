@@ -22,6 +22,7 @@ public import til.nodes.sublist;
 
 public import til.nodes.dict;
 public import til.nodes.queue;
+public import til.nodes.vectors;
 
 public import til.nodes.error;
 public import til.nodes.pid;
