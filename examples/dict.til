@@ -2,18 +2,21 @@
 set d [dict (x 11) (y 22) (z 33)]
 print "d: $d"
 print <$d x> <$d y> <$d z>
+assert (<$d x> == 11) (<$d y> == 22) (<$d z> == 33)
 
 # Set new keys
 set $d (a 1) (b 2)
 set $d (b 2)
 set $d (c 3)
 print "a b c: " <$d a> <$d b> <$d c>
+assert (<$d a> == 1) (<$d b> == 2) (<$d c> == 3)
 
 # Set new keys with "dynamic set"
 set $d (a 11) (b 22)
 set $d (b 22)
 set $d (c 33)
 print "a b c: " <$d a> <$d b> <$d c>
+assert (<$d a> == 11) (<$d b> == 22) (<$d c> == 33)
 
 # Multi-dimensional dicts:
 set $d (a b c 123)
@@ -22,6 +25,7 @@ unset $d (a b c)
 
 set $d (a b c 123)
 print "a.b.c (with simple `set`): " <$d a b c>
+assert (<$d a b c> == 123)
 
 set map [
     dict (a a 1) (a b 2) (a c 3)
@@ -29,8 +33,11 @@ set map [
        . (c a 7) (c b 8) (c c 9)
 ]
 
+set counter 0
 range (a b c) | foreach x {
     range (a b c) | foreach y {
+        incr $counter
         print "$x $y: " <$map $x $y>
+        assert (<$map $x $y> == $counter)
     }
 }

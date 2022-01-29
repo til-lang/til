@@ -9,6 +9,7 @@ push $q gama
 range 0 2 | foreach i {
     print [pop $q]
 }
+assert ([length $q] == 0)
 
 print "queue 2"
 set q [queue 2]
@@ -26,5 +27,8 @@ push.no_wait $q alfa
 push.no_wait $q beta
 print "Trying to push into a full queue"
 push.no_wait $q gama
+
+# on.error is going to empty the queue
+assert ([length $q] == 0)
 
 print "END"

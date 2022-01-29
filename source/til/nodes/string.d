@@ -15,12 +15,12 @@ CommandsMap stringCommands;
 class String : ListItem
 {
     string repr;
-    string typeName = "string";
 
     this(string s)
     {
         this.repr = s;
         this.type = ObjectType.String;
+        this.typeName = "string";
         this.commands = stringCommands;
     }
 
@@ -49,10 +49,6 @@ class String : ListItem
         context.exitCode = ExitCode.CommandSuccess;
         return context;
     }
-
-
-
-    // 
     override Context evaluate(Context context)
     {
         context.push(this);

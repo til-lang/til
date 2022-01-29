@@ -14,7 +14,7 @@ static this()
             auto msg = "`send` expects only two arguments";
             return context.error(msg, ErrorCode.InvalidArgument, "");
         }
-        Pid pid = cast(Pid)context.pop();
+        auto pid = context.pop!Pid();
         auto value = context.pop();
 
         // Process input should be a Queue:

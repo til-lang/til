@@ -1,8 +1,10 @@
 print "START"
 
-zip [range 0 10] [range 120 130] [range 1040 1055] | foreach x {
+zip [range 0 10] [range 1 11] [range 2 12] | foreach x {
     set (a b c) [list $x]
     print "$a $b $c"
+    assert ($b == [math ($a + 1)])
+    assert ($c == [math ($b + 1)])
 }
 
 print "END"

@@ -11,6 +11,7 @@ proc overflow () {
     incr $max
     
     error "Increasing \$max should overflow."
+    exit 1
 }
 
 proc underflow () {
@@ -24,6 +25,7 @@ proc underflow () {
     decr $min
 
     error "Decreasing \$min should underflow."
+    exit 1
 }
 
 overflow

@@ -1,3 +1,5 @@
+print "START"
+
 set value 1
 print "value is $value"
 
@@ -6,3 +8,6 @@ range (10 20 30) | foreach x {
 }
 
 print " and now value is $value"
+assert ($value == 30)
+
+print "END"

@@ -1,7 +1,13 @@
+print "START"
+
+set sum 0
 range 0 10 | transform x {
-        set value [math ($x + 100)]
-        print "$x -> $value"
-        return $value
-    } | foreach y {
-        print $y
-    }
+    return 1
+} | foreach y {
+    print $y
+    set sum [math ($sum + $y)]
+}
+
+assert ($sum == 11)
+
+print "END"

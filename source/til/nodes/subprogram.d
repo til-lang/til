@@ -5,7 +5,6 @@ import til.nodes;
 class SubProgram
 {
     string name = "<SubProgram>";
-    string typeName = "sub_program";
     Pipeline[] pipelines;
 
     this(Pipeline[] pipelines)

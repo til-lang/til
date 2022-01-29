@@ -18,6 +18,7 @@ class Pid : ListItem
 {
     ProcessFiber fiber;
     Process process;
+    auto type = ObjectType.Pid;
     const typeName = "pid";
 
     this(ProcessFiber fiber)

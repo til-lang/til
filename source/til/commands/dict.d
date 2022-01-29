@@ -3,6 +3,11 @@ module til.commands.dict;
 import til.nodes;
 import til.commands;
 
+debug
+{
+    import std.stdio;
+}
+
 
 // Commands:
 static this()
@@ -14,6 +19,7 @@ static this()
         foreach(argument; context.items)
         {
             SimpleList l = cast(SimpleList)argument;
+            debug {stderr.writeln(" l:", l); }
             context = l.forceEvaluate(context);
             l = cast(SimpleList)context.pop();
 
@@ -21,9 +27,10 @@ static this()
             l.items.popBack();
             string key = to!string(l.items.map!(x => to!string(x)).join("."));
             dict[key] = value;
+            debug {stderr.writeln(" ", key, ":", value); }
         }
+        debug {stderr.writeln("new dict:", dict.toString()); }
         context.push(dict);
-
         context.exitCode = ExitCode.CommandSuccess;
         return context;
     });

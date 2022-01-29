@@ -1,3 +1,7 @@
+print "START"
+
+set error_handler_called false
+
 proc e () {
     error "Test error"
 }
@@ -6,8 +10,12 @@ proc on.error (x) {
     print "on.error:"
     print "  received: $x"
     print "  IGNORING IT!"
+    set error_handler_called true
 }
 
 print "Calling procedure `e`..."
 e
 print "Procedure `e` was called."
+assert ($error_handler_called == true)
+
+print "END"

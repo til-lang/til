@@ -9,13 +9,16 @@ print [pop $q] " should be 1"
 
 print "Test 2"
 range 2 | send $q
+assert ([length $q] == 3)
+
+print "Receiving..."
 receive $q | foreach a {
     print "Received $a"
     if ($a == 2) { break }
 }
 
-# TODO: is_empty $q
-# TODO: lenght $q
+print " length: " [length $q]
+assert ([length $q] == 0)
 
 print "Test 3"
 range 3 | send $q
@@ -26,5 +29,6 @@ receive.no_wait $q | foreach b {
 receive.no_wait $q | foreach c {
     print "Received (no_wait, again) $c"
 }
+assert ([length $q] == 0)
 
 print "END"

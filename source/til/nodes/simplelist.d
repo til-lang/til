@@ -21,7 +21,6 @@ class SimpleList : BaseList
     */
 
     long currentItemIndex;
-    string typeName = "list";
 
     this(Items items)
     {
@@ -29,6 +28,7 @@ class SimpleList : BaseList
         this.items = items;
         this.commands = simpleListCommands;
         this.type = ObjectType.SimpleList;
+        this.typeName = "list";
     }
 
     // -----------------------------

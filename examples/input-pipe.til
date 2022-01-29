@@ -1,17 +1,25 @@
 print "START"
 
+set counter 0
+
 proc printer () {
     print "printer started"
-    sleep 1000
+    sleep 500
     read.no_wait | foreach line {
         print "> $line"
     }
     print "printer ended"
+    incr $counter
 }
 
 set p [spawn printer]
-range 5 | foreach x {
+range 4 | foreach x {
     send $p $x
 }
+
+assert ($counter == 0)
+
+# After some time:
+# assert ($counter == 5)
 
 print "END"

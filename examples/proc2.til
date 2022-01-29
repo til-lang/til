@@ -5,8 +5,8 @@ proc f (x y z) {
 }
 
 set result [f 1 2 3]
-print "expected: _1 _2 _3"
-print "result: $result"
+print "result: $result (expected: _1_2_3)"
+assert ("$result" == "_1_2_3")
 
 proc empty () {}
 empty

@@ -17,12 +17,14 @@ enum ErrorCode
     CommandNotFound,
     InvalidArgument,
     InvalidSyntax,
+    NotImplemented,
     SemanticError,
     Empty,
     Full,
     Overflow,
     Underflow,
     Assertion,
+    RuntimeError,
 }
 
 
@@ -31,7 +33,6 @@ class Erro : ListItem
     int code = -1;
     string classe;
     string message;
-    string typeName = "error";
     Process process;
     Item object;
 
@@ -46,6 +47,8 @@ class Erro : ListItem
         this.message = message;
         this.code = code;
         this.classe = classe;
+        this.type = ObjectType.Error;
+        this.typeName = "error";
     }
 
     // Conversions:

@@ -1,6 +1,9 @@
+print "START"
+
 print "Including a file..."
 
 include "examples/include_2.til"
 
-hello "include_1"
+assert ([hello "include_1"] == "hello!")
+
 print "END"

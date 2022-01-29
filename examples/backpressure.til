@@ -1,22 +1,30 @@
 print "START"
 
-proc p (name) {
-    print "p $name START"
+set q [queue]
+
+proc p (q) {
     read | foreach msg {
-        print " Procedure $name received message: $msg (first foreach)"
+        push $q $msg
         break
     }
     read.no_wait | foreach msg {
-        print " Procedure $name received message: $msg"
+        push $q $msg
     }
-    print "p $name END"
 }
 
-set p1 [spawn p "alfa"]
+set p1 [spawn p $q]
 
-range 10 | foreach x {
-    print "Sending message-$x to p1"
-    send $p1 "message-$x"
+range 3 | foreach x {
+    send $p1 $x
 }
+
+sleep 50
+set result ""
+receive.no_wait $q | foreach x {
+    set result "$result $x"
+}
+
+print "result: $result"
+assert ($result == " 0 1 2 3")
 
 print "END"

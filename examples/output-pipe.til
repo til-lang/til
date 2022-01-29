@@ -11,11 +11,14 @@ proc generator (x) {
     print "generator ended"
 }
 
+set counter 0
 spawn generator 4 | foreach i {
     print "i:$i"
     if ($i == "quit") {
         break
     }
+    incr $counter
 }
+assert ($counter == 5)
 
 print "END"

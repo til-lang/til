@@ -1,3 +1,5 @@
+print "START"
+
 proc p1 (name n) {
     print "Running p1 $name $n"
     range $n | foreach x {
@@ -10,3 +12,5 @@ range 20 40 4 | foreach x {
     print "SPAWN $x"
     set "p$x" [spawn p1 "p$x" $x]
 }
+
+print "END"

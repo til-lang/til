@@ -10,6 +10,7 @@ proc ls (path) {
         push $e | foreach line {
             print "ls.error> $line"
         }
+        return "error"
     }
 
     print "path: $path"
@@ -17,16 +18,18 @@ proc ls (path) {
     push $p | foreach line {
         print "ls> $line"
     }
-    print " done:" <$p returncode>
+    print " done:" <$p return_code>
 
-    if (<$p returncode> != 0) {
+    if (<$p return_code> != 0) {
         print "Should not reach this line."
         exit 1
     }
+
+    return "ok"
 }
 
-ls "/"
-ls "/blobs"
+assert ([ls "/"] == "ok")
+assert ([ls "/blobs"] == "error")
 
 print "Piping test:"
 exec ls "/" | exec grep "etc" | foreach x {

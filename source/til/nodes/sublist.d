@@ -6,13 +6,13 @@ import til.nodes;
 class SubList : BaseList
 {
     SubProgram subprogram;
-    string typeName = "sub_list";
 
     this(SubProgram subprogram)
     {
         super();
         this.subprogram = subprogram;
         this.type = ObjectType.SubList;
+        this.typeName = "sub_list";
     }
 
     // -----------------------------

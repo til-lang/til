@@ -1,14 +1,23 @@
-print "start of the program"
+print "START"
 
 proc prefixer (prefix item) {
     print "  Prefixing $item ..."
     return "$prefix $item"
 }
 
-range ("Angela" "Bob" "Carla" "David") | transform x {
+set list [
+    range ("Angela" "Bob" "Carla" "David") | transform x {
         return [prefixer "The name is" $x]
     } | foreach phrase {
-        print $phrase
+        push $phrase
     }
+    return [list [stack]]
+]
 
-print "end of the program"
+print "list: $list"
+assert (<$list 3> == "The name is Angela")
+assert (<$list 2> == "The name is Bob")
+assert (<$list 1> == "The name is Carla")
+assert (<$list 0> == "The name is David")
+
+print "END"

@@ -23,13 +23,13 @@ class NameAtom : Atom
     // x
 
     string value;
-    string typeName = "atom";
 
     this(string s)
     {
         this.type = ObjectType.Name;
         this.value = s;
         this.commands = nameCommands;
+        this.typeName = "atom";
     }
 
     // Utilities and operators:
@@ -49,11 +49,11 @@ class NameAtom : Atom
 class SubstAtom : NameAtom
 {
     // $x
-    string typeName = "subst_atom";
 
     this(string s)
     {
         super(s);
+        this.typeName = "subst_atom";
     }
 
     override Context evaluate(Context context)
@@ -84,12 +84,12 @@ class IntegerAtom : Atom
     // 10
 
     long value;
-    string typeName = "integer";
 
     this(long value)
     {
         this.value = value;
         this.type = ObjectType.Integer;
+        this.typeName = "integer";
         this.commands = integerCommands;
     }
     IntegerAtom opUnary(string operator)
@@ -126,11 +126,11 @@ class FloatAtom : Atom
     // 12.34
 
     float value;
-    string typeName = "float";
     this(float value)
     {
         this.value = value;
         this.type = ObjectType.Float;
+        this.typeName = "float";
         this.commands = floatCommands;
     }
     override bool toBool()
@@ -275,11 +275,11 @@ class BooleanAtom : Atom
     // false
 
     bool value;
-    string typeName = "boolean";
     this(bool value)
     {
         this.value = value;
         this.type = ObjectType.Boolean;
+        this.typeName = "boolean";
     }
     override bool toBool()
     {
@@ -325,11 +325,11 @@ class OperatorAtom : Atom
     // +
 
     string value;
-    string typeName = "operator";
     this(string s)
     {
         value = s;
         this.type = ObjectType.Operator;
+        this.typeName = "operator";
     }
 
     // Utilities and operators:

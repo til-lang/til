@@ -13,6 +13,8 @@ class Extraction : BaseList
 
     override string toString()
     {
+        // TODO: improve this:
+        // <[obj, key]> -> <obj key>
         return "<" ~ to!string(items) ~ ">";
     }
 

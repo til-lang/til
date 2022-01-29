@@ -14,4 +14,8 @@ if ((1 > 2) || ($hour >= 6) && ($hour < 18)) {
     set theme.mode "dark"
 }
 
+assert ($font.family == "Fira Code")
+assert ($font.size == 14)
+assert ($theme.mode == "dark")
+
 print "END"

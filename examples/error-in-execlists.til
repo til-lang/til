@@ -1,13 +1,19 @@
+print "START"
+
 proc error_test () {
     proc on.error (e) {
         print "on.error: $e"
         set msg <$e message>
         print " message: $msg"
-        return
+        return "something else"
     }
 
     set x [invalidcommand 1 2 3]
     print <$x invalidextraction>
+    return "happy path that shouldn't happen"
 }
 
-error_test
+set result [error_test]
+assert ($result == "something else")
+
+print "END"

@@ -1,3 +1,5 @@
+print "START"
+
 import std.sharedlib sl
 
 sl.load "libhello.so" as h
@@ -5,3 +7,5 @@ sl.load "libhello.so" as h
 sl.call h "hello"
 h.call "hello"
 h.unload
+
+print "END"

@@ -1,3 +1,5 @@
+print "START"
+
 set result [
     range 1000 | foreach x {
         if ($x >= 5) {
@@ -8,3 +10,6 @@ set result [
 ]
 
 print "Result: $result"
+assert ($result == "Last item was 5")
+
+print "END"

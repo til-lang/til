@@ -1,6 +1,6 @@
 set result [
     set r 0
-    range 1000 | foreach x {
+    range 100 | foreach x {
         if ($x >= 5) {
             continue
         }
@@ -11,4 +11,5 @@ set result [
     return $r
 ]
 
-print "Result: $result"
+print "Result: $result (expected: 4)"
+assert ($result == 4)

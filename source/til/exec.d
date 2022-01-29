@@ -11,6 +11,7 @@ debug
     import std.stdio;
 }
 
+CommandsMap systemProcessCommands;
 
 class SystemProcess : ListItem
 {
@@ -19,7 +20,18 @@ class SystemProcess : ListItem
     ListItem inputStream;
     string[] command;
     int returnCode = 0;
-    bool isRunning;
+    bool _isRunning;
+    auto type = ObjectType.SystemProcess;
+    auto typeName = "system_process";
+
+    bool isRunning()
+    {
+        if (_isRunning)
+        {
+            _isRunning = !this.pid.tryWait().terminated;
+        }
+        return _isRunning;
+    }
 
     this(string[] command, ListItem inputStream)
     {
@@ -37,7 +49,7 @@ class SystemProcess : ListItem
         }
 
         this.pid = pipes.pid;
-        this.isRunning = true;
+        this.commands = systemProcessCommands;
     }
 
     override string toString()
@@ -47,12 +59,6 @@ class SystemProcess : ListItem
 
     override Context next(Context context)
     {
-        if (!isRunning)
-        {
-            context.exitCode = ExitCode.Break;
-            return context;
-        }
-
         // For the output:
         string line = null;
 
@@ -88,14 +94,14 @@ class SystemProcess : ListItem
             if (pipes.stdout.eof)
             {
                 debug {stderr.writeln(" waiting for termination");}
-                while (!pid.tryWait().terminated)
+                while (isRunning)
                 {
                     context.yield();
                 }
 
                 debug {stderr.writeln(" terminated");}
-                returnCode = pid.wait();
-                isRunning = false;
+                wait();
+                _isRunning = false;
 
                 if (returnCode != 0)
                 {
@@ -127,6 +133,10 @@ class SystemProcess : ListItem
         context.exitCode = ExitCode.Continue;
         return context;
     }
+    void wait()
+    {
+        returnCode = pid.wait();
+    }
 
     override Context extract(Context context)
     {
@@ -153,8 +163,16 @@ class SystemProcess : ListItem
             case "pid":
                 context.push(this.pid.processID());
                 break;
-            case "returncode":
-                context.push(this.returnCode);
+            case "return_code":
+                if (this.isRunning)
+                {
+                    auto msg = "Process is still running";
+                    return context.error(msg, ErrorCode.RuntimeError, "");
+                }
+                else
+                {
+                    context.push(this.returnCode);
+                }
                 break;
             case "error":
                 context.push(new SystemProcessError(this));

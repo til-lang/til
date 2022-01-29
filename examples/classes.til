@@ -3,7 +3,7 @@ print "START"
 type coordinates {
     proc init (x y) {
         print "coordinates.init: $x $y"
-        return [dict (x $x) (y $y)]
+        return [dict (x $x) (y $y) (to_string_call_count 0) (teste 0)]
     }
     proc set (dict key value) {
         print "setting coordinates.$key=$value"
@@ -16,6 +16,8 @@ type coordinates {
     }
     proc to.string (dict) {
         print "coordinates.to.string"
+        set $dict to_string_call_count [math (<$dict to_string_call_count> + 1)]
+
         set s [dict.to.string $dict]
         return "coordinates: $s"
     }
@@ -27,7 +29,16 @@ print $c1
 set $c1 x 12
 set $c1 y 34
 print $c1
+assert (<$c1 x> == 12)
+assert (<$c1 y> == 34)
 print "to.string test: $c1"
+assert (<$c1 to_string_call_count> == 3)
+
+print "INDEPENDENCE TEST:"
+set c2 [coordinates 3 4]
+print $c2
+print "c2 to_string_call_count: " <$c2 to_string_call_count>
+assert (<$c2 to_string_call_count> == 1)
 
 
 print "\nINHERITANCE TEST:"
@@ -42,10 +53,23 @@ type position {
         print "setting position.$key=$value"
         coordinates.set $coordinates $key $value
     }
+    proc mark (coordinates value) {
+        print "marking"
+        dict.set $coordinates (teste $value)
+    }
 }
 
 set p1 [position 34 56]
+
+mark $p1 123
+print "c1 teste: " <$c1 teste>
+assert (<$c1 teste> != 123)
+
+print "p1 to_string_call_count: " <$p1 to_string_call_count>
 set $p1 x 78
+assert (<$p1 x> == 78)
 print $p1
+print "p1 to_string_call_count: " <$p1 to_string_call_count>
+assert (<$p1 to_string_call_count> == 1)
 
 print "END"

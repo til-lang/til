@@ -1,2 +1,7 @@
+print "START"
+
 set x 10
-print [incr $x]
+incr $x
+assert ($x == 11)
+
+print "END"

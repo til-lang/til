@@ -255,7 +255,7 @@ static this()
                 Comparator other = cast(Comparator)o;
 
                 context.push(other.item);
-                context.push("<");
+                context.push(">");
                 context = item.operate(context);
                 auto result = cast(BooleanAtom)context.pop();
 
@@ -307,5 +307,31 @@ static this()
         auto l = context.pop!SimpleList();
         context.exitCode = ExitCode.CommandSuccess;
         return context.push(l.items.length);
+    });
+    simpleListCommands["operate"] = new Command((string path, Context context)
+    {
+        SimpleList rhs = context.pop!SimpleList();
+        string op = context.pop!string();
+
+        Item other = context.pop();
+        if (other.type != ObjectType.SimpleList)
+        {
+            auto msg = "Cannot operate " ~ to!string(other.type) ~ " and SimpleList";
+            return context.error(msg, ErrorCode.NotImplemented, "");
+        }
+        SimpleList lhs = cast(SimpleList)other;
+
+        if (op == "==")
+        {
+            // TODO, maybe: compare item by item instead of relying on toString
+            if (lhs.items.length != rhs.items.length)
+            {
+                return context.push(false);
+            }
+            return context.push(lhs.toString() == rhs.toString());
+        }
+
+        auto msg = "Operator " ~ op ~ " not implemented for SimpleList";
+        return context.error(msg, ErrorCode.NotImplemented, "");
     });
 }

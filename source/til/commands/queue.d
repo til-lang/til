@@ -3,6 +3,10 @@ module til.commands.queue;
 import til.nodes;
 import til.commands;
 
+debug
+{
+    import std.stdio;
+}
 
 // Commands:
 static this()
@@ -169,23 +173,21 @@ static this()
             return context.error(msg, ErrorCode.InvalidArgument, "");
         }
 
-        class QueueIterator : Item
+        class WaitingQueueIterator : ListItem
         {
             Queue queue;
-            this(Queue queue)
+            this(Queue q)
             {
-                this.queue = queue;
+                this.queue = q;
             }
-            override string toString()
-            {
-                return "QueueIterator";
-            }
+
             override Context next(Context context)
             {
                 while (queue.isEmpty)
                 {
                     context.yield();
                 }
+
                 auto item = queue.pop();
                 context.push(item);
                 context.exitCode = ExitCode.Continue;
@@ -194,48 +196,22 @@ static this()
         }
 
         auto queue = context.pop!Queue();
-        context.push(new QueueIterator(queue));
-        context.exitCode = ExitCode.CommandSuccess;
-        return context;
+        return context.push(new WaitingQueueIterator(queue));
     });
     queueCommands["receive.no_wait"] = new Command((string path, Context context)
     {
         if (context.size != 1)
         {
-            auto msg = "`receive` expects one argument";
+            auto msg = "`receive.no_wait` expects one argument";
             return context.error(msg, ErrorCode.InvalidArgument, "");
         }
 
-        class QueueIteratorNoWait : Item
-        {
-            Queue queue;
-            this(Queue queue)
-            {
-                this.queue = queue;
-            }
-            override string toString()
-            {
-                return "QueueIteratorNoWait";
-            }
-            override Context next(Context context)
-            {
-                if (queue.isEmpty)
-                {
-                    context.exitCode = ExitCode.Break;
-                }
-                else
-                {
-                    context.exitCode = ExitCode.Continue;
-                    auto item = queue.pop();
-                    context.push(item);
-                }
-                return context;
-            }
-        }
-
         auto queue = context.pop!Queue();
-        context.push(new QueueIteratorNoWait(queue));
-        context.exitCode = ExitCode.CommandSuccess;
-        return context;
+        return context.push(queue);
+    });
+    queueCommands["length"] = new Command((string path, Context context)
+    {
+        auto queue = context.pop!Queue();
+        return context.push(queue.values.length);
     });
 }

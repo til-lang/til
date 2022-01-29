@@ -16,12 +16,13 @@ class Queue : ListItem
 {
     ulong size;
     Items values;
-    string typeName = "queue";
 
     this(ulong size)
     {
         this.size = size;
         this.commands = queueCommands;
+        this.type = ObjectType.Queue;
+        this.typeName = "queue";
     }
     this(ulong size, Items values)
     {
@@ -109,6 +110,10 @@ class WaitingQueue : Queue
     {
         super(size);
     }
+    this(Queue q)
+    {
+        super(q);
+    }
 
     override Context next(Context context)
     {
@@ -124,5 +129,4 @@ class WaitingQueue : Queue
         context.exitCode = ExitCode.Continue;
         return context;
     }
-
 }

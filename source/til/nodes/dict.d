@@ -14,12 +14,12 @@ CommandsMap dictCommands;
 class Dict : ListItem
 {
     ListItem[string] values;
-    string typeName = "dict";
 
     this()
     {
         this.type = ObjectType.Dict;
         this.commands = dictCommands;
+        this.typeName = "dict";
     }
     this(ListItem[string] values)
     {

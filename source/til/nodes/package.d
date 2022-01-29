@@ -11,6 +11,7 @@ public import til.context;
 public import til.process;
 
 public import til.command;
+public import til.exec;
 public import til.nodes.listitem;
 
 public import til.nodes.baselist;
@@ -56,7 +57,11 @@ enum ObjectType
     ExecList,
     SubList,
     SubProgram,
+    Pid,
+    SystemProcess,
+    Error,
     Dict,
+    Queue,
     String,
     Name,
     Atom,

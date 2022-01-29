@@ -1,7 +1,13 @@
+print "START"
+
 set (x y z) (1 2 3)
 print "x:$x y:$y z:$z"
+assert ($x == 1) ($y == 2) ($z == 3)
 
 set lista (11 22 33)
 print "lista: $lista"
 set (a b c) $lista
 print "a:$a, b:$b, c:$c"
+assert ($a == 11) ($b == 22) ($c == 33)
+
+print "END"
