@@ -827,4 +827,47 @@ zipIteration:
         context.exitCode = ExitCode.CommandSuccess;
         return context;
     });
+
+    // ---------------------------------------
+    // Information about escopo/process
+    commands["cmds"] = new Command((string path, Context context)
+    {
+        auto process = context.escopo;
+        auto cmdsList = new SimpleList([]);
+
+        do
+        {
+            auto list = new SimpleList([]);
+            foreach (cmdName; process.commands.byKey)
+            {
+                list.items ~= new String(cmdName);
+            }
+            cmdsList.items ~= list;
+
+            process = process.parent;
+        }
+        while (process !is null);
+
+        return context.push(cmdsList);
+    });
+    commands["vars"] = new Command((string path, Context context)
+    {
+        auto process = context.escopo;
+        auto varsList = new SimpleList([]);
+
+        do
+        {
+            auto list = new SimpleList([]);
+            foreach (varName; process.variables.byKey)
+            {
+                list.items ~= new String(varName);
+            }
+            varsList.items ~= list;
+
+            process = process.parent;
+        }
+        while (process !is null);
+
+        return context.push(varsList);
+    });
 }

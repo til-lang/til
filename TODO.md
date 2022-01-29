@@ -26,10 +26,7 @@
 ## Low hanging fruits
 
 * Command to convert from int to float and vice-versa.
-* Make **all** examples `assert` things instead of simply printing.
 * collect: `set content [exec cat $file_path | collect]` - ?
-* Some command to list currently available commands.
-* Some command to list all currently set variables.
 * regex command that only matches the first occurrence.
 
 ## A little more complex ones
