@@ -8,11 +8,6 @@ import std.array : array;
 import til.nodes;
 
 
-debug
-{
-    import std.stdio;
-}
-
 class ProcessFiber : Fiber
 {
     Process process = null;
@@ -68,22 +63,16 @@ class Scheduler
             {
                 if (fiber.state == Fiber.State.TERM)
                 {
-                    debug {
-                        stderr.writeln(" FIBER TERM: ", fiber.process.index);
-                    }
                     fiber.process.state = ProcessState.Finished;
                     finishedFibers ~= fiber;
-
-                    // TODO: remove from fibers list!!!
                     continue;
                 }
                 activeCounter++;
-                debug {stderr.writeln(" FIBER CALL: ", fiber.process.index);}
                 fiber.call();
             }
 
             // Clean up finished fibers:
-            if (activeCounter > 0 && finishedFibers.length != 0)
+            if (finishedFibers.length != 0)
             {
                 activeFibers = array(
                     activeFibers.filter!(item => !finishedFibers.canFind(item))
@@ -121,7 +110,6 @@ class Scheduler
     void yield()
     {
         if (fibers.length == 1) return;
-        debug {stderr.writeln(" FIBER YIELD ");}
         Fiber.yield();
     }
 }

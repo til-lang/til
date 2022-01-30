@@ -116,12 +116,10 @@ class Process
     // escopo["x"] = new Atom(123);
     void opIndexAssign(ListItem value, string name)
     {
-        debug {stderr.writeln(name, " = ", value);}
         variables[name] = [value];
     }
     void opIndexAssign(Items value, string name)
     {
-        debug {stderr.writeln(name, " = ", value);}
         variables[name] = value;
     }
 
@@ -136,15 +134,10 @@ class Process
     {
         if (stackPointer == 0) return "empty";
         return to!string(stack[0..stackPointer]);
-
     }
 
     ListItem peek(uint index=1)
     {
-        /*
-        Just LOOK at the first item, do
-        not pop it off.
-        */
         long pointer = stackPointer - index;
         if (pointer < 0)
         {
@@ -230,16 +223,14 @@ class Process
     // Debugging information about itself:
     override string toString()
     {
-        string s = (
+        return (
             "Process["
             ~ to!string(this.index)
             ~ ":" ~ this.description
             ~ "]\n"
+            ~ "vars:" ~ to!string(variables.byKey) ~ "\n"
+            ~ "cmds:" ~ to!string(commands.byKey) ~ "\n"
         );
-        s ~= to!string(variables.byKey) ~ "\n";
-        s ~= to!string(commands.byKey) ~ "\n";
-
-        return s;
     }
 
     // Commands and procedures
@@ -395,7 +386,7 @@ class Process
                         ~ " Expected a Proceed exit code."
                     );
             }
-            // Each 8 pipelines we yield fiber/thread control:
+            // Each N pipelines we yield fiber/thread control:
             if ((index & 0x07) == 0x07) this.yield();
         }
 

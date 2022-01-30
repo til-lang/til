@@ -6,10 +6,6 @@ import std.string : stripRight;
 
 import til.nodes;
 
-debug
-{
-    import std.stdio;
-}
 
 CommandsMap systemProcessCommands;
 
@@ -21,6 +17,7 @@ class SystemProcess : ListItem
     string[] command;
     int returnCode = 0;
     bool _isRunning;
+
     auto type = ObjectType.SystemProcess;
     auto typeName = "system_process";
 
@@ -35,7 +32,6 @@ class SystemProcess : ListItem
 
     this(string[] command, ListItem inputStream)
     {
-        debug {stderr.writeln("SystemProcess:", command, " ", inputStream);}
         this.command = command;
         this.inputStream = inputStream;
 
@@ -67,7 +63,6 @@ class SystemProcess : ListItem
             // Send from inputStream, first:
             if (inputStream !is null)
             {
-                debug {stderr.writeln(" inputStream:", inputStream);}
                 auto inputContext = this.inputStream.next(context);
                 if (inputContext.exitCode == ExitCode.Break)
                 {
@@ -84,7 +79,6 @@ class SystemProcess : ListItem
                 foreach (item; inputContext.items)
                 {
                     string s = item.toString();
-                    debug {stderr.writeln(" stdin:", s);}
                     pipes.stdin.writeln(s);
                     pipes.stdin.flush();
                 }
@@ -93,13 +87,11 @@ class SystemProcess : ListItem
 
             if (pipes.stdout.eof)
             {
-                debug {stderr.writeln(" waiting for termination");}
                 while (isRunning)
                 {
                     context.yield();
                 }
 
-                debug {stderr.writeln(" terminated");}
                 wait();
                 _isRunning = false;
 
@@ -116,7 +108,6 @@ class SystemProcess : ListItem
             }
 
             line = pipes.stdout.readln();
-            debug {stderr.writeln(" line:", line);}
 
             if (line is null)
             {
@@ -177,12 +168,6 @@ class SystemProcess : ListItem
             case "error":
                 context.push(new SystemProcessError(this));
                 break;
-            /*
-            case "time":
-                // For how long this process is running
-                context.push(t);
-                break;
-            */
             default:
                 break;
         }

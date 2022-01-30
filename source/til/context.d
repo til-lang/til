@@ -4,10 +4,6 @@ import std.array;
 
 import til.nodes;
 
-debug
-{
-    import std.stdio;
-}
 
 struct Context
 {
@@ -70,7 +66,6 @@ struct Context
         T pop()
         {
             auto info = typeid(T);
-            debug {stderr.writeln("popping as a class: ", info);}
             auto value = this.pop();
             return cast(T)value;
         }
@@ -232,7 +227,6 @@ struct Context
     }
     Context error(string message, int code, string classe, Item object)
     {
-        debug {stderr.writeln("context.error:", message);}
         auto e = new Erro(escopo, message, code, classe, object);
         push(e);
         this.exitCode = ExitCode.Failure;

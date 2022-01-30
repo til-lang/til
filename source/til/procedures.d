@@ -5,11 +5,6 @@ import std.conv : to;
 import til.exceptions;
 import til.nodes;
 
-debug
-{
-    import std.stdio;
-}
-
 
 class Procedure : Command
 {
@@ -27,10 +22,6 @@ class Procedure : Command
 
     override Context run(string name, Context context)
     {
-        debug {
-            stderr.writeln("proc.run:", name, " ", context);
-            stderr.writeln(" parameters:", parameters.items);
-        }
         auto newScope = new Process(context.escopo);
         newScope.description = name;
 
@@ -41,7 +32,7 @@ class Procedure : Command
             {
                 throw new InvalidException(
                     "Not enough arguments passed to command"
-                    ~ " \"" ~ name ~ "\"."
+                    ~ " `" ~ name ~ "`."
                 );
             }
             string parameterName = to!string(parameter);

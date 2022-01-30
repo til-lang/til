@@ -6,10 +6,6 @@ import std.range;
 
 import til.nodes;
 
-debug
-{
-    import std.stdio;
-}
 
 SimpleList applyPrecedenceRules(SimpleList list)
 {
@@ -46,7 +42,6 @@ Context math(Context context)
     string lastOperator;
     foreach(item; items)
     {
-        debug {stderr.writeln("math.item:", item);}
         if (item.type == ObjectType.SimpleList)
         {
             context.push(item);
@@ -83,7 +78,6 @@ Context math(Context context)
             {
                 lastOperator = to!string(item);
             }
-            debug {stderr.writeln(" math.push:", item);}
             context.push(item);
         }
     }
