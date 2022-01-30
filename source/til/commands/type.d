@@ -10,14 +10,20 @@ debug
 }
 
 
-class Type : Runnable
+class TypeCommand : Command
 {
+    string name;
     CommandsMap commands;
 
     this(string name, Process escopo)
     {
-        super(name);
+        this.name = name;
         this.commands = escopo.commands;
+        super(null);
+    }
+    override string toString()
+    {
+        return "type:" ~ this.name;
     }
 
     override Context run(string path, Context context)
@@ -85,15 +91,6 @@ class Type : Runnable
     };
 }
 
-Context runType(string path, Context context)
-{
-    // TODO: check if context.command or
-    // context.command.runnable is null
-    auto runnable = context.command.runnable;
-    Type type = cast(Type)runnable;
-    return type.run(path, context);
-}
-
 
 // Commands:
 static this()
@@ -124,8 +121,7 @@ static this()
             auto msg = "The type " ~ name ~ " must have a `init` method";
             return context.error(msg, ErrorCode.InvalidSyntax, "");
         }
-        auto type = new Type(name, newScope);
-        context.escopo.commands[name] = new Command(&runType, type);
+        context.escopo.commands[name] = new TypeCommand(name, newScope);
 
         context.exitCode = ExitCode.CommandSuccess;
         return context;

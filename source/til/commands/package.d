@@ -451,7 +451,7 @@ forLoop:
             body
         );
 
-        context.escopo.commands[name] = new Command(&runProc, proc);
+        context.escopo.commands[name] = proc;
 
         return context;
     });

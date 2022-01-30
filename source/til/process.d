@@ -32,23 +32,6 @@ class NotFoundError : Exception
 }
 
 
-abstract class Runnable
-{
-    string name;
-    this(string name)
-    {
-        this.name = name;
-    }
-
-    abstract Context run(string path, Context context);
-
-    override string toString()
-    {
-        return "Runnable " ~ this.name;
-    }
-}
-
-
 class Process
 {
     SubProgram program;
