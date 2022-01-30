@@ -61,4 +61,9 @@ range $s | foreach x {
 }
 assert ($output == $s)
 
+set s "12345"
+set part <$s 0 end>
+print "part: $part"
+assert ($part == $s)
+
 print "END"

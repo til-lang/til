@@ -6,6 +6,10 @@ import std.string : indexOf;
 
 import til.nodes;
 
+debug
+{
+    import std.stdio;
+}
 
 // Commands:
 static this()
@@ -25,10 +29,18 @@ static this()
         auto end = start + 1;
         if (context.size)
         {
-            end = context.pop().toInt();
-            if (end < 0)
+            auto item = context.pop();
+            if (item.toString() == "end")
             {
-                end = s.repr.length + end;
+                end = s.repr.length;
+            }
+            else
+            {
+                end = item.toInt();
+                if (end < 0)
+                {
+                    end = s.repr.length + end;
+                }
             }
         }
 
