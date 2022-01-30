@@ -66,4 +66,12 @@ set part <$s 0 end>
 print "part: $part"
 assert ($part == $s)
 
+# strip
+set s " aa12345bb "
+print [typeof $s]
+print [typeof [strip $s]]
+assert ([strip $s] == "aa12345bb")
+assert ([strip.left $s "a "] == "12345bb ")
+assert ([strip.right $s "b "] == " aa12345")
+
 print "END"

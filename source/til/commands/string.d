@@ -2,7 +2,7 @@ module til.commands.string;
 
 import std.array;
 import std.regex : matchAll, matchFirst;
-import std.string : indexOf;
+import std.string;
 
 import til.nodes;
 
@@ -96,6 +96,42 @@ static this()
         }
         context.exitCode = ExitCode.CommandSuccess;
         return context;
+    });
+    stringCommands["strip"] = new Command((string path, Context context)
+    {
+        string s = context.pop!string();
+
+        string chars = " ";
+        if (context.size > 0)
+        {
+            chars = context.pop!string();
+        }
+
+        return context.push(new String(s.strip(chars)));
+    });
+    stringCommands["strip.left"] = new Command((string path, Context context)
+    {
+        string s = context.pop!string();
+
+        string chars = " ";
+        if (context.size > 0)
+        {
+            chars = context.pop!string();
+        }
+
+        return context.push(new String(s.stripLeft(chars)));
+    });
+    stringCommands["strip.right"] = new Command((string path, Context context)
+    {
+        string s = context.pop!string();
+
+        string chars = " ";
+        if (context.size > 0)
+        {
+            chars = context.pop!string();
+        }
+
+        return context.push(new String(s.stripRight(chars)));
     });
     stringCommands["find"] = new Command((string path, Context context)
     {
