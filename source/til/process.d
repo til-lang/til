@@ -247,24 +247,15 @@ class Process
     // Debugging information about itself:
     override string toString()
     {
-        string s = "Process[" ~ to!string(this.index) ~ "]";
-        /*
-        s ~= "(" ~ program.name ~ "):\n";
+        string s = (
+            "Process["
+            ~ to!string(this.index)
+            ~ ":" ~ this.description
+            ~ "]\n"
+        );
+        s ~= to!string(variables.byKey) ~ "\n";
+        s ~= to!string(commands.byKey) ~ "\n";
 
-        s ~= "STACK:" ~ stackAsString ~ " SP:" ~ to!string(stackPointer) ~ "\n";
-        */
-        foreach(name, value; variables)
-        {
-            // s ~= " " ~ name ~ "=<" ~ to!string(value) ~">\n";
-            s ~= " " ~ name ~ "\n";
-        }
-
-        s ~= ".COMMANDS:\n";
-        foreach(name; commands.byKey)
-        {
-            s ~= " " ~ name ~ " ";
-        }
-        s ~= "\n";
         return s;
     }
 
