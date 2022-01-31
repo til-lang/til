@@ -1,6 +1,9 @@
 print "START"
 
-set b [bytes 1 2 3]
+set b [byte_vector 1 2 3]
 assert ([length $b] == 3)
+assert (<$b 0> == 1)
+assert (<$b 1 2> == 2)
+assert (<$b end> == 3)
 
 print "END"

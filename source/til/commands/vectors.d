@@ -1,31 +1,39 @@
 module til.commands.vectors;
 
-import til.nodes;
 import til.commands;
+import til.nodes;
 
-debug
+
+static this ()
 {
-    import std.stdio;
-}
-
-
-static this()
-{
-    commands["bytes"] = new Command((string path, Context context)
+    void addCommands(T, C)()
     {
-        auto vector = new BytesVector();
+        auto typeName = T.stringof ~ "_vector";
 
-        foreach (item; context.items)
+        commands[typeName] = new Command((string path, Context context)
         {
-            auto i = item.toInt();
-            vector.values ~= cast(byte)i;
-        }
+            auto vector = new C();
 
-        return context.push(vector);
-    });
-    bytesVectorCommands["length"] = new Command((string path, Context context)
-    {
-        auto vector = context.pop!BytesVector();
-        return context.push(vector.values.length);
-    });
+            foreach (item; context.items)
+            {
+                static if (__traits(isFloating, T))
+                {
+                    auto x = item.toFloat();
+                }
+                else
+                {
+                    auto x = item.toInt();
+                }
+                vector.values ~= cast(T)x;
+            }
+
+            return context.push(vector);
+        });
+    }
+
+    addCommands!(byte, ByteVector);
+    addCommands!(float, FloatVector);
+    addCommands!(int, IntVector);
+    addCommands!(long, LongVector);
+    addCommands!(double, DoubleVector);
 }

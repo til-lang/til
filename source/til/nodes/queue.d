@@ -4,13 +4,9 @@ import std.range : front, popFront;
 
 import til.nodes;
 
-debug
-{
-    import std.stdio;
-}
-
 
 CommandsMap queueCommands;
+
 
 class Queue : ListItem
 {
@@ -119,12 +115,10 @@ class WaitingQueue : Queue
     {
         while (isEmpty)
         {
-            debug {stderr.writeln("WaitingQueue isEmpty: yield");}
             context.yield();
         }
 
         auto item = pop();
-        debug {stderr.writeln("WaitingQueue.popped:", item);}
         context.push(item);
         context.exitCode = ExitCode.Continue;
         return context;
