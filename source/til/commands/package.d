@@ -209,6 +209,22 @@ static this()
 
         return context;
     });
+    commands["to.bool"] = new Command((string path, Context context)
+    {
+        auto target = context.pop();
+        return context.push(target.toBool());
+    });
+    commands["to.int"] = new Command((string path, Context context)
+    {
+        auto target = context.pop();
+        return context.push(target.toInt());
+    });
+    commands["to.float"] = new Command((string path, Context context)
+    {
+        auto target = context.pop();
+        return context.push(target.toFloat());
+    });
+
 
     // ---------------------------------------------
     // Flow control

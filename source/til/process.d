@@ -199,7 +199,7 @@ class Process
     {
         void push(T x)
         {
-            return push(new NameAtom(x));
+            return push(new String(x));
         }
     }
 

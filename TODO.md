@@ -2,6 +2,9 @@
 
 ## Questions
 
+* Is it possible for an external module to add commands to native types?
+    * Use case: string handling and vectors.
+
 * Should commands return SimpleList or sequence?
     * Answer: SimpleList, because it has extractions and methods.
 * Why are commands (D) delegates???
@@ -25,7 +28,6 @@
 
 ## Low hanging fruits
 
-* Command to convert from int to float and vice-versa.
 * collect: `set content [exec cat $file_path | collect]` - ?
 
 ## A little more complex ones
@@ -50,17 +52,6 @@ test "conversion to float" {
 
 * Step-by-step debugging.
 * Profiling!
-
-### "script" support
-
-* "script" scope, maybe?
-    * Let's make it **real** easy to create "subcommands"
-    * `myproject.til users add`
-* Support for common flags
-    * `-h / --help`
-    * `--version`
-    * `--usage`
-        * Getting command line flags/options should be trivial
 
 ## Very important for 1.0
 

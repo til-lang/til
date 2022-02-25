@@ -24,4 +24,9 @@ test_tofloat "1.234" 1.234
 test_tofloat "0.001" 0.001
 test_tofloat ".01" 0.01
 
+print [to.int 1.0]
+assert ([to.string [to.int 1.1]] == "1")
+print [to.float 2]
+assert ([to.string [to.float 2]] == "2.0")
+
 print "END"

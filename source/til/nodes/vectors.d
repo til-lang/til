@@ -64,18 +64,19 @@ class Vector(T) : Item
             }
 
             context.exitCode = ExitCode.CommandSuccess;
-            foreach (x; item.values[start..end].retro)
+            Items items;
+            foreach (x; item.values[start..end])
             {
                 static if (__traits(isFloating, T))
                 {
-                    context.push(new FloatAtom(x));
+                    items ~= new FloatAtom(x);
                 }
                 else
                 {
-                    context.push(new IntegerAtom(x));
+                    items ~= new IntegerAtom(x);
                 }
             }
-            return context;
+            return context.push(new SimpleList(items));
         });
     }
     override string toString()

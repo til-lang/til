@@ -1,9 +1,12 @@
 print "START"
 
-set b [byte_vector 1 2 3]
-assert ([length $b] == 3)
-assert (<$b 0> == 1)
-assert (<$b 1 2> == 2)
-assert (<$b end> == 3)
+set b [byte_vector 1 2 3 4 5]
+assert ([length $b] == 5)
+print <$b 0>
+assert (<$b 0> == (1))
+print <$b 1 3>
+assert ([to.string <$b 1 3>] == [to.string (2 3)])
+print <$b end>
+assert (<$b end> == (5))
 
 print "END"
