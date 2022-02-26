@@ -66,7 +66,7 @@ mainLoop:
             break;
         }
 
-        if (command.length > 0)
+        if (command.length > 1)
         {
             add_history(command.toStringz());
         }
@@ -86,7 +86,7 @@ mainLoop:
         {
             if (fiber.context.exitCode != ExitCode.Proceed)
             {
-                stdout.writeln("Process ", fiber.process.index, ":");
+                stdout.writeln(fiber.process.fullDescription, ":");
                 stderr.writeln(" exitCode ", fiber.context.exitCode);
                 output = stderr;
             }

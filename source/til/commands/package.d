@@ -453,6 +453,20 @@ forLoop:
 
     // ---------------------------------------------
     // Procedures-related
+    nameCommands["alias"] = new Command((string path, Context context)
+    {
+        string origin = context.pop!string();
+        string target = context.pop!string();
+
+        auto command = context.escopo.getCommand(origin);
+        if (command is null)
+        {
+            auto msg = "Command `" ~ origin ~ "` not found";
+            return context.error(msg, ErrorCode.CommandNotFound, "");
+        }
+        commands[target] = command;
+        return context;
+    });
     nameCommands["proc"] = new Command((string path, Context context)
     {
         // proc name (parameters) {body}

@@ -224,13 +224,40 @@ class Process
     override string toString()
     {
         return (
-            "Process["
+            "Process "
             ~ to!string(this.index)
             ~ ":" ~ this.description
-            ~ "]\n"
+            ~ "\n"
             ~ "vars:" ~ to!string(variables.byKey) ~ "\n"
             ~ "cmds:" ~ to!string(commands.byKey) ~ "\n"
         );
+    }
+    string fullDescription()
+    {
+        string[] descriptions;
+        
+        auto pivot = this;
+        while (pivot !is null)
+        {
+            if (pivot.description)
+            {
+                descriptions ~= pivot.description
+                    ~ "(" ~ to!string(pivot.index) ~ ")";
+            }
+            else
+            {
+                descriptions ~= to!string(pivot.index);
+            }
+            pivot = pivot.parent;
+        }
+
+        string fullDesc;
+        foreach (desc; descriptions.retro)
+        {
+            fullDesc ~= "/" ~ desc;
+        }
+
+        return fullDesc;
     }
 
     // Commands and procedures

@@ -30,10 +30,9 @@ class Procedure : Command
         {
             if (context.size == 0)
             {
-                throw new InvalidException(
-                    "Not enough arguments passed to command"
-                    ~ " `" ~ name ~ "`."
-                );
+                auto msg = "Not enough arguments passed to command"
+                    ~ " `" ~ name ~ "`.";
+                return context.error(msg, ErrorCode.InvalidSyntax, "");
             }
             string parameterName = to!string(parameter);
             auto argument = context.pop();
