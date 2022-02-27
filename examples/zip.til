@@ -1,7 +1,7 @@
 print "START"
 
 zip [range 0 10] [range 1 11] [range 2 12] | foreach x {
-    set (a b c) [list $x]
+    list $x | as (a b c)
     print "$a $b $c"
     assert ($b == [math ($a + 1)])
     assert ($c == [math ($b + 1)])

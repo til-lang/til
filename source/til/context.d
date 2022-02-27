@@ -10,7 +10,7 @@ struct Context
     Process escopo;
     Command command;
     ExitCode exitCode = ExitCode.Proceed;
-    bool hasInput = false;
+    uint inputSize = 0;
 
     /*
     Commands CAN pop beyond local zero, so

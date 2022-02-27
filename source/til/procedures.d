@@ -5,6 +5,11 @@ import std.conv : to;
 import til.exceptions;
 import til.nodes;
 
+debug
+{
+    import std.stdio;
+}
+
 
 class Procedure : Command
 {
@@ -39,18 +44,35 @@ class Procedure : Command
             newScope[parameterName] = argument;
         }
 
+        debug {
+            stderr.writeln("stack 0:", context.escopo.stackAsString());
+        }
+
         // newScope *shares* the Stack:
         newScope.stack = context.escopo.stack[];
         newScope.stackPointer = context.escopo.stackPointer;
         auto newContext = context.next(newScope, context.size);
 
         // RUN!
-        newContext = newContext.escopo.run(body.subprogram, newContext);
+        newContext = newScope.run(body.subprogram, newContext);
 
-        if (newContext.exitCode == ExitCode.Proceed)
+        // THIS is weird:
+        context.escopo.stack = newScope.stack[];
+        // I mean, shouldn't newScope.stack be a reference
+        // to context.escopo.stack, already???
+
+        context.escopo.stackPointer = newScope.stackPointer;
+        context.size = newContext.size;
+
+        if (newContext.exitCode == ExitCode.Failure)
         {
-            newContext.exitCode = ExitCode.CommandSuccess;
+            context.exitCode = newContext.exitCode;
         }
-        return newContext;
+        else
+        {
+            context.exitCode = ExitCode.CommandSuccess;
+        }
+
+        return context;
     }
 }

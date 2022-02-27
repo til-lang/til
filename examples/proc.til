@@ -1,6 +1,6 @@
 proc f (x y z) {
     print "x is $x"
-    set x [g $x]
+    g $x | as x
     print "g(x) becomes $x"
     print "y is $y"
     print "z is $z"
@@ -8,6 +8,7 @@ proc f (x y z) {
 }
 
 proc g (a) {
+    print "g $a"
     return ">$a<"
 }
 

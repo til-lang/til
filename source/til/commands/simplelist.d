@@ -24,9 +24,9 @@ static this()
     {
         string[] names;
 
-        if (context.size != 2)
+        if (context.size < 2)
         {
-            auto msg = "`list.set` must receive two arguments.";
+            auto msg = "`" ~ path ~ "` must receive at least 2 arguments";
             return context.error(msg, ErrorCode.InvalidArgument, "");
         }
 
@@ -35,7 +35,7 @@ static this()
 
         if (l2.type != ObjectType.SimpleList)
         {
-            auto msg = "You can only use `list.set` with two SimpleLists";
+            auto msg = "You can only use `" ~ path ~ "` with two SimpleLists";
             return context.error(msg, ErrorCode.InvalidArgument, "");
         }
 
@@ -70,6 +70,8 @@ static this()
         context.exitCode = ExitCode.CommandSuccess;
         return context;
     });
+    simpleListCommands["as"] = simpleListCommands["set"];
+
     simpleListCommands["range"] = new Command((string path, Context context)
     {
         /*

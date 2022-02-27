@@ -1,7 +1,7 @@
 print "START"
 
 print "queue 1"
-set q [queue]
+queue | as q
 push $q alfa
 push $q beta
 push $q gama
@@ -12,7 +12,7 @@ range 0 2 | foreach i {
 assert ([length $q] == 0)
 
 print "queue 2"
-set q [queue 2]
+queue 2 | as q
 
 proc on.error (e) {
     print "Error handled: " <$e message>

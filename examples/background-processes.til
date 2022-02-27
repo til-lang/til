@@ -1,6 +1,6 @@
 print "START"
 
-set q [queue]
+queue | as q
 
 proc p (q) {
     push $q "x"

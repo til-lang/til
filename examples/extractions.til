@@ -24,7 +24,7 @@ type dicio {
     }
 }
 
-set d [dicio]
+dicio | as d
 print <$d x>
 assert (<$d y> == "none")
 

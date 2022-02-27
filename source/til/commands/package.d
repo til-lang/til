@@ -126,10 +126,15 @@ static this()
         string[] command;
         ListItem inputStream;
 
-        if (context.hasInput)
+        if (context.inputSize == 1)
         {
             command = context.pop(context.size - 1).map!(x => to!string(x)).array;
             inputStream = context.pop();
+        }
+        else if (context.inputSize > 1)
+        {
+            auto msg = path ~ ": cannot handle multiple inputs";
+            return context.error(msg, ErrorCode.InvalidInput, "");
         }
         else
         {
@@ -594,10 +599,15 @@ forLoop:
         auto commandName = context.pop!string();
         Items arguments = context.items;
         ListItem input = null;
-        if (context.hasInput)
+        if (context.inputSize == 1)
         {
             input = arguments[$-1];
             arguments.popBack();
+        }
+        else if (context.inputSize == 1)
+        {
+            auto msg = path ~ ": cannot handle multiple inputs";
+            return context.error(msg, ErrorCode.InvalidInput, "");
         }
 
         auto command = new CommandCall(commandName, arguments);
@@ -777,7 +787,7 @@ forLoop:
     {
         if (context.size < 2)
         {
-            auto msg = "`name.set` must receive at least two arguments.";
+            auto msg = "`" ~ path ~ "` must receive at least two arguments.";
             return context.error(msg, ErrorCode.InvalidArgument, "");
         }
 
@@ -786,6 +796,25 @@ forLoop:
 
         return context;
     });
+    commands["as"] = new Command((string path, Context context)
+    {
+        if (context.inputSize == 0)
+        {
+            auto msg = "`" ~ path ~ "` must receive its values as input";
+            return context.error(msg, ErrorCode.InvalidArgument, "");
+        }
+        if (context.size < 1)
+        {
+            auto msg = "`" ~ path ~ "` must receive at least one argument.";
+            return context.error(msg, ErrorCode.InvalidArgument, "");
+        }
+
+        auto key = context.pop!string();
+        context.escopo[key] = context.items;
+
+        return context;
+    });
+
     nameCommands["unset"] = new Command((string path, Context context)
     {
         auto firstArgument = context.pop();

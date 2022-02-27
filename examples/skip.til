@@ -1,6 +1,6 @@
 print "START"
 
-set results [list]
+list | as results
 range 10 | transform x {
     if (($x % 2) == 0) {
         skip

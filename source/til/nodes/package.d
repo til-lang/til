@@ -66,7 +66,6 @@ enum ObjectType
     String,
     Name,
     Atom,
-    Operator,
     Float,
     Integer,
     Boolean,

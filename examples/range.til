@@ -2,11 +2,11 @@ print "START"
 
 proc test_range (args expected_result) {
     print "args: $args"
-    print "expected_result: $expected_result"
     set s ""
     range [expand $args] | foreach x {
         set s "$s $x"
     }
+    print "s/expected_result: $s/$expected_result"
     assert ($s == $expected_result)
     print "---"
 }
@@ -15,7 +15,7 @@ test_range (10 23 3) " 10 13 16 19 22"
 test_range (3 5) " 3 4 5"
 test_range (5 15 4) " 5 9 13"
 
-set r [range 3]
+range 3 | as r
 set s ""
 push $r | foreach x {
     set s "$s $x"
@@ -36,7 +36,7 @@ range $lista | foreach x {
 }
 print "---"
 range.enumerate $lista | foreach x {
-    set (index item) [list $x]
+    list $x | as (index item)
     print "<\$lista $index> : $item"
 }
 

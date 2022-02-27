@@ -24,7 +24,7 @@ type context_manager {
     }
 }
 
-set global_cm [context_manager]
+context_manager | as global_cm
 scope "context_manager test" {
     with cm $global_cm
 

@@ -1,8 +1,9 @@
 print "START"
 
-set q [queue]
+queue | as q
 
 print "Test 1"
+range 2 | foreach x { print "x:$x" }
 range 1 | send $q
 print [pop $q] " should be 0"
 print [pop $q] " should be 1"

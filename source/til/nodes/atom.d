@@ -319,22 +319,3 @@ class BooleanAtom : Atom
         return context;
     }
 }
-
-class OperatorAtom : Atom
-{
-    // +
-
-    string value;
-    this(string s)
-    {
-        value = s;
-        this.type = ObjectType.Operator;
-        this.typeName = "operator";
-    }
-
-    // Utilities and operators:
-    override string toString()
-    {
-        return this.value;
-    }
-}

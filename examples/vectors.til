@@ -1,6 +1,6 @@
 print "START"
 
-set b [byte_vector 1 2 3 4 5]
+byte_vector 1 2 3 4 5 | as b
 assert ([length $b] == 5)
 print <$b 0>
 assert (<$b 0> == (1))

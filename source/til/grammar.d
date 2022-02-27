@@ -21,14 +21,7 @@ const EOL = '\n';
 const SPACE = ' ';
 const TAB = '\t';
 const PIPE = '|';
-
-const OPERATORS = [
-    '+', '-', '*', '/', '%',
-    '!', '=',
-    '&', '|',
-    '<', '>',
-    '@', '^', '~'
-];
+const STOPPERS = [')', '>', ']', '}'];
 
 // Integers units:
 uint[char] units;
@@ -389,7 +382,7 @@ class Parser
         // with the start of an Extraction.
         if (currentChar == SPACE)
         {
-            return new OperatorAtom("<");
+            return new String("<");
         }
 
         do
@@ -528,15 +521,13 @@ class Parser
         }
     }
 
-    Atom consumeAtom()
+    Item consumeAtom()
     {
         push("atom");
         char[] token;
 
         bool isNumber = true;
-        bool mustBeNumber = false;
         bool isSubst = false;
-        bool isOperator = false;
         uint dotCounter = 0;
 
         // `$x`
@@ -547,69 +538,45 @@ class Parser
             // Do NOT add `$` to the SubstAtom.
             consumeChar();
         }
-        else
+        else if (currentChar == '-')
         {
-            // `>=`
-            while (!eof && OPERATORS.canFind(currentChar))
-            {
-                token ~= consumeChar();
-            }
-
-            if (token.length)
-            {
-                auto s = to!string(token);
-                // `+`
-                if (s != "-")
-                {
-                    if (!eof && !isWhitespace)
-                    {
-                        // *name = invalid!
-                        throw new Exception(
-                            "Invalid atom format: "
-                            ~ s
-                        );
-                    }
-                    return new OperatorAtom(s);
-                }
-                // `- `, like in `($a - $b)`
-                else if (eof || isWhitespace)
-                {
-                    return new OperatorAtom(s);
-                }
-                // `-10`
-                else
-                {
-                    mustBeNumber = true;
-                }
-            }
+            token ~= consumeChar();
         }
 
         // The rest:
-        while (!eof)
+        while (!eof && !isWhitespace)
         {
-            if (currentChar >= 'a' && currentChar <= 'z' || currentChar == '_')
-            {
-                if (mustBeNumber)
-                {
-                    auto s = to!string(token);
-                    throw new Exception(
-                        "Invalid atom format: "
-                        ~ s
-                    );
-                }
-                isNumber = false;
-                isOperator = false;
-            }
-            else if (currentChar >= '0' && currentChar <= '9')
+            if (currentChar >= '0' && currentChar <= '9')
             {
             }
             else if (currentChar == '.')
             {
                 dotCounter++;
             }
-            else
+            else if (currentChar >= 'A' && currentChar <= 'Z')
+            {
+                uint* p = (currentChar in units);
+                if (p is null)
+                {
+                    throw new Exception(
+                        "Invalid character in name: "
+                        ~ cast(string)token
+                        ~ to!string(currentChar)
+                    );
+                }
+                else
+                {
+                    // Do not consume the unit.
+                    break;
+                }
+            }
+            else if (token.length && STOPPERS.canFind(currentChar))
             {
                 break;
+            }
+            else
+            {
+                isNumber = false;
             }
             token ~= consumeChar();
         }
@@ -622,39 +589,34 @@ class Parser
 
         if (isNumber)
         {
-            if (dotCounter == 0)
+            if (s == "-")
             {
-                // `-`
-                if (isOperator && s.length == 1)
+                return new String(s);
+            }
+            else if (dotCounter == 0)
+            {
+                uint multiplier = 1;
+                uint* p = (currentChar in units);
+                if (p !is null)
                 {
-                    debug {stderr.writeln("new OperatorAtom: ", s);}
-                    return new OperatorAtom(s);
-                }
-                else
-                {
-                    uint multiplier = 1;
-                    uint* p = (currentChar in units);
-                    if (p !is null)
+                    consumeChar();
+                    if (currentChar == 'i')
                     {
                         consumeChar();
-                        if (currentChar == 'i')
-                        {
-                            consumeChar();
-                            multiplier = pow(1024, *p);
-                        }
-                        else
-                        {
-                            multiplier = pow(1000, *p);
-                        }
+                        multiplier = pow(1024, *p);
                     }
-
-                    debug {
-                        stderr.writeln(
-                            "new IntegerAtom: <", s, "> * ", multiplier
-                        );
+                    else
+                    {
+                        multiplier = pow(1000, *p);
                     }
-                    return new IntegerAtom(to!long(s) * multiplier);
                 }
+
+                debug {
+                    stderr.writeln(
+                        "new IntegerAtom: <", s, "> * ", multiplier
+                    );
+                }
+                return new IntegerAtom(to!long(s) * multiplier);
             }
             else if (dotCounter == 1)
             {
@@ -673,11 +635,6 @@ class Parser
         {
             debug {stderr.writeln("new SubstAtom: ", s);}
             return new SubstAtom(s);
-        }
-        else if (isOperator)
-        {
-            debug {stderr.writeln("new OperatorAtom: ", s);}
-            return new OperatorAtom(s);
         }
 
         // Handle hexadecimal format, like 0xabcdef

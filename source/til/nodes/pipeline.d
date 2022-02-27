@@ -32,10 +32,10 @@ class Pipeline
     {
         debug {stderr.writeln("Running Pipeline ", this);}
 
-        bool hasInput = false;
+        uint inputSize = 0;
         foreach(index, command; commandCalls)
         {
-            context = command.run(context, hasInput);
+            context = command.run(context, inputSize);
 
             final switch(context.exitCode)
             {
@@ -72,7 +72,7 @@ class Pipeline
                 case ExitCode.CommandSuccess:
                     if (context.size > 0)
                     {
-                        hasInput = true;
+                        inputSize = context.size;
                     }
                     break;
             }

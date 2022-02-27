@@ -3,13 +3,13 @@ print "START"
 set s "2023-12-25T12:34:56"
 set exp "[0-9]+"
 print "s:$s; exp:$exp"
-set m [matches $exp $s]
+matches $exp $s | as m
 assert ([length $m] == 6)
 range $m | foreach x {
     print "match:$x"
 }
 
-set m [match $exp $s]
+match $exp $s | as m
 print "match: $m"
 
 print "END"

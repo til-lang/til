@@ -18,12 +18,12 @@ type coordinates {
         print "coordinates.to.string"
         set $dict to_string_call_count [math (<$dict to_string_call_count> + 1)]
 
-        set s [dict.to.string $dict]
+        dict.to.string $dict | as s
         return "coordinates: $s"
     }
 }
 
-set c1 [coordinates 1 2]
+coordinates 1 2 | as c1
 print " coordinates instantiated successfully"
 print $c1
 set $c1 x 12
@@ -35,7 +35,7 @@ print "to.string test: $c1"
 assert (<$c1 to_string_call_count> == 3)
 
 print "INDEPENDENCE TEST:"
-set c2 [coordinates 3 4]
+coordinates 3 4 | as c2
 print $c2
 print "c2 to_string_call_count: " <$c2 to_string_call_count>
 assert (<$c2 to_string_call_count> == 1)
@@ -59,7 +59,7 @@ type position {
     }
 }
 
-set p1 [position 34 56]
+position 34 56 | as p1
 
 mark $p1 123
 print "c1 teste: " <$c1 teste>

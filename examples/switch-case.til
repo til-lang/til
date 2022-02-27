@@ -2,11 +2,15 @@ print "START"
 
 set offset 10
 
+proc on.error (e) {
+    print "ERROR: $e"
+}
+
 range 0 5 | transform x {
         return [math ($x + $offset)] $x
     } | foreach x {
         print "x:" [list $x]
-        set (a b) [list $x]
+        list $x | as (a b)
 
         if ($a == 10) {
             print "$b + $offset is ten"

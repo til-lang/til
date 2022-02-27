@@ -77,7 +77,7 @@ class CommandCall
         return cmd;
     }
 
-    Context run(Context context, bool hasInput=false)
+    Context run(Context context, uint inputSize=0)
     {
         // evaluate arguments and set proper context.size:
         auto executionContext = this.evaluateArguments(context);
@@ -86,11 +86,11 @@ class CommandCall
             return executionContext;
         }
 
-        if (hasInput)
+        if (inputSize)
         {
             // `input`, when present, is always the last argument:
-            executionContext.size++;
-            executionContext.hasInput = true;
+            executionContext.size += inputSize;
+            executionContext.inputSize = inputSize;
         }
 
         // The target is always the first argument:

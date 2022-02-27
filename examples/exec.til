@@ -14,7 +14,7 @@ proc ls (path) {
     }
 
     print "path: $path"
-    set p [exec ls $path]
+    exec ls $path | as p
     push $p | foreach line {
         print "ls> $line"
     }
