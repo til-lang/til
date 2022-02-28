@@ -282,26 +282,12 @@ class Process
 
         // If the command is present in an external module:
         bool success = {
-            // std.io.out → std.io
-            string modulePath = to!string(name.split(".")[0..$-1].join("."));
-
-            // std.math
-            // = std.math
-            // exec
-            // = exec
+            // exec -> exec
             if (this.importModule(name, name)) return true;
 
-            // std.io.out
-            // = std.io
+            // http.get -> http
+            string modulePath = to!string(name.split(".")[0..$-1].join("."));
             if (this.importModule(modulePath)) return true;
-
-            // io.out
-            // = std.io as io
-            if (this.importModule("std." ~ modulePath, modulePath)) return true;
-
-            // math
-            // = std.math as math
-            if (this.importModule("std." ~ name, name)) return true;
 
             return false;
         }();
@@ -314,6 +300,7 @@ class Process
             if (c !is null)
             {
                 commands[name] = *c;
+                cmd = *c;
             }
         }
 

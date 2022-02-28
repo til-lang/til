@@ -127,6 +127,7 @@ void importNamesFrom(
         {
             cmdPath = prefix ~ "." ~ name;
         }
+        debug {stderr.writeln("cmdPath:", cmdPath);}
         escopo.commands[cmdPath] = command;
     }
 }
