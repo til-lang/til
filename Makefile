@@ -48,7 +48,7 @@ clean:
 3rd-parties/editline:
 	git clone --single-branch --branch v0.0.1 https://github.com/theoremoon/editline-d.git 3rd-parties/editline
 
-dist/libeditline.so:
+dist/libeditline.so: 3rd-parties/editline
 	ldc2 --shared 3rd-parties/editline/source/editline/package.d \
 		-I=3rd-parties/editline/source \
 		-L-ledit \
