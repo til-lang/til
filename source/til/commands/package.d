@@ -347,10 +347,10 @@ forLoop:
             }
             else if (context.exitCode == ExitCode.ReturnSuccess)
             {
-                // Return should always return
-                // until a procedure or
-                // a program is
-                // stopped:
+                /*
+                ReturnSuccess propagates up into the
+                processes stack:
+                */
                 return context;
             }
 

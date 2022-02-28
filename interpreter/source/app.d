@@ -11,7 +11,7 @@ import til.grammar;
 import til.nodes;
 import til.scheduler;
 
-import til.interpreter.repl;
+import til.repl;
 
 
 class InterpreterInput : Item
@@ -84,6 +84,9 @@ int main(string[] args)
         auto sw = StopWatch(AutoStart.no);
         sw.start();
     }
+
+    // Potential small speed-up:
+    commands.rehash;
 
     if (args.length == 1)
     {

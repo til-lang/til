@@ -5,11 +5,6 @@ import std.conv : to;
 import til.exceptions;
 import til.nodes;
 
-debug
-{
-    import std.stdio;
-}
-
 
 class Procedure : Command
 {
@@ -42,10 +37,6 @@ class Procedure : Command
             string parameterName = to!string(parameter);
             auto argument = context.pop();
             newScope[parameterName] = argument;
-        }
-
-        debug {
-            stderr.writeln("stack 0:", context.escopo.stackAsString());
         }
 
         // newScope *shares* the Stack:
