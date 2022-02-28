@@ -1,36 +1,40 @@
 dist/libtil.so: dist/libeditline.so
-	ldc2 --shared source/til/*.d source/til/commands/*.d source/til/nodes/*.d \
+	ldc2 --shared \
+		source/til/*.d source/til/commands/*.d source/til/nodes/*.d \
 		-I=source -I=3rd-parties/editline/source \
 		-link-defaultlib-shared \
-		-L-L${PWD}/dist -L-leditline -L-ledit \
+		-L-L${PWD}/dist -L-leditline \
 		--O2 -of=dist/libtil.so
 
 lib-debug:
-	ldc2 --d-debug --shared source/til/*.d source/til/commands/*.d source/til/nodes/*.d \
-		-I=source -I=3rd-parties/editline/source \
+	ldc2 --d-debug --shared \
+		source/til/*.d source/til/commands/*.d source/til/nodes/*.d \
 		-link-defaultlib-shared \
-		-L-L${PWD}/dist -L-leditline -L-ledit \
+		-L-L${PWD}/dist \
 		-of=dist/libtil.so
 
 til.release: dist/libtil.so
-	ldc2 interpreter/source/app.d \
+	ldc2 \
+		cli/source/*.d \
 		-L-L${PWD}/dist -L-ltil -L-ledit \
 		-I=source -I=3rd-parties/editline/source \
 		-link-defaultlib-shared \
 		--O2 -of=til.release
 
 til.debug: dist/libtil.so
-	ldc2 --d-debug interpreter/source/app.d \
+	ldc2 --d-debug \
+		cli/source/*.d \
 		-L-L${PWD}/dist -L-ltil -L-ledit \
 		-I=source -I=3rd-parties/editline/source \
 		-link-defaultlib-shared \
 		-of=til.debug
 
 libtil_hellomodule.so: modules/hello/hellomodule.d
-	ldc2 --shared modules/hello/hellomodule.d \
-		-I=source -I=3rd-parties/editline/source \
+	ldc2 --shared \
+		modules/hello/hellomodule.d \
+		-I=source \
 		-link-defaultlib-shared \
-		-L-L${PWD}/dist -L-ltil -L-ledit \
+		-L-L${PWD}/dist -L-ltil \
 		--O2 -of=libtil_hellomodule.so
 
 test: libtil_hellomodule.so til.release

@@ -11,7 +11,7 @@ import til.grammar;
 import til.nodes;
 import til.scheduler;
 
-import til.repl;
+import cli.repl;
 
 
 class InterpreterInput : Item

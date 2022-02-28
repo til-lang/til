@@ -1,4 +1,4 @@
-module til.repl;
+module cli.repl;
 
 import std.stdio;
 import std.string : fromStringz, toStringz;

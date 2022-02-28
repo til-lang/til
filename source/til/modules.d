@@ -23,7 +23,7 @@ static this()
     string home = environment["HOME"];
     string til_path = environment.get(
         "TIL_PATH",
-        home ~ "/.dub/packages"
+        home ~ "/.til/packages"
     );
     foreach(p; til_path.split(":"))
     {
