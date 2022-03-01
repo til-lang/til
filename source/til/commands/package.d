@@ -12,7 +12,6 @@ import til.grammar;
 
 import til.conv;
 import til.exceptions;
-import til.exec;
 import til.math;
 import til.modules;
 import til.nodes;
@@ -113,41 +112,6 @@ static this()
         if (context.exitCode == ExitCode.Proceed)
         {
             context.exitCode = ExitCode.CommandSuccess;
-        }
-        return context;
-    });
-
-    // ---------------------------------------------
-    // System commands
-    commands["exec"] = new Command((string path, Context context)
-    {
-        import std.process : ProcessException;
-
-        string[] command;
-        ListItem inputStream;
-
-        if (context.inputSize == 1)
-        {
-            command = context.pop(context.size - 1).map!(x => to!string(x)).array;
-            inputStream = context.pop();
-        }
-        else if (context.inputSize > 1)
-        {
-            auto msg = path ~ ": cannot handle multiple inputs";
-            return context.error(msg, ErrorCode.InvalidInput, "");
-        }
-        else
-        {
-            command = context.items.map!(x => to!string(x)).array;
-        }
-
-        try
-        {
-            context.push(new SystemProcess(command, inputStream));
-        }
-        catch (ProcessException ex)
-        {
-            return context.error(ex.msg, ErrorCode.Unknown, "");
         }
         return context;
     });
