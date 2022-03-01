@@ -21,14 +21,20 @@ set x [math (1 + 2 + 3 + 4)]
 print $x
 # 10
 
-# Contrary to Tcl, "{}" enclosed things are
-# NOT strings, but simply a "SubProgram".
-# They are parsed as any other part
-# of the language, just not
-# immediately run.
+# And offer some ways to avoid nesting braces:
+math (1 + 2) | as y
+print $y
+# 3
+
+# Different from Tcl, "{}" enclosed things are NOT strings,
+# but simply "SubPrograms".
+# They are parsed as any other part of the language,
+# just not immediately run.
 if ($x > 7) {
     print "Great! $x is greater than 7."
 }
+
+# (Oh, and comments are **real** comments.)
 
 # Til implements the concept of "streams", almost
 # like stdin/stdout in shell script.
@@ -41,7 +47,7 @@ range 1 5 | foreach x { print $x }
 
 # You can "transform" values from the stream before consuming them:
 range 1 5 | transform value {
-    return [math ($value * 2)] 
+        return [math ($value * 2)] 
     } | foreach x {
         print $x
     }
@@ -54,7 +60,7 @@ range 1 5 | transform value {
 # We also have dictionaries!
 set d [dict (a 1) (b 2) (c 3)]
 
-# Values can be extracted using Til extraction syntax:
+# Values can be extracted using Til's **extraction** syntax:
 print <$d a>
 # 1
 
@@ -67,6 +73,12 @@ print <$lista 0>
 # by range:
 print <$lista 1 4>
 # b c d
+
+# And the extraction itself is implemented as a command:
+extract $lista 1 4 | foreach item { print $item }
+# b
+# c
+# d
 ```
 
 See more in the `examples/` directory.
