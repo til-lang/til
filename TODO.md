@@ -6,6 +6,7 @@
 
 ## A little more complex ones
 
+* `--version` CLI option.
 * Improve **string handling**!
 * Make the REPL a command.
     * `repl $prompt_string $handler_command`

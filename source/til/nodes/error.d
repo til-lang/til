@@ -10,25 +10,6 @@ debug
 }
 
 
-enum ErrorCode
-{
-    Unknown = 1,
-    InternalError,
-    CommandNotFound,
-    InvalidArgument,
-    InvalidSyntax,
-    InvalidInput,
-    NotImplemented,
-    SemanticError,
-    Empty,
-    Full,
-    Overflow,
-    Underflow,
-    Assertion,
-    RuntimeError,
-}
-
-
 class Erro : ListItem
 {
     int code = -1;
@@ -79,6 +60,8 @@ class Erro : ListItem
                 return context.push(process.index);
             case "message":
                 return context.push(message);
+            case "class":
+                return context.push(classe);
             case "object":
                 return context.push(object);
             default:

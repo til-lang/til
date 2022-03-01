@@ -48,6 +48,24 @@ enum ExitCode
     Skip,             // Skip this iteration and call `next` again
 }
 
+enum ErrorCode
+{
+    Unknown = 1,
+    InternalError,
+    CommandNotFound,
+    InvalidArgument,
+    InvalidSyntax,
+    InvalidInput,
+    NotImplemented,
+    SemanticError,
+    Empty,
+    Full,
+    Overflow,
+    Underflow,
+    Assertion,
+    RuntimeError,
+}
+
 enum ObjectType
 {
     Undefined,
