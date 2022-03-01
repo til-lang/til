@@ -9,6 +9,8 @@ debug
     import std.stdio;
 }
 
+CommandsMap errorCommands;
+
 
 class Erro : ListItem
 {
@@ -31,6 +33,7 @@ class Erro : ListItem
         this.classe = classe;
         this.type = ObjectType.Error;
         this.typeName = "error";
+        this.commands = errorCommands;
     }
 
     // Conversions:
@@ -43,30 +46,5 @@ class Erro : ListItem
             s ~= " (" ~ classe ~ ")";
         }
         return s;
-    }
-
-    // Extractions:
-    override Context extract(Context context)
-    {
-        if (context.size == 0) return context.push(this);
-        auto args = context.items!string;
-        auto arg = args.join(" ");
-
-        switch(arg)
-        {
-            case "code":
-                return context.push(code);
-            case "process id":
-                return context.push(process.index);
-            case "message":
-                return context.push(message);
-            case "class":
-                return context.push(classe);
-            case "object":
-                return context.push(object);
-            default:
-                auto msg = "Invalid argument to Error extraction";
-                return context.error(msg, ErrorCode.InvalidArgument, "");
-        }
     }
 }

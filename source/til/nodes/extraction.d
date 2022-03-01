@@ -30,7 +30,7 @@ class Extraction : BaseList
 
         try
         {
-            context = target.extract(context);
+            context = target.runCommand("extract", context);
         }
         catch (Exception ex)
         {

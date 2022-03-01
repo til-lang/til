@@ -98,11 +98,6 @@ class ListItem
         context = runCommand("next", context);
         return context;
     }
-    Context extract(Context context)
-    {
-        context = runCommand("extract", context);
-        return context;
-    }
 
     Command getCommand(string name)
     {

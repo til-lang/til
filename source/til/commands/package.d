@@ -33,6 +33,7 @@ static this()
         // Do nothing, the value is already on stack.
         return context;
     });
+
     commands["pop"] = new Command((string path, Context context)
     {
         if (context.escopo.stackPointer == 0)
@@ -40,9 +41,15 @@ static this()
             auto msg = "Stack is empty";
             return context.error(msg, ErrorCode.SemanticError, "");
         }
-        context.size++;
+
+        long quantity = 1;
+        if (context.size) {
+            quantity = context.pop!long();
+        }
+        context.size += quantity;
         return context;
     });
+
     commands["stack"] = new Command((string path, Context context)
     {
         context.size = cast(int)context.escopo.stackPointer;
@@ -731,19 +738,24 @@ forLoop:
     */
 
     // ---------------------------------------------
-    integerCommands["exit"] = new Command((string path, Context context)
+    commands["exit"] = new Command((string path, Context context)
     {
         string classe = "";
         string message = "Process was stopped";
 
-        IntegerAtom code = cast(IntegerAtom)context.pop();
+        long code = 0;
+        
+        if (context.size)
+        {
+            code = context.pop!long();
+        }
 
         if (context.size > 0)
         {
             message = context.pop!string();
         }
 
-        return context.error(message, cast(int)code.value, classe);
+        return context.error(message, cast(int)code, classe);
     });
 
     // Names:
