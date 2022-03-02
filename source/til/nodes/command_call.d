@@ -1,5 +1,7 @@
 module til.nodes.command_call;
 
+import std.array : join;
+
 import til.nodes;
 
 debug
@@ -21,8 +23,13 @@ class CommandCall
 
     override string toString()
     {
-        // return "cmd(" ~ this.name ~ to!string(this.arguments) ~ ")";
         return this.name;
+        /*
+        return this.name
+            ~ " "
+            ~ arguments.map!(x => x.toString())
+                .join(" ");
+        */
     }
 
     Context evaluateArguments(Context context)
@@ -110,6 +117,7 @@ class CommandCall
             );
         }
 
+        executionContext.escopo["args.count"] = new IntegerAtom(executionContext.size);
         return cmd.run(this.name, executionContext);
     }
 }

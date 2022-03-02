@@ -2,11 +2,6 @@ module til.nodes.listitem;
 
 import til.nodes;
 
-debug
-{
-    import std.stdio;
-}
-
 
 class NotImplementedError : Exception
 {

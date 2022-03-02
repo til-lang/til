@@ -5,10 +5,6 @@ import std.range : empty, front, popFront;
 
 import til.nodes;
 
-debug
-{
-    import std.stdio;
-}
 
 CommandsMap simpleListCommands;
 
@@ -37,7 +33,7 @@ class SimpleList : BaseList
     {
         return "(" ~ to!string(this.items
             .map!(x => to!string(x))
-            .joiner(" ")) ~ ")";
+            .join(" ")) ~ ")";
     }
 
     override Context evaluate(Context context, bool force)

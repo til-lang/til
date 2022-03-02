@@ -553,6 +553,12 @@ class Parser
             {
                 dotCounter++;
             }
+            else if (currentChar == '(')
+            {
+                // $(1 + 2 + 4)
+                SimpleList list = consumeSimpleList();
+                return ExecList.infixProgram(list);
+            }
             else if (currentChar >= 'A' && currentChar <= 'Z')
             {
                 uint* p = (currentChar in units);
@@ -591,7 +597,7 @@ class Parser
         {
             if (s == "-")
             {
-                return new String(s);
+                return new NameAtom(s);
             }
             else if (dotCounter == 0)
             {

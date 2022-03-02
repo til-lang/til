@@ -11,7 +11,7 @@ lib-debug:
 		source/til/*.d source/til/commands/*.d source/til/nodes/*.d \
 		-link-defaultlib-shared \
 		-L-L${PWD}/dist \
-		-of=dist/libtil.so
+		--O1 -of=dist/libtil.so
 
 til.release: dist/libtil.so
 	ldc2 \
@@ -21,13 +21,13 @@ til.release: dist/libtil.so
 		-link-defaultlib-shared \
 		--O2 -of=til.release
 
-til.debug: dist/libtil.so
+til.debug: lib-debug
 	ldc2 --d-debug \
 		cli/source/*.d \
 		-L-L${PWD}/dist -L-ltil -L-ledit \
 		-I=source -I=3rd-parties/editline/source \
 		-link-defaultlib-shared \
-		-of=til.debug
+		--O1 -of=til.debug
 
 libtil_hellomodule.so: modules/hello/hellomodule.d
 	ldc2 --shared \
@@ -41,9 +41,9 @@ test: libtil_hellomodule.so til.release
 	./run-examples.sh
 
 clean:
-	rm -f til.release
-	rm -f til.debug
-	rm -f dist/libtil.so
+	-rm -f til.release
+	-rm -f til.debug
+	-rm -f dist/libtil.*
 
 3rd-parties/editline:
 	git clone --single-branch --branch v0.0.1 https://github.com/theoremoon/editline-d.git 3rd-parties/editline

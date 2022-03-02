@@ -4,7 +4,6 @@ import til.nodes;
 
 class SubProgram
 {
-    string name = "<SubProgram>";
     Pipeline[] pipelines;
 
     this(Pipeline[] pipelines)
@@ -14,10 +13,22 @@ class SubProgram
 
     override string toString()
     {
-        string s = "SubProgram " ~ this.name ~ ":\n";
-        foreach(pipeline; pipelines)
+        string s = "";
+        if (pipelines.length < 2)
         {
-            s ~= to!string(pipeline) ~ "\n";
+            foreach(pipeline; pipelines)
+            {
+                s ~= pipeline.toString();
+            }
+        }
+        else
+        {
+            s ~= "{\n";
+            foreach(pipeline; pipelines)
+            {
+                s ~= pipeline.toString() ~ "\n";
+            }
+            s ~= "}";
         }
         return s;
     }

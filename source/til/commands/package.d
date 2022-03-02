@@ -1,12 +1,10 @@
 module til.commands;
 
-import std.algorithm.iteration : joiner, map;
-import std.algorithm.sorting : sort;
 import std.array;
 import std.conv : to, ConvException;
 import std.file : read;
 import std.stdio;
-import std.string : indexOf, toLower;
+import std.string : toLower;
 
 import til.grammar;
 

@@ -1,6 +1,11 @@
 module til.nodes;
 
-public import std.algorithm.iteration : map, joiner;
+debug
+{
+    public import std.stdio;
+}
+
+public import std.algorithm.iteration : map;
 public import std.range : back, popBack, retro;
 public import std.array : join;
 public import std.conv : to;

@@ -114,7 +114,7 @@ class SubstString : String
     {
         return to!string(this.parts
             .map!(x => to!string(x))
-            .joiner(""));
+            .join(""));
     }
 
     override Context evaluate(Context context)
@@ -142,7 +142,7 @@ class SubstString : String
                     auto newContext = v.runCommand("to.string", context.next(), true);
                     result ~= to!string(newContext.items
                         .map!(x => to!string(x))
-                        .joiner(" "));
+                        .join(" "));
                     }
             }
             else

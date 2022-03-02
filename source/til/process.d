@@ -8,10 +8,6 @@ import til.nodes;
 import til.procedures;
 import til.scheduler;
 
-debug
-{
-    import std.stdio;
-}
 
 enum ProcessState
 {

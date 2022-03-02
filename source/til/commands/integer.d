@@ -188,4 +188,42 @@ static this()
         context.exitCode = ExitCode.CommandSuccess;
         return context;
     });
+
+    // TODO: make it work between ints and floats:
+    integerCommands["+"] = new Command((string path, Context context)
+    {
+        long result = 0;
+        foreach (item; context.items)
+        {
+            result += item.toInt();
+        }
+        return context.push(result);
+    });
+    integerCommands["-"] = new Command((string path, Context context)
+    {
+        long result = context.pop!long();
+        foreach (item; context.items)
+        {
+            result -= item.toInt();
+        }
+        return context.push(result);
+    });
+    integerCommands["*"] = new Command((string path, Context context)
+    {
+        long result = 1;
+        foreach (item; context.items)
+        {
+            result *= item.toInt();
+        }
+        return context.push(result);
+    });
+    integerCommands["/"] = new Command((string path, Context context)
+    {
+        long result = context.pop!long();
+        foreach (item; context.items)
+        {
+            result /= item.toInt();
+        }
+        return context.push(result);
+    });
 }

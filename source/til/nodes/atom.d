@@ -4,10 +4,6 @@ import std.math.rounding : nearbyint;
 
 import til.nodes;
 
-debug
-{
-    import std.stdio;
-}
 
 CommandsMap integerCommands;
 CommandsMap floatCommands;
@@ -147,7 +143,7 @@ class FloatAtom : Atom
     }
     override string toString()
     {
-        return to!string(this.value);
+        return to!string(value);
     }
 
     // Operators:

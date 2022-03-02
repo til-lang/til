@@ -6,10 +6,6 @@ import std.string : toLower;
 import til.nodes;
 import til.scheduler : ProcessFiber;
 
-debug
-{
-    import std.stdio;
-}
 
 CommandsMap pidCommands;
 

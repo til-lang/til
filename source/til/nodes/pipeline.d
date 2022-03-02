@@ -2,10 +2,6 @@ module til.nodes.pipeline;
 
 import til.nodes;
 
-debug
-{
-    import std.stdio;
-}
 
 class Pipeline
 {
@@ -24,13 +20,13 @@ class Pipeline
     override string toString()
     {
         return to!string(commandCalls
-            .map!(x => to!string(x))
-            .joiner(" | "));
+            .map!(x => x.toString())
+            .join(" | "));
     }
 
     Context run(Context context)
     {
-        debug {stderr.writeln("Running Pipeline ", this);}
+        debug {stderr.writeln("Running Pipeline: ", this);}
 
         uint inputSize = 0;
         foreach(index, command; commandCalls)
