@@ -1,6 +1,9 @@
 # Til
 
-Just another programming language.
+A command language. 
+
+https://til-lang.github.io/til/
+
 
 ## Some examples
 
