@@ -172,15 +172,17 @@ static this()
             start = l.items.length + start;
         }
 
+
         // end:
-        auto end = start + 1;
-        if (context.size)
+        if (context.size == 0)
         {
-            end = context.pop().toInt();
-            if (end < 0)
-            {
-                end = l.items.length + end;
-            }
+            return context.push(l.items[start]);
+        }
+
+        auto end = context.pop().toInt();
+        if (end < 0)
+        {
+            end = l.items.length + end;
         }
 
         // slice:
@@ -198,6 +200,13 @@ static this()
 
         newContext.exitCode = ExitCode.CommandSuccess;
         return newContext;
+    });
+    simpleListCommands["infix"] = new Command((string path, Context context)
+    {
+        SimpleList list = context.pop!SimpleList();
+        context = list.runAsInfixProgram(context);
+        context.exitCode = ExitCode.CommandSuccess;
+        return context;
     });
     simpleListCommands["expand"] = new Command((string path, Context context)
     {
@@ -257,8 +266,7 @@ static this()
                 Comparator other = cast(Comparator)o;
 
                 context.push(other.item);
-                context.push(">");
-                context = item.operate(context);
+                context = item.runCommand("<", context);
                 auto result = cast(BooleanAtom)context.pop();
 
                 if (result.value)
@@ -310,30 +318,43 @@ static this()
         context.exitCode = ExitCode.CommandSuccess;
         return context.push(l.items.length);
     });
-    simpleListCommands["operate"] = new Command((string path, Context context)
+    simpleListCommands["eq"] = new Command((string path, Context context)
     {
         SimpleList rhs = context.pop!SimpleList();
-        string op = context.pop!string();
 
         Item other = context.pop();
         if (other.type != ObjectType.SimpleList)
         {
-            auto msg = "Cannot operate " ~ to!string(other.type) ~ " and SimpleList";
-            return context.error(msg, ErrorCode.NotImplemented, "");
+            return context.push(false);
         }
         SimpleList lhs = cast(SimpleList)other;
 
-        if (op == "==")
+        // TODO, maybe: compare item by item instead of relying on toString
+        if (lhs.items.length != rhs.items.length)
         {
-            // TODO, maybe: compare item by item instead of relying on toString
-            if (lhs.items.length != rhs.items.length)
-            {
-                return context.push(false);
-            }
-            return context.push(lhs.toString() == rhs.toString());
+            return context.push(false);
         }
-
-        auto msg = "Operator " ~ op ~ " not implemented for SimpleList";
-        return context.error(msg, ErrorCode.NotImplemented, "");
+        return context.push(lhs.toString() == rhs.toString());
     });
+    simpleListCommands["=="] = simpleListCommands["eq"];
+
+    simpleListCommands["neq"] = new Command((string path, Context context)
+    {
+        SimpleList rhs = context.pop!SimpleList();
+
+        Item other = context.pop();
+        if (other.type != ObjectType.SimpleList)
+        {
+            return context.push(true);
+        }
+        SimpleList lhs = cast(SimpleList)other;
+
+        // TODO, maybe: compare item by item instead of relying on toString
+        if (lhs.items.length != rhs.items.length)
+        {
+            return context.push(true);
+        }
+        return context.push(lhs.toString() != rhs.toString());
+    });
+    simpleListCommands["!="] = simpleListCommands["neq"];
 }

@@ -3,7 +3,7 @@ print "START"
 proc fold (start items operation) {
     set result $start
     range $items | foreach x {
-        set result [math $operation]
+        set result [infix $operation]
     }
     return $result
 }

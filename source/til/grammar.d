@@ -557,7 +557,7 @@ class Parser
             {
                 // $(1 + 2 + 4)
                 SimpleList list = consumeSimpleList();
-                return ExecList.infixProgram(list);
+                return list.infixProgram();
             }
             else if (currentChar >= 'A' && currentChar <= 'Z')
             {

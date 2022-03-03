@@ -9,21 +9,15 @@ type number {
         print "init: $x"
         return $x
     }
-    proc operate (x operator lhs) {
-        print "number.operate: $lhs $operator $x"
-        if ("$operator" == "+") {
-            return 0
-        }
-        return [integer.operate $x $operator $lhs]
-    }
-    proc operate.reverse (lhs operator x) {
-        return [number.operate $lhs $operator $x]
+    proc "+" (a b) {
+        return 0
     }
 }
 
 set n [number 5]
-assert ([math (1 - $n)] == -4)
-assert ([math (1 + $n)] == 0)
-assert ([math ($n + 1)] == 6)
+assert ((1 - $n) == -4)
+print $(1 + $n)
+assert ((1 + $n) == 6)
+assert (($n + 1) == 0)
 
 print "END"

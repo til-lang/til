@@ -5,6 +5,7 @@ import std.math.rounding : nearbyint;
 import til.nodes;
 
 
+CommandsMap booleanCommands;
 CommandsMap integerCommands;
 CommandsMap floatCommands;
 CommandsMap nameCommands;
@@ -157,111 +158,6 @@ class FloatAtom : Atom
         }
         return new FloatAtom(-value);
     }
-
-    override Context reverseOperate(Context context)
-    {
-        auto operator = context.pop();
-        auto rhs = context.pop();
-        // 1.1 * 2
-        //  f op i
-        //  ^
-        //  |
-        // this!
-        // IntegerAtom is going to call FloatAtom.reverseOperate
-        if (rhs.type != ObjectType.Integer)
-        {
-            context.push(rhs);
-            context.push(operator);
-            return super.reverseOperate(context);
-        }
-
-        IntegerAtom i = cast(IntegerAtom)rhs;
-        FloatAtom t2 = new FloatAtom(cast(float)i.value);
-
-        context.push(this);
-        context.push(operator);
-        return t2.operate(context);
-
-    }
-    override Context operate(Context context)
-    {
-        auto operator = context.pop();
-        auto lhs = context.pop();
-
-        FloatAtom t1;
-        if (lhs.type == ObjectType.Integer)
-        {
-            auto it1 = cast(IntegerAtom)lhs;
-            t1 = new FloatAtom(cast(float)it1.value);
-        }
-        else if (lhs.type == ObjectType.Float)
-        {
-            t1 = cast(FloatAtom)lhs;
-        }
-        else
-        {
-            context.push(this);
-            context.push(operator);
-            return lhs.reverseOperate(context);
-        }
-
-        bool done = true;
-        string op = to!string(operator);
-        switch(op)
-        {
-            // Math:
-            case "+":
-                context.push(t1.value + this.value);
-                break;
-            case "-":
-                context.push(t1.value - this.value);
-                break;
-            case "*":
-                context.push(t1.value * this.value);
-                break;
-            case "/":
-                context.push(t1.value / this.value);
-                break;
-            default:
-                done = false;
-                break;
-        }
-        if (!done)
-        {
-            // TODO: use something like a `scale` variable to control this:
-            auto v1 = nearbyint(t1.value * 100000);
-            auto v2 = nearbyint(this.value * 100000);
-
-            switch(op)
-            {
-                // Logic:
-                case "==":
-                    context.push(v1 == v2);
-                    break;
-                case "!=":
-                    context.push(v1 != v2);
-                    break;
-                case ">":
-                    context.push(v1 > v2);
-                    break;
-                case ">=":
-                    context.push(v1 >= v2);
-                    break;
-                case "<":
-                    context.push(v1 < v2);
-                    break;
-                case "<=":
-                    context.push(v1 <= v2);
-                    break;
-                default:
-                    context.push(this);
-                    context.push(operator);
-                    return lhs.reverseOperate(context);
-            }
-        }
-        context.exitCode = ExitCode.CommandSuccess;
-        return context;
-    }
 }
 
 
@@ -276,6 +172,7 @@ class BooleanAtom : Atom
         this.value = value;
         this.type = ObjectType.Boolean;
         this.typeName = "boolean";
+        this.commands = booleanCommands;
     }
     override bool toBool()
     {
@@ -292,26 +189,5 @@ class BooleanAtom : Atom
     override string toString()
     {
         return to!string(value);
-    }
-    override Context operate(Context context)
-    {
-        auto operator = context.pop();
-        auto lhs = context.pop();
-
-        switch(to!string(operator))
-        {
-            case "==":
-                context.push(lhs.toBool() == this.value);
-                break;
-            case "!=":
-                context.push(lhs.toBool() != this.value);
-                break;
-            default:
-                context.push(this);
-                context.push(operator);
-                return super.reverseOperate(context);
-        }
-        context.exitCode = ExitCode.CommandSuccess;
-        return context;
     }
 }

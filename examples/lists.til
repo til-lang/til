@@ -1,6 +1,6 @@
 print "START"
 
-assert ([math [
+assert ([infix [
     set a 1
     set b 2
     set c 3
@@ -10,7 +10,7 @@ assert ([math [
 set x 10
 set y 20
 set terms ($x + $y)
-assert ([math $terms] == 30)
+assert ([infix $terms] == 30)
 
 print "push and pop:"
 set lista (1 2)

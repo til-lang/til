@@ -7,7 +7,7 @@ proc on.error (e) {
 }
 
 range 0 5 | transform x {
-        return [math ($x + $offset)] $x
+        return $($x + $offset) $x
     } | foreach x {
         print "x:" [list $x]
         list $x | as (a b)

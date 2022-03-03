@@ -30,25 +30,6 @@ class String : ListItem
         return this.repr;
     }
 
-    // Operators:
-    override Context operate(Context context)
-    {
-        auto operator = context.pop();
-        auto rhs = context.pop();
-
-        if (rhs.type != ObjectType.String)
-        {
-            context.push(this);
-            context.push(operator);
-            return rhs.reverseOperate(context);
-        }
-
-        auto t2 = cast(String)rhs;
-
-        context.push(this.repr == t2.repr);
-        context.exitCode = ExitCode.CommandSuccess;
-        return context;
-    }
     override Context evaluate(Context context)
     {
         context.push(this);

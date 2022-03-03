@@ -1,3 +1,5 @@
+print "START"
+
 set x 10
 
 set something_is_wrong false
@@ -23,10 +25,10 @@ if ($x < 11) {
 }
 
 if ($x > 11) {
-    print "if condition is WRONG. $x is not greater nor equal than 11."
+    print "if condition is WRONG. $x is not greater than 11."
     set something_is_wrong true
 } else if ($x > 12) {
-    print "if condition is WRONG. $x is not greater nor equal than 12."
+    print "if condition is WRONG. $x is not greater than 12."
     set something_is_wrong true
 } else {
     print "Correct: $x is lesser than 11 and 12."

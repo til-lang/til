@@ -5,15 +5,15 @@ set y 200M
 set z 200K
 
 print "$x + $y + $z"
-print [math ($x + $y + $z)]
-assert ([math ($x + $y + $z)] == 2200200000)
+print $($x + $y + $z)
+assert ($($x + $y + $z) == 2200200000)
 
 set x 2Gi
 set y 200Mi
 set z 200Ki
 
 print "$x + $y + $z"
-print [math ($x + $y + $z)]
-assert ([math ($x + $y + $z)] == 2357403648)
+print $($x + $y + $z)
+assert ($($x + $y + $z) == 2357403648)
 
 print "END"

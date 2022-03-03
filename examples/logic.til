@@ -61,7 +61,7 @@ if ((($a < $b) && (1 > 2)) || ($a < $b)) {
 }
 
 #         t            f             t              f            t
-if (((($a < $b) && (54 > 57)) || (($a < $b) && ((95 > 96) || (12 < 34))))) {
+if ((($a < $b) && (54 > 57)) || (($a < $b) && ((95 > 96) || (12 < 34)))) {
     print "Lots of parenthesis is okay"
 } else {
     print "Lots of parenthesis is WRONG"

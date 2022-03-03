@@ -20,16 +20,35 @@ print "$a $b"
 # 1 2 
 
 # Til has "simple lists", using "()":
-set x [math (1 + 2 + 3 + 4)]
+set lista (1 2 3 4)
+
+# And can work with infix notation:
+set x $(1 + 2 + 3 + 4)
 print $x
 # 10
 
-# And offer some ways to avoid nesting braces:
-math (1 + 2) | as y
-print $y
-# 3
+# Infix notation is a syntatic sugar:
+# $(1 + 2 + 3 + 4) -> [+ 1 2 3 4]
+# $(1 + 2 * 3 - 4) -> [- [* [+ 1 2] 3] 4]
+# (And, no, there's no "precedence" besides
+# simple left-to-right order of appearance.)
 
-# Different from Tcl, "{}" enclosed things are NOT strings,
+# Infix notation is also implemented as a command:
+set operation (1 + 1)
+infix $operation | as result
+# (It's handy to send operations as arguments, for example.)
+
+# Til also values *comfort*, and offer
+# some ways to avoid nesting braces:
+# Instead of `set y [list $a $b]`,
+list $a $b | as y
+print $y
+# (1 2)
+# Instead of `range [length [list 1 2 3]] | foreach`,
+list 1 2 3 | length | range | foreach x { print $x }
+# (1 2 3)       3    range 3  ...
+
+# Unlike Tcl, "{}" enclosed things are NOT strings,
 # but simply "SubPrograms".
 # They are parsed as any other part of the language,
 # just not immediately run.
@@ -37,7 +56,7 @@ if ($x > 7) {
     print "Great! $x is greater than 7."
 }
 
-# (Oh, and comments are **real** comments.)
+# (Oh, and comments are **real** comments!)
 
 # Til implements the concept of "streams", almost
 # like stdin/stdout in shell script.
@@ -61,11 +80,13 @@ range 1 5 | transform value {
 # 10
 
 # We also have dictionaries!
-set d [dict (a 1) (b 2) (c 3)]
+dict (a 1) (b 2) (c 3) | as d
 
 # Values can be extracted using Til's **extraction** syntax:
 print <$d a>
 # 1
+# It makes it easier to write conditions, for instance:
+if (<$d a> == 1) { print "yes, it's 1!" }
 
 # Extraction syntax is used to get values from lists, too:
 set lista (a b c d e)
@@ -75,10 +96,10 @@ print <$lista 0>
 
 # by range:
 print <$lista 1 4>
-# b c d
+# (b c d)
 
 # And the extraction itself is implemented as a command:
-extract $lista 1 4 | foreach item { print $item }
+extract $lista 1 4 | range | foreach item { print $item }
 # b
 # c
 # d

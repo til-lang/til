@@ -45,21 +45,23 @@ class Vector(T) : Item
                 }
             }
 
-            auto end = start + 1;
-            if (context.size)
+            if (context.size == 0)
             {
-                auto endItem = context.pop();
-                if (endItem.toString() == "end")
+                return context.push(item.values[start]);
+            }
+
+            auto end = start + 1;
+            auto endItem = context.pop();
+            if (endItem.toString() == "end")
+            {
+                end = item.values.length;
+            }
+            else
+            {
+                end = endItem.toInt();
+                if (end < 0)
                 {
-                    end = item.values.length;
-                }
-                else
-                {
-                    end = endItem.toInt();
-                    if (end < 0)
-                    {
-                        end = item.values.length + end;
-                    }
+                    end = item.values.length + end;
                 }
             }
 

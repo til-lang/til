@@ -6,10 +6,6 @@ import std.string;
 
 import til.nodes;
 
-debug
-{
-    import std.stdio;
-}
 
 // Commands:
 static this()
@@ -227,4 +223,43 @@ static this()
         context.exitCode = ExitCode.CommandSuccess;
         return context;
     });
+
+    stringCommands["eq"] = new Command((string path, Context context)
+    {
+        if (context.size < 2)
+        {
+            auto msg = "`" ~ path ~ "` expects at least 2 arguments";
+            return context.error(msg, ErrorCode.InvalidArgument, "int");
+        }
+
+        string first = context.pop!string();
+        foreach (item; context.items)
+        {
+            if (item.toString() != first)
+            {
+                return context.push(false);
+            }
+        }
+        return context.push(true);
+    });
+    stringCommands["=="] = stringCommands["eq"];
+    stringCommands["neq"] = new Command((string path, Context context)
+    {
+        if (context.size < 2)
+        {
+            auto msg = "`" ~ path ~ "` expects at least 2 arguments";
+            return context.error(msg, ErrorCode.InvalidArgument, "int");
+        }
+
+        string first = context.pop!string();
+        foreach (item; context.items)
+        {
+            if (item.toString() == first)
+            {
+                return context.push(false);
+            }
+        }
+        return context.push(true);
+    });
+    stringCommands["!="] = stringCommands["neq"];
 }

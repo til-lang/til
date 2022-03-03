@@ -5,7 +5,7 @@ range 0 10 | transform x {
     return 1
 } | foreach y {
     print $y
-    math ($sum + $y) | as sum
+    set sum $($sum + $y)
 }
 
 assert ($sum == 11)

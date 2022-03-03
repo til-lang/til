@@ -3,6 +3,55 @@ module til.commands.integer;
 import til.nodes;
 
 
+template CreateOperator(string cmdName, string operator)
+{
+    const string CreateOperator = "
+        integerCommands[\"" ~ cmdName ~ "\"] = new Command((string path, Context context)
+        {
+            if (context.size < 2)
+            {
+                auto msg = \"`\" ~ path ~ \"` expects at least 2 arguments\";
+                return context.error(msg, ErrorCode.InvalidArgument, \"int\");
+            }
+
+            long result = context.pop!long();
+            foreach (item; context.items)
+            {
+                result = result " ~ operator ~ " item.toInt();
+            }
+            return context.push(result);
+        });
+        integerCommands[\"" ~ operator ~ "\"] = integerCommands[\"" ~ cmdName ~ "\"];
+        ";
+}
+template CreateComparisonOperator(string cmdName, string operator)
+{
+    const string CreateComparisonOperator = "
+        integerCommands[\"" ~ cmdName ~ "\"] = new Command((string path, Context context)
+        {
+            if (context.size < 2)
+            {
+                auto msg = \"`\" ~ path ~ \"` expects at least 2 arguments\";
+                return context.error(msg, ErrorCode.InvalidArgument, \"int\");
+            }
+
+            long pivot = context.pop!long();
+            foreach (item; context.items)
+            {
+                long x = item.toInt();
+                if (!(pivot " ~ operator ~ " x))
+                {
+                    return context.push(false);
+                }
+                pivot = x;
+            }
+            return context.push(true);
+        });
+        integerCommands[\"" ~ operator ~ "\"] = integerCommands[\"" ~ cmdName ~ "\"];
+        ";
+}
+
+
 // Commands:
 static this()
 {
@@ -130,100 +179,16 @@ static this()
         context.exitCode = ExitCode.CommandSuccess;
         return context;
     });
-    integerCommands["operate"] = new Command((string path, Context context)
-    {
-        IntegerAtom t2 = context.pop!IntegerAtom();
-        Item operator = context.pop();
-        Item lhs = context.pop();
 
-        string op = to!string(operator);
-
-        if (lhs.type != ObjectType.Integer)
-        {
-            context.push(t2);
-            context.push(operator);
-            return lhs.reverseOperate(context);
-        }
-
-        auto t1 = cast(IntegerAtom)lhs;
-        final switch(op)
-        {
-            // Logic:
-            case "==":
-                context.push(t1.value == t2.value);
-                break;
-            case "!=":
-                context.push(t1.value != t2.value);
-                break;
-            case ">":
-                context.push(t1.value > t2.value);
-                break;
-            case ">=":
-                context.push(t1.value >= t2.value);
-                break;
-            case "<":
-                context.push(t1.value < t2.value);
-                break;
-            case "<=":
-                context.push(t1.value <= t2.value);
-                break;
-
-            // Math:
-            case "+":
-                context.push(t1.value + t2.value);
-                break;
-            case "-":
-                context.push(t1.value - t2.value);
-                break;
-            case "*":
-                context.push(t1.value * t2.value);
-                break;
-            case "/":
-                context.push(t1.value / t2.value);
-                break;
-            case "%":
-                context.push(t1.value % t2.value);
-                break;
-        }
-        context.exitCode = ExitCode.CommandSuccess;
-        return context;
-    });
-
-    // TODO: make it work between ints and floats:
-    integerCommands["+"] = new Command((string path, Context context)
-    {
-        long result = 0;
-        foreach (item; context.items)
-        {
-            result += item.toInt();
-        }
-        return context.push(result);
-    });
-    integerCommands["-"] = new Command((string path, Context context)
-    {
-        long result = context.pop!long();
-        foreach (item; context.items)
-        {
-            result -= item.toInt();
-        }
-        return context.push(result);
-    });
-    integerCommands["*"] = new Command((string path, Context context)
-    {
-        long result = 1;
-        foreach (item; context.items)
-        {
-            result *= item.toInt();
-        }
-        return context.push(result);
-    });
-    integerCommands["/"] = new Command((string path, Context context)
-    {
-        long result = context.pop!long();
-        foreach (item; context.items)
-        {
-            result /= item.toInt();
-        }
-        return context.push(result);
-    });
+    mixin(CreateOperator!("sum", "+"));
+    mixin(CreateOperator!("sub", "-"));
+    mixin(CreateOperator!("mul", "*"));
+    mixin(CreateOperator!("div", "/"));
+    mixin(CreateOperator!("mod", "%"));
+    mixin(CreateComparisonOperator!("eq", "=="));
+    mixin(CreateComparisonOperator!("neq", "!="));
+    mixin(CreateComparisonOperator!("gt", ">"));
+    mixin(CreateComparisonOperator!("lt", "<"));
+    mixin(CreateComparisonOperator!("gte", ">="));
+    mixin(CreateComparisonOperator!("lte", "<="));
 }

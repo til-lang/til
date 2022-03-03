@@ -74,20 +74,6 @@ class ListItem
         context.push(this);
         return context;
     }
-    Context operate(Context context)
-    {
-        debug {
-            auto info = typeid(this);
-            stderr.writeln(to!string(info), ".operate!");
-        }
-        context = runCommand("operate", context);
-        return context;
-    }
-    Context reverseOperate(Context context)
-    {
-        context = runCommand("operate.reverse", context);
-        return context;
-    }
     Context next(Context context)
     {
         context = runCommand("next", context);

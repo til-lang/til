@@ -16,7 +16,7 @@ type coordinates {
     }
     proc to.string (dict) {
         print "coordinates.to.string"
-        set $dict to_string_call_count [math (<$dict to_string_call_count> + 1)]
+        set $dict to_string_call_count $(<$dict to_string_call_count> + 1)
 
         dict.to.string $dict | as s
         return "coordinates: $s"

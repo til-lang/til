@@ -10,7 +10,6 @@ import til.grammar;
 
 import til.conv;
 import til.exceptions;
-import til.math;
 import til.modules;
 import til.nodes;
 import til.procedures;
@@ -206,9 +205,9 @@ static this()
     {
         while(true)
         {
-            // NOT popping the conditions: `math` will take care of that, already.
-            auto mathContext = math(context.next(1));
-            auto isConditionTrue = mathContext.pop!bool();
+            auto condition = context.pop!SimpleList();
+            auto execContext = condition.runAsInfixProgram(context);
+            auto isConditionTrue = execContext.pop!bool();
 
             auto thenBody = context.pop!SubList();
 
@@ -459,6 +458,7 @@ forLoop:
 
         return context;
     });
+    stringCommands["proc"] = nameCommands["proc"];
     commands["return"] = new Command((string path, Context context)
     {
         context.exitCode = ExitCode.ReturnSuccess;
@@ -713,15 +713,25 @@ forLoop:
     // Debugging
     commands["assert"] = new Command((string path, Context context)
     {
-        while (context.size)
+        foreach (item; context.items)
         {
-            auto target = context.peek();
-            auto mathContext = math(context.next(1));
-            auto isTrue = mathContext.pop!bool();
-            if (!isTrue)
+            if (item.type == ObjectType.SimpleList)
             {
-                auto msg = "assertion error: " ~ target.toString();
-                return context.error(msg, ErrorCode.Assertion, "");
+                auto execContext = (cast(SimpleList)item).runAsInfixProgram(context);
+                auto result = execContext.pop!bool();
+                if (!result)
+                {
+                    auto msg = "assertion error: " ~ item.toString();
+                    return context.error(msg, ErrorCode.Assertion, "");
+                }
+            }
+            else
+            {
+                if (!item.toBool())
+                {
+                    auto msg = "assertion error: " ~ item.toString();
+                    return context.error(msg, ErrorCode.Assertion, "");
+                }
             }
         }
 
@@ -793,22 +803,6 @@ forLoop:
     {
         auto firstArgument = context.pop();
         context.escopo.variables.remove(to!string(firstArgument));
-        return context;
-    });
-
-    simpleListCommands["math"] = new Command((string path, Context context)
-    {
-        // NOT popping the SimpleList: `math` will handle that, already:
-        context = math(context.next(1));
-        if (context.size != 1)
-        {
-            auto msg = "math.run: error. Should return 1 item.\n"
-                       ~ to!string(context.escopo)
-                       ~ " returned " ~ to!string(context.size);
-            return context.error(msg, ErrorCode.InternalError, "til.internal");
-        }
-
-        // NOT pushing the result: `math` already did that.
         return context;
     });
 
