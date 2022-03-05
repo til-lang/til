@@ -1,5 +1,6 @@
 module til.commands.pids;
 
+import core.thread.fiber;
 import std.string : toLower;
 
 import til.nodes;
@@ -39,10 +40,10 @@ static this()
                 return context.push(to!string(process.state));
 
             case "is_running":
-                return context.push(process.state != ProcessState.Finished);
+                return context.push(process.state != Fiber.State.TERM);
 
             case "exit_code":
-                Context processContext = target.fiber.context;
+                Context processContext = target.process.context;
 
                 // XXX: is it correct???
                 if (&processContext is null)

@@ -18,8 +18,6 @@ static this()
         {
             case "code":
                 return context.push(target.code);
-            case "process id":
-                return context.push(target.process.index);
             case "message":
                 return context.push(target.message);
             case "class":

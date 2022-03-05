@@ -13,6 +13,7 @@ import til.exceptions;
 import til.modules;
 import til.nodes;
 import til.procedures;
+import til.process;
 import til.sharedlibs;
 
 
@@ -33,7 +34,7 @@ static this()
 
     commands["pop"] = new Command((string path, Context context)
     {
-        if (context.escopo.stackPointer == 0)
+        if (context.process.stack.stackPointer == 0)
         {
             auto msg = "Stack is empty";
             return context.error(msg, ErrorCode.SemanticError, "");
@@ -49,7 +50,7 @@ static this()
 
     commands["stack"] = new Command((string path, Context context)
     {
-        context.size = cast(int)context.escopo.stackPointer;
+        context.size = cast(int)context.process.stack.stackPointer;
         return context;
     });
 
@@ -71,7 +72,7 @@ static this()
             return context.error(msg, ErrorCode.InvalidSyntax, "");
         }
 
-        context = context.escopo.run(program, context);
+        context = context.process.run(program, context);
 
         // XXX: maybe this is wrong.
         // What if I want to include a code that returns Continue?
@@ -112,7 +113,7 @@ static this()
         auto parser = new Parser(code);
         SubProgram subprogram = parser.run();
 
-        context = context.escopo.run(subprogram);
+        context = context.process.run(subprogram, context.next());
         if (context.exitCode == ExitCode.Proceed)
         {
             context.exitCode = ExitCode.CommandSuccess;
@@ -209,14 +210,14 @@ static this()
             auto execContext = condition.runAsInfixProgram(context);
             auto isConditionTrue = execContext.pop!bool();
 
-            auto thenBody = context.pop!SubList();
+            auto thenBody = context.pop!SubProgram();
 
             if (isConditionTrue)
             {
                 // Get rid of eventual "else":
                 context.items();
                 // Run body:
-                context = context.escopo.run(thenBody.subprogram);
+                context = context.process.run(thenBody, context.next());
                 break;
             }
             // no else:
@@ -240,8 +241,8 @@ static this()
                 // If only one part is left, it's for sure the last "else":
                 if (context.size == 1)
                 {
-                    auto elseBody = context.pop!SubList();
-                    context = context.escopo.run(elseBody.subprogram);
+                    auto elseBody = context.pop!SubProgram();
+                    context = context.process.run(elseBody, context.next());
                     break;
                 }
                 else
@@ -272,7 +273,7 @@ static this()
         range 5 | foreach x { ... }
         */
         auto argName = context.pop!string();
-        auto argBody = context.pop!SubList();
+        auto argBody = context.pop!SubProgram();
 
         /*
         Do NOT create a new scope for the
@@ -307,7 +308,7 @@ forLoop:
 
             loopScope[argName] = nextContext.items;
 
-            context = loopScope.run(argBody.subprogram);
+            context = context.process.run(argBody, context.next());
 
             if (context.exitCode == ExitCode.Break)
             {
@@ -336,17 +337,22 @@ forLoop:
         class Transformer : Item
         {
             Item target;
-            SubList body;
-            Process escopo;
+            SubProgram body;
+            Context context;
             string varName;
             bool empty;
 
-            this(Item target, string varName, SubList body, Process escopo)
+            this(
+                Item target,
+                string varName,
+                SubProgram body,
+                Context context
+            )
             {
                 this.target = target;
                 this.varName = varName;
                 this.body = body;
-                this.escopo = escopo;
+                this.context = context;
             }
 
             override string toString()
@@ -373,27 +379,27 @@ forLoop:
                         );
                 }
 
-                escopo[varName] = targetContext.items;
+                context.escopo[varName] = targetContext.items;
 
-                context = escopo.run(body.subprogram);
+                auto execContext = context.process.run(body, context);
 
-                switch(context.exitCode)
+                switch(execContext.exitCode)
                 {
                     case ExitCode.ReturnSuccess:
                     case ExitCode.CommandSuccess:
                     case ExitCode.Proceed:
-                        context.exitCode = ExitCode.Continue;
+                        execContext.exitCode = ExitCode.Continue;
                         break;
 
                     default:
                         break;
                 }
-                return context;
+                return execContext;
             }
         }
 
         auto varName = context.pop!string();
-        auto body = context.pop!SubList();
+        auto body = context.pop!SubProgram();
 
         if (context.size == 0)
         {
@@ -403,7 +409,7 @@ forLoop:
         auto target = context.pop();
 
         auto iterator = new Transformer(
-            target, varName, body, context.escopo
+            target, varName, body, context
         );
         context.push(iterator);
         return context;
@@ -446,7 +452,7 @@ forLoop:
         string name = context.pop!string();
 
         auto parameters = context.pop!SimpleList();
-        auto body = context.pop!SubList();
+        auto body = context.pop!SubProgram();
 
         auto proc = new Procedure(
             name,
@@ -459,6 +465,7 @@ forLoop:
         return context;
     });
     stringCommands["proc"] = nameCommands["proc"];
+
     commands["return"] = new Command((string path, Context context)
     {
         context.exitCode = ExitCode.ReturnSuccess;
@@ -467,23 +474,27 @@ forLoop:
     commands["scope"] = new Command((string path, Context context)
     {
         string name = context.pop!string();
-        SubList body = context.pop!SubList();
+        SubProgram body = context.pop!SubProgram();
 
-        auto process = new Process(context.escopo);
-        process.description = name;
-        process.variables = context.escopo.variables;
+        auto escopo = new Escopo(context.escopo);
+        escopo.description = name;
+        escopo.variables = context.escopo.variables;
 
-        auto returnedContext = process.run(body.subprogram, context.next(process, 0));
+        auto returnedContext = context.process.run(
+            body, context.next(escopo, 0)
+        );
 
         if (returnedContext.exitCode == ExitCode.Proceed)
         {
             returnedContext.exitCode = ExitCode.CommandSuccess;
         }
 
-        Items managers = process.internalVariables.require("cm", []);
+        Items managers = escopo.internalVariables.require("cm", []);
         foreach (contextManager; managers)
         {
-            returnedContext = contextManager.runCommand("close", returnedContext);
+            returnedContext = contextManager.runCommand(
+                "close", returnedContext
+            );
         }
 
         return returnedContext;
@@ -559,31 +570,29 @@ forLoop:
 
     // ---------------------------------------------
     // Scheduler-related:
-    nameCommands["spawn"] = new Command((string path, Context context)
+    commands["spawn"] = new Command((string path, Context context)
     {
-        // set pid [spawn f $x]
-        // spawn f | read | foreach x { ... }
-        // range 5 | spawn g | foreach y { ... }
+        // set pid [spawn {f $x}]
+        // spawn {f} | read | foreach x { ... }
+        // range 5 | spawn {g} | foreach y { ... }
 
-        auto commandName = context.pop!string();
-        Items arguments = context.items;
-        ListItem input = null;
-        if (context.inputSize == 1)
+        auto subprogram = context.pop!SubProgram;
+
+        Item input = context.popOrNull();
+        debug {stderr.writeln("input:", input); }
+
+        if (context.inputSize > 1)
         {
-            input = arguments[$-1];
-            arguments.popBack();
-        }
-        else if (context.inputSize == 1)
-        {
-            auto msg = path ~ ": cannot handle multiple inputs";
+            auto msg = "`" ~ path ~ "` cannot handle multiple inputs";
             return context.error(msg, ErrorCode.InvalidInput, "");
         }
 
-        auto command = new CommandCall(commandName, arguments);
-        auto pipeline = new Pipeline([command]);
-        auto subprogram = new SubProgram([pipeline]);
-        auto process = new Process(context.escopo, subprogram);
-        process.description = commandName;
+        auto process = new Process(
+            context.process.scheduler,
+            subprogram,
+            new Escopo(context.escopo),
+            "spawn"
+        );
 
         // Piping:
         if (input !is null)
@@ -597,7 +606,7 @@ forLoop:
         }
         process.output = new WaitingQueue(64);
 
-        auto pid = context.escopo.scheduler.add(process);
+        auto pid = context.process.scheduler.add(process);
         context.push(pid);
 
         // Give some time for the new process to start:
@@ -625,25 +634,25 @@ forLoop:
     // Piping
     commands["read"] = new Command((string path, Context context)
     {
-        if (context.escopo.input is null)
+        if (context.process.input is null)
         {
             auto msg = "`read.no_wait`: process input is null";
             return context.error(msg, ErrorCode.InvalidArgument, "");
         }
         // Probably a WaitingQueue:
-        context.push(context.escopo.input);
+        context.push(context.process.input);
         return context;
     });
     commands["read.no_wait"] = new Command((string path, Context context)
     {
-        if (context.escopo.input is null)
+        if (context.process.input is null)
         {
             auto msg = "`read.no_wait`: process input is null";
             return context.error(msg, ErrorCode.InvalidArgument, "");
         }
         // Probably a WaitingQueue, let's change its behavior to
         // a regular Queue:
-        auto q = cast(WaitingQueue)context.escopo.input;
+        auto q = cast(WaitingQueue)context.process.input;
         context.push(new Queue(q));
         return context;
     });
@@ -654,7 +663,7 @@ forLoop:
             auto msg = "`write` expects only one argument";
             return context.error(msg, ErrorCode.InvalidArgument, "");
         }
-        Queue output = cast(Queue)context.escopo.output;
+        Queue output = cast(Queue)context.process.output;
         output.push(context.pop());
         return context;
     });

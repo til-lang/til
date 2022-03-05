@@ -66,7 +66,7 @@ class CommandCall
         return context;
     }
 
-    Command getCommand(Process escopo, ListItem target)
+    Command getCommand(Escopo escopo, ListItem target)
     {
         Command cmd;
 

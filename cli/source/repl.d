@@ -7,6 +7,7 @@ import til.commands;
 import til.exceptions;
 import til.grammar;
 import til.nodes;
+import til.process;
 import til.scheduler;
 
 import editline;
@@ -14,27 +15,29 @@ import editline;
 
 int repl(Dict envVars, SimpleList argumentsList)
 {
-    auto process = new Process(null);
-    process.description = "repl";
-    process["args"] = argumentsList;
-    process["env"] = envVars;
-    process.commands = commands;
+    auto scheduler = new Scheduler();
+    auto escopo = new Escopo();
+    escopo["args"] = argumentsList;
+    escopo["env"] = envVars;
+    escopo.commands = commands;
+    auto process = new Process(scheduler, null, escopo, "repl");
+
     string command;
 
     ListItem* promptString = ("TIL_PROMPT" in envVars.values);
     if (promptString !is null)
     {
-        process["prompt"] = *promptString;
+        escopo["prompt"] = *promptString;
     }
     else
     {
-        process["prompt"] = new String("> ");
+        escopo["prompt"] = new String("> ");
     }
 
 mainLoop:
     while (true)
     {
-        auto prompt = process["prompt"][0].toString();
+        auto prompt = escopo["prompt"][0].toString();
 
         while (true)
         {
@@ -51,7 +54,7 @@ mainLoop:
             auto parser = new Parser(command);
             try
             {
-                process.program = parser.consumeSubProgram();
+                process.subprogram = parser.consumeSubProgram();
             }
             catch (IncompleteInputException)
             {
@@ -61,7 +64,7 @@ mainLoop:
             catch (Exception ex)
             {
                 stdout.writeln("Exception: ", ex.msg);
-                process.program = null;
+                process.subprogram = null;
             }
             break;
         }
@@ -72,22 +75,24 @@ mainLoop:
         }
         command = "";
 
-        if (process.program is null)
+        if (process.subprogram is null)
         {
             continue;
         }
 
-        process.state = ProcessState.New;
-        auto scheduler = new Scheduler(process);
+        debug {stderr.writeln("Running scheduler..."); }
+        process.reset();
+        scheduler.reset();
+        scheduler.add(process);
         ExitCode exitCode = scheduler.run();
 
-        File output = stdin;
-        foreach (fiber; scheduler.fibers)
+        File output;
+        foreach (p; scheduler.processes)
         {
-            if (fiber.context.exitCode != ExitCode.Proceed)
+            if (p.context.exitCode != ExitCode.Proceed)
             {
-                stdout.writeln(fiber.process.fullDescription, ":");
-                stderr.writeln(" exitCode ", fiber.context.exitCode);
+                stdout.writeln(p.description, ":");
+                stderr.writeln(" exitCode ", p.context.exitCode);
                 output = stderr;
             }
             else
@@ -95,11 +100,10 @@ mainLoop:
                 output = stdout;
             }
 
-            foreach (item; fiber.context.items)
+            foreach (item; p.context.items)
             {
                 output.writeln(" ", item);
             }
-
         }
     }
     clear_history();

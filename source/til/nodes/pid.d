@@ -4,7 +4,7 @@ import std.conv : to;
 import std.string : toLower;
 
 import til.nodes;
-import til.scheduler : ProcessFiber;
+import til.process;
 
 
 CommandsMap pidCommands;
@@ -12,15 +12,13 @@ CommandsMap pidCommands;
 
 class Pid : ListItem
 {
-    ProcessFiber fiber;
     Process process;
     auto type = ObjectType.Pid;
     const typeName = "pid";
 
-    this(ProcessFiber fiber)
+    this(Process process)
     {
-        this.fiber = fiber;
-        this.process = fiber.process;
+        this.process = process;
         this.commands = pidCommands;
     }
 

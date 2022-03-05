@@ -6,30 +6,18 @@ import std.algorithm.searching : canFind;
 import std.array : array;
 
 import til.nodes;
-
-
-class ProcessFiber : Fiber
-{
-    Process process = null;
-    Context context = null;
-
-    this(Process process)
-    {
-        this.process = process;
-        super(&run);
-    }
-    private void run()
-    {
-        context = process.run();
-    }
-}
+import til.process;
 
 
 class Scheduler
 {
-    ProcessFiber[] fibers = null;
-    ProcessFiber[] activeFibers = null;
+    Process[] processes = null;
+    Process[] activeProcesses = null;
 
+    this()
+    {
+        this([]);
+    }
     this(Process process)
     {
         this([process]);
@@ -45,10 +33,16 @@ class Scheduler
     Pid add(Process process)
     {
         process.scheduler = this;
-        auto processFiber = new ProcessFiber(process);
-        this.fibers ~= processFiber;
-        this.activeFibers ~= processFiber;
-        return new Pid(processFiber);
+        processes ~= process;
+        activeProcesses ~= process;
+        return new Pid(process);
+    }
+
+    // TODO: clean up: remove finished processes from .processes.
+    void reset()
+    {
+        processes = [];
+        activeProcesses = [];
     }
 
     ExitCode run()
@@ -57,25 +51,24 @@ class Scheduler
         do
         {
             activeCounter = 0;
-            ProcessFiber[] finishedFibers;
+            Process[] finishedProcesses;
 
-            foreach(fiber; activeFibers)
+            foreach(process; activeProcesses)
             {
-                if (fiber.state == Fiber.State.TERM)
+                if (process.state == Fiber.State.TERM)
                 {
-                    fiber.process.state = ProcessState.Finished;
-                    finishedFibers ~= fiber;
+                    finishedProcesses ~= process;
                     continue;
                 }
                 activeCounter++;
-                fiber.call();
+                process.call();
             }
 
-            // Clean up finished fibers:
-            if (finishedFibers.length != 0)
+            // Clean up finished processes:
+            if (finishedProcesses.length != 0)
             {
-                activeFibers = array(
-                    activeFibers.filter!(item => !finishedFibers.canFind(item))
+                activeProcesses = array(
+                    activeProcesses.filter!(item => !finishedProcesses.canFind(item))
                 );
             }
         } while (activeCounter > 0);
@@ -84,11 +77,11 @@ class Scheduler
         In the end, check if any of the processes
         was terminated with failure:
         */
-        foreach(fiber; fibers)
+        foreach(process; processes)
         {
-            if (fiber.context.exitCode == ExitCode.Failure)
+            if (process.context.exitCode == ExitCode.Failure)
             {
-                return fiber.context.exitCode;
+                return process.context.exitCode;
             }
         }
         return ExitCode.CommandSuccess;
@@ -97,11 +90,11 @@ class Scheduler
     Context[] failingContexts()
     {
         Context[] contexts;
-        foreach(fiber; fibers)
+        foreach(process; processes)
         {
-            if (fiber.context.exitCode == ExitCode.Failure)
+            if (process.context.exitCode == ExitCode.Failure)
             {
-                contexts ~= fiber.context;
+                contexts ~= process.context;
             }
         }
         return contexts;
@@ -109,7 +102,7 @@ class Scheduler
 
     void yield()
     {
-        if (fibers.length == 1) return;
+        if (processes.length == 1) return;
         Fiber.yield();
     }
 }

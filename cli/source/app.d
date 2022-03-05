@@ -9,6 +9,7 @@ import til.commands;
 import til.exceptions;
 import til.grammar;
 import til.nodes;
+import til.process;
 import til.scheduler;
 
 import cli.repl;
@@ -138,35 +139,44 @@ int main(string[] args)
         );
     }
 
-    auto process = new Process(null, program);
-    process.description = "main process";
-    process["args"] = argumentsList;
-    process["env"] = envVars;
-    process.commands = commands;
+    // The scheduler:
+    auto scheduler = new Scheduler();
+
+    // The main Process:
+    auto process = new Process(scheduler, program);
+    process.description = "main";
     process.input = new InterpreterInput(stdin);
     process.output = new InterpreterOutput(stdout);
 
+    // The scope:
+    auto escopo = new Escopo();
+    escopo["args"] = argumentsList;
+    escopo["env"] = envVars;
+    escopo.commands = commands;
+    process.context = process.context.next(escopo);
+
+    // Start!
     debug {sw.start();}
-    auto scheduler = new Scheduler(process);
+    scheduler.add(process);
     scheduler.run();
 
     // Print everything remaining in the stack:
     int returnCode = 0;
-    foreach(fiber; scheduler.fibers)
+    foreach(p; scheduler.processes)
     {
-        stderr.write("Process ", fiber.process.index, ": ");
-        if (fiber.context.exitCode == ExitCode.Failure)
+        stderr.write("Process ", p.index, ": ");
+        if (p.context.exitCode == ExitCode.Failure)
         {
             stderr.writeln("ERROR");
-            auto e = cast(Erro)fiber.context.pop();
+            auto e = p.context.pop!Erro();
             stderr.writeln(e);
             returnCode = e.code;
         }
         else
         {
             stderr.writeln("Success");
-            debug {stderr.writeln("  context.size:", fiber.context.size);}
-            foreach(item; fiber.context.items)
+            debug {stderr.writeln("  context.size:", p.context.size);}
+            foreach(item; p.context.items)
             {
                 stderr.writeln(item);
             }

@@ -7,7 +7,6 @@
 ## A little more complex ones
 
 * `--version` CLI option.
-* Improve **string handling**!
 * Make the REPL a command.
     * `repl $prompt_string $handler_command`
     * Don't execute the input, just pass that to the handler command.
@@ -24,6 +23,8 @@ scope "conversion to float" {
 
 "conversion to float": assertion failed: 1.23 (float) == 1.234 (float)
 ```
+
+* Improve **string handling**!
 
 ## Complex
 

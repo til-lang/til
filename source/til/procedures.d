@@ -10,19 +10,19 @@ class Procedure : Command
 {
     string name;
     SimpleList parameters;
-    SubList body;
+    SubProgram body;
 
-    this(string name, SimpleList parameters, SubList body)
+    this(string name, SimpleList parameters, SubProgram body)
     {
-        super(null);
         this.name = name;
         this.parameters = parameters;
         this.body = body;
+        super(null);
     }
 
     override Context run(string name, Context context)
     {
-        auto newScope = new Process(context.escopo);
+        auto newScope = new Escopo(context.escopo);
         newScope.description = name;
 
         // Empty the caller scope context/stack:
@@ -39,20 +39,11 @@ class Procedure : Command
             newScope[parameterName] = argument;
         }
 
-        // newScope *shares* the Stack:
-        newScope.stack = context.escopo.stack[];
-        newScope.stackPointer = context.escopo.stackPointer;
         auto newContext = context.next(newScope, context.size);
 
         // RUN!
-        newContext = newScope.run(body.subprogram, newContext);
+        newContext = context.process.run(body, newContext);
 
-        // THIS is weird:
-        context.escopo.stack = newScope.stack[];
-        // I mean, shouldn't newScope.stack be a reference
-        // to context.escopo.stack, already???
-
-        context.escopo.stackPointer = newScope.stackPointer;
         context.size = newContext.size;
 
         if (newContext.exitCode == ExitCode.Failure)

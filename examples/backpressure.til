@@ -12,7 +12,7 @@ proc p (q) {
     }
 }
 
-spawn p $q | as p1
+spawn {p $q} | as p1
 
 range 3 | foreach x {
     send $p1 $x

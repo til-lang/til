@@ -2,33 +2,31 @@ module til.context;
 
 import std.array;
 
+import til.process;
 import til.nodes;
 
 
 struct Context
 {
-    Process escopo;
-    Command command;
+    Escopo escopo;
+    Process process;
     ExitCode exitCode = ExitCode.Proceed;
     uint inputSize = 0;
 
     /*
     Commands CAN pop beyond local zero, so
-    resist the temptation to make it
-    an uint.
+    resist the temptation to make it an uint:
     */
     int size = 0;
 
     @disable this();
-    this(Process escopo)
+    this(Process process, Escopo escopo, int size=0)
     {
-        this(escopo, 0);
-    }
-    this(Process escopo, int argumentCount)
-    {
+        this.process = process;
         this.escopo = escopo;
-        this.size = argumentCount;
+        this.size = size;
     }
+
     Context next()
     {
         return this.next(0);
@@ -37,31 +35,31 @@ struct Context
     {
         return this.next(escopo, argumentCount);
     }
-    Context next(Process escopo)
+    Context next(Escopo escopo)
     {
         return this.next(escopo, 0);
     }
-    Context next(Process escopo, int argumentCount)
+    Context next(Escopo escopo, int size)
     {
-        this.size -= argumentCount;
-        auto newContext = Context(escopo, argumentCount);
+        this.size -= size;
+        auto newContext = Context(process, escopo, size);
         return newContext;
     }
 
     string toString()
     {
-        string s = "STACK:" ~ to!string(escopo.stackAsString);
+        string s = "STACK:" ~ to!string(process.stack);
         s ~= " (" ~ to!string(size) ~ ")";
-        s ~= " process " ~ to!string(this.escopo.index);
+        s ~= " process " ~ to!string(process.index);
         return s;
     }
 
     // Stack-related things:
-    ListItem peek(uint index=1)
+    Item peek(uint index=1)
     {
-        return escopo.peek(index);
+        return process.stack.peek(index);
     }
-    template pop(T : ListItem)
+    template pop(T : Item)
     {
         T pop()
         {
@@ -102,19 +100,31 @@ struct Context
             return value.toString;
         }
     }
-    ListItem pop()
+    Item pop()
     {
         size--;
-        return escopo.pop();
+        return process.stack.pop();
     }
-    ListItem[] pop(uint count)
+    Item popOrNull()
+    {
+        if (process.stack.isEmpty)
+        {
+            return null;
+        }
+        else
+        {
+            return this.pop();
+        }
+    }
+
+    Item[] pop(uint count)
     {
         return this.pop(cast(ulong)count);
     }
-    ListItem[] pop(ulong count)
+    Item[] pop(ulong count)
     {
         size -= count;
-        return escopo.pop(count);
+        return process.stack.pop(count);
     }
     template pop(T)
     {
@@ -129,9 +139,9 @@ struct Context
         }
     }
 
-    Context push(ListItem item)
+    Context push(Item item)
     {
-        escopo.push(item);
+        process.stack.push(item);
         size++;
         return this;
     }
@@ -147,12 +157,12 @@ struct Context
     {
         Context push(T x)
         {
-            escopo.push(x);
+            process.stack.push(x);
             size++;
             return this;
         }
     }
-    Context ret(ListItem item)
+    Context ret(Item item)
     {
         push(item);
         exitCode = ExitCode.CommandSuccess;
@@ -185,7 +195,7 @@ struct Context
         {
             auto x = size;
             size = 0;
-            return escopo.pop(x);
+            return process.stack.pop(x);
         }
         else
         {
@@ -201,7 +211,7 @@ struct Context
     // Scheduler-related things
     void yield()
     {
-        escopo.yield();
+        process.yield();
     }
 
     // Execution
@@ -227,7 +237,7 @@ struct Context
     }
     Context error(string message, int code, string classe, Item object)
     {
-        auto e = new Erro(escopo, message, code, classe, object);
+        auto e = new Erro(message, code, classe, object);
         push(e);
         this.exitCode = ExitCode.Failure;
         return this;

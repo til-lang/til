@@ -12,8 +12,8 @@ public import std.conv : to;
 
 public import til.exceptions;
 
+public import til.escopo;
 public import til.context;
-public import til.process;
 
 public import til.command;
 public import til.nodes.listitem;
@@ -22,7 +22,6 @@ public import til.nodes.baselist;
 public import til.nodes.extraction;
 public import til.nodes.simplelist;
 public import til.nodes.execlist;
-public import til.nodes.sublist;
 
 public import til.nodes.dict;
 public import til.nodes.queue;
@@ -78,7 +77,6 @@ enum ObjectType
     None,
     SimpleList,
     ExecList,
-    SubList,
     SubProgram,
     Pid,
     SystemProcess,

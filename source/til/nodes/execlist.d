@@ -26,8 +26,8 @@ class ExecList : BaseList
         SubProgram names messing up with the caller
         context names, anyway.
         */
-        auto escopo = new Process(context.escopo);
+        auto escopo = new Escopo(context.escopo);
         escopo.description = "ExecList.evaluate";
-        return escopo.run(this.subprogram, context);
+        return context.process.run(this.subprogram, context);
     }
 }

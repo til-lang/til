@@ -12,7 +12,7 @@ proc generator (x) {
 }
 
 set counter 0
-spawn generator 4 | foreach i {
+spawn {generator 4} | foreach i {
     print "i:$i"
     if ($i == "quit") {
         break

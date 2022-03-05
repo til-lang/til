@@ -34,11 +34,11 @@ static this()
 }
 
 
-bool importModule(Process escopo, string modulePath)
+bool importModule(Escopo escopo, string modulePath)
 {
     return importModule(escopo, modulePath, modulePath);
 }
-bool importModule(Process escopo, string modulePath, string prefix)
+bool importModule(Escopo escopo, string modulePath, string prefix)
 {
     CommandsMap source;
 
@@ -58,7 +58,7 @@ bool importModule(Process escopo, string modulePath, string prefix)
 
 // Import commands from a .so:
 CommandsMap importFromSharedLibrary(
-    Process escopo, string libraryPath, string moduleAlias
+    Escopo escopo, string libraryPath, string moduleAlias
 )
 {
     // We don't want users informing the library preffix and suffix:
@@ -94,7 +94,7 @@ CommandsMap importFromSharedLibrary(
             }
 
             // Get the commands from inside the shared object:
-            auto getCommands = cast(CommandsMap function(Process))dlsym(
+            auto getCommands = cast(CommandsMap function(Escopo))dlsym(
                 lh, "getCommands"
             );
 
@@ -112,9 +112,7 @@ CommandsMap importFromSharedLibrary(
 };
 
 
-void importNamesFrom(
-    Process escopo, CommandsMap source, string prefix
-)
+void importNamesFrom(Escopo escopo, CommandsMap source, string prefix)
 {
     foreach(name, command; source)
     {

@@ -49,19 +49,6 @@ class SimpleList : BaseList
     }
     override Context evaluate(Context context)
     {
-        /*
-        Returning itself has some advantages:
-        1- We can use SimpleLists as "liquid" lists
-        the same way as SubLists (if a proc returns only
-        a SimpleList it is "diluted" in the CommonList
-        that called it as a command, like in
-        set eagle [f 15 E]
-         → set eagle "strike" "eagle"
-        2- It is more suitable to return SimpleLists
-        instead of SubLists because semantically
-        the returns are only one list, not
-        a list of lists.
-        */
         context.push(this);
         context.exitCode = ExitCode.Proceed;
         return context;

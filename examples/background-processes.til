@@ -8,7 +8,7 @@ proc p (q) {
 
 range 1 3 | foreach x {
     push $q $x
-    spawn p $q
+    spawn {p $q}
     sleep 50
 }
 

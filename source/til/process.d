@@ -1,328 +1,74 @@
 module til.process;
 
-import std.array : join, split;
-import std.container : DList;
+import core.thread.fiber : Fiber;
 
-import til.modules;
 import til.nodes;
-import til.procedures;
 import til.scheduler;
+import til.stack;
 
 
-enum ProcessState
+class Process : Fiber
 {
-    New,
-    Running,
-    Receiving,
-    Waiting,
-    Finished,
-}
+    Scheduler scheduler;
+    SubProgram subprogram;
 
+    // To store the execution results:
+    Context context;
 
-class NotFoundError : Exception
-{
-    this(string msg)
-    {
-        super(msg);
-    }
-}
+    // Stack:
+    Stack stack;
 
-
-class Process
-{
-    SubProgram program;
-    Process parent;
-
-    auto state = ProcessState.New;
-
-    ListItem[64] stack;
-    ulong stackPointer = 0;
-    Items[string] variables;
-    Items[string] internalVariables;
-    CommandsMap commands;
-
-    // PIDs
+    // Process identification:
     static uint counter = 0;
     string description;
     uint index;
 
-    // Scheduling
-    Scheduler scheduler = null;
-
-    // Piping
+    // I/O:
     Item input = null;
     Item output = null;
 
-    this(Process parent, bool shareStack=false)
+    this(Scheduler scheduler, string description=null)
     {
+        this(scheduler, null, null, description);
+    }
+    this(Scheduler scheduler, SubProgram subprogram, Escopo escopo=null, string description=null)
+    {
+        this.scheduler = scheduler;
+        this.subprogram = subprogram;
+        this.stack = new Stack();
         this.index = this.counter++;
-        this.parent = parent;
+        this.description = description;
 
-        if (parent !is null)
+        if (escopo is null)
         {
-            this.input = parent.input;
-            this.output = parent.output;
-            this.program = parent.program;
-
-            if (shareStack)
-            {
-                this.stack = parent.stack[];
-                this.stackPointer = parent.stackPointer;
-            }
+            escopo = new Escopo();
         }
-    }
-    this(Process parent, SubProgram program)
-    {
-        this(parent);
-        this.program = program;
-    }
-
-    static Process clone(Process other)
-    {
-        auto p = new Process(other);
-
-        p.stack = other.stack;
-        p.stackPointer = other.stackPointer;
-        p.commands = other.commands;
-
-        return p;
-    }
-
-    // The "heap":
-    // auto x = escopo["x"];
-    Items opIndex(string name)
-    {
-        Items* value = (name in this.variables);
-        if (value is null)
-        {
-            if (this.parent !is null)
-            {
-                return this.parent[name];
-            }
-            else
-            {
-                throw new NotFoundError("`" ~ name ~ "` variable not found!");
-            }
-        }
-        else
-        {
-            return *value;
-        }
-    }
-    // escopo["x"] = new Atom(123);
-    void opIndexAssign(ListItem value, string name)
-    {
-        variables[name] = [value];
-    }
-    void opIndexAssign(Items value, string name)
-    {
-        variables[name] = value;
+        this.context = Context(this, escopo);
+        super(&fiberRun);
     }
 
     // Scheduler-related things
     void yield()
     {
-        this.getRoot().scheduler.yield();
+        this.scheduler.yield();
     }
 
-    // The Stack:
-    string stackAsString()
+    void fiberRun()
     {
-        if (stackPointer == 0) return "empty";
-        return to!string(stack[0..stackPointer]);
+        this.run();
     }
 
-    ListItem peek(uint index=1)
-    {
-        long pointer = stackPointer - index;
-        if (pointer < 0)
-        {
-            return null;
-        }
-        return stack[pointer];
-    }
-    ListItem pop()
-    {
-        auto item = stack[--stackPointer];
-        return item;
-    }
-    Items pop(int count)
-    {
-        return this.pop(cast(ulong)count);
-    }
-    Items pop(ulong count)
-    {
-        Items items;
-        foreach(i; 0..count)
-        {
-            items ~= pop();
-        }
-        return items;
-    }
-    void push(ListItem item)
-    {
-        stack[stackPointer++] = item;
-    }
-    template push(T : int)
-    {
-        void push(T x)
-        {
-            return push(new IntegerAtom(x));
-        }
-    }
-    template push(T : long)
-    {
-        void push(T x)
-        {
-            return push(new IntegerAtom(x));
-        }
-    }
-    template push(T : float)
-    {
-        void push(T x)
-        {
-            return push(new FloatAtom(x));
-        }
-    }
-    template push(T : bool)
-    {
-        void push(T x)
-        {
-            return push(new BooleanAtom(x));
-        }
-    }
-    template push(T : string)
-    {
-        void push(T x)
-        {
-            return push(new String(x));
-        }
-    }
-
-    // Utilities:
-    Process getRoot()
-    {
-        if (this.scheduler !is null)
-        {
-            return this;
-        }
-        else if (this.parent !is null)
-        {
-            return this.parent.getRoot();
-        }
-        else
-        {
-            return null;
-        }
-    }
-
-    // Debugging information about itself:
-    override string toString()
-    {
-        return (
-            "Process "
-            ~ to!string(this.index)
-            ~ ":" ~ this.description
-            ~ "\n"
-            ~ "vars:" ~ to!string(variables.byKey) ~ "\n"
-            ~ "cmds:" ~ to!string(commands.byKey) ~ "\n"
-        );
-    }
-    string fullDescription()
-    {
-        string[] descriptions;
-        
-        auto pivot = this;
-        while (pivot !is null)
-        {
-            if (pivot.description)
-            {
-                descriptions ~= pivot.description
-                    ~ "(" ~ to!string(pivot.index) ~ ")";
-            }
-            else
-            {
-                descriptions ~= to!string(pivot.index);
-            }
-            pivot = pivot.parent;
-        }
-
-        string fullDesc;
-        foreach (desc; descriptions.retro)
-        {
-            fullDesc ~= "/" ~ desc;
-        }
-
-        return fullDesc;
-    }
-
-    // Commands and procedures
-    Command getCommand(string name)
-    {
-        Command cmd;
-
-        // If it's a local command:
-        auto c = (name in commands);
-        if (c !is null) return *c;
-
-        // It it's present on parent:
-        if (this.parent !is null)
-        {
-            cmd = parent.getCommand(name);
-            if (cmd !is null)
-            {
-                commands[name] = cmd;
-                return cmd;
-            }
-        }
-
-        // If the command is present in an external module:
-        bool success = {
-            // exec -> exec
-            if (this.importModule(name, name)) return true;
-
-            // http.get -> http
-            string modulePath = to!string(name.split(".")[0..$-1].join("."));
-            if (this.importModule(modulePath)) return true;
-
-            return false;
-        }();
-
-        if (success) {
-            // We imported the module, but we're not sure if this
-            // name actually exists inside it:
-            // (Important: do NOT call this method recursively!)
-            c = (name in commands);
-            if (c !is null)
-            {
-                commands[name] = *c;
-                cmd = *c;
-            }
-        }
-
-        // If such command doesn't seem to exist, `cmd` will be null:
-        return cmd;
-    }
-
-    // Execution
+    // SubProgram execution:
     Context run()
     {
-        auto context = Context(this);
-        if (this.program is null)
-        {
-            throw new Exception("Process.program cannot be null");
-        }
-        return this.run(this.program, context);
+        return run(this.subprogram, this.context);
     }
-    Context run(SubProgram subprogram)
+    Context run(Context context)
     {
-        auto context = Context(this);
-        return this.run(subprogram, context);
+        return run(this.subprogram, context);
     }
     Context run(SubProgram subprogram, Context context)
     {
-        this.state = ProcessState.Running;
-
         foreach(index, pipeline; subprogram.pipelines)
         {
             context = pipeline.run(context);
@@ -353,15 +99,16 @@ class Process
                     2- Or, if it doesn't exist, return `context`
                        as we would already do.
                     */
-                    Command* errorHandler = ("on.error" in commands);
-                    if (errorHandler !is null)
+                    Command* errorHandlerPtr = ("on.error" in context.escopo.commands);
+                    if (errorHandlerPtr !is null)
                     {
+                        auto errorHandler = *errorHandlerPtr;
                         debug {
                             stderr.writeln("Calling on.error");
                             stderr.writeln(" context: ", context);
                             stderr.writeln(" ...");
                         }
-                        context = (*errorHandler).run("on.error", context);
+                        context = errorHandler.run("on.error", context);
                         debug {stderr.writeln(" returned context:", context);}
                         /*
                         errorHandler can simply "rethrow"
@@ -404,3 +151,4 @@ class Process
         return context;
     }
 }
+

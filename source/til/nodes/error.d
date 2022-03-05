@@ -12,22 +12,20 @@ debug
 CommandsMap errorCommands;
 
 
-class Erro : ListItem
+class Erro : Item
 {
     int code = -1;
     string classe;
     string message;
-    Process process;
     Item object;
 
-    this(Process process, string message, int code, string classe)
+    this(string message, int code, string classe)
     {
-        this(process, message, code, classe, null);
+        this(message, code, classe, null);
     }
-    this(Process process, string message, int code, string classe, Item object)
+    this(string message, int code, string classe, Item object)
     {
         this.object = object;
-        this.process = process;
         this.message = message;
         this.code = code;
         this.classe = classe;

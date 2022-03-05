@@ -12,7 +12,7 @@ proc printer () {
     incr $counter
 }
 
-set p [spawn printer]
+set p [spawn {printer}]
 range 4 | foreach x {
     send $p $x
 }

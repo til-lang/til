@@ -320,9 +320,9 @@ class Parser
         }
     }
 
-    SubList consumeSubList()
+    SubProgram consumeSubList()
     {
-        push("SubList");
+        push("SubProgram");
         auto open = consumeChar();
         assert(open == '{');
         auto subprogram = consumeSubProgram();
@@ -330,7 +330,7 @@ class Parser
         assert(close == '}');
 
         pop();
-        return new SubList(subprogram);
+        return subprogram;
     }
 
     ExecList consumeExecList()

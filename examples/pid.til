@@ -10,7 +10,7 @@ proc procedure () {
     }
 }
 
-spawn procedure | as pid
+spawn {procedure} | as pid
 
 assert (<$pid is_running>)
 print "$pid is running"

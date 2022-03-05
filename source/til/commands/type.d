@@ -15,7 +15,7 @@ class TypeCommand : Command
     string name;
     CommandsMap commands;
 
-    this(string name, Process escopo)
+    this(string name, Escopo escopo)
     {
         this.name = name;
         this.commands = escopo.commands;
@@ -98,15 +98,14 @@ static this()
     nameCommands["type"] = new Command((string path, Context context)
     {
         auto name = context.pop!string();
-        auto sublist = context.pop!SubList();
+        auto subprogram = context.pop!SubProgram();
 
-        auto subprogram = sublist.subprogram;
-        auto newScope = new Process(context.escopo);
-        newScope.description = name;
+        auto newScope = new Escopo(context.escopo);
+        // newScope.description = name;
         auto newContext = context.next(newScope, context.size);
 
         // RUN!
-        newContext = newContext.escopo.run(subprogram, newContext);
+        newContext = newContext.process.run(subprogram, newContext);
 
         if (newContext.exitCode == ExitCode.Failure)
         {

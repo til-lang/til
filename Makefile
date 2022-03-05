@@ -21,13 +21,15 @@ til.release: dist/libtil.so
 		-link-defaultlib-shared \
 		--O2 -of=til.release
 
-til.debug: lib-debug
+til.debug:
 	ldc2 --d-debug \
 		cli/source/*.d \
 		-L-L${PWD}/dist -L-ltil -L-ledit \
 		-I=source -I=3rd-parties/editline/source \
 		-link-defaultlib-shared \
 		--O1 -of=til.debug
+
+debug: lib-debug til.debug
 
 libtil_hellomodule.so: modules/hello/hellomodule.d
 	ldc2 --shared \

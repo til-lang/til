@@ -2,13 +2,16 @@ module til.nodes.subprogram;
 
 import til.nodes;
 
-class SubProgram
+
+class SubProgram : BaseList
 {
     Pipeline[] pipelines;
 
     this(Pipeline[] pipelines)
     {
         this.pipelines = pipelines;
+        this.type = ObjectType.SubProgram;
+        this.typeName = "subprogram";
     }
 
     override string toString()
@@ -31,5 +34,22 @@ class SubProgram
             s ~= "}";
         }
         return s;
+    }
+
+    override Context evaluate(Context context)
+    {
+        return this.evaluate(context, false);
+    }
+    override Context evaluate(Context context, bool force)
+    {
+        if (!force)
+        {
+            context.push(this);
+            return context;
+        }
+        else
+        {
+            return new ExecList(this).evaluate(context);
+        }
     }
 }
