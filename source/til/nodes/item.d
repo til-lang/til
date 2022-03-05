@@ -1,10 +1,10 @@
-module til.nodes.listitem;
+module til.nodes.item;
 
 import til.nodes;
 
 
 // A base class for all kind of items that
-// compose a sequence (including SimpleLists):
+// compose a sequence:
 class Item
 {
     ObjectType type;

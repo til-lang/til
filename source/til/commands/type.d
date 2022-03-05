@@ -14,6 +14,7 @@ class TypeCommand : Command
 {
     string name;
     CommandsMap commands;
+    CommandsMap[string] newCommandsCache;
 
     this(string name, Escopo escopo)
     {
@@ -39,10 +40,35 @@ class TypeCommand : Command
             return initContext;
         }
 
-        CommandsMap newCommands;
-
         auto returnedObject = initContext.pop();
         debug {stderr.writeln(" returnedObject:", returnedObject); }
+
+        returnedObject.commands = resolveCommands(returnedObject);
+        returnedObject.typeName = this.name;
+
+        context.push(returnedObject);
+        context.exitCode = ExitCode.CommandSuccess;
+        return context;
+    };
+
+    CommandsMap resolveCommands(Item returnedObject)
+    {
+        auto cacheEntryPtr = (returnedObject.typeName in newCommandsCache);
+        if (cacheEntryPtr is null)
+        {
+            auto newCommands = doResolveCommands(returnedObject);
+            newCommandsCache[returnedObject.typeName] = newCommands;
+            return newCommands;
+        }
+        else
+        {
+            return *cacheEntryPtr;
+        }
+    }
+
+    CommandsMap doResolveCommands(Item returnedObject)
+    {
+        CommandsMap newCommands;
 
         string prefix1 = returnedObject.typeName ~ ".";
 
@@ -82,13 +108,9 @@ class TypeCommand : Command
             newCommands[cmdName] = command;
             debug {stderr.writeln(" ", this.name, ":", cmdName);}
         }
-        returnedObject.commands = newCommands;
-        returnedObject.typeName = this.name;
 
-        context.push(returnedObject);
-        context.exitCode = ExitCode.CommandSuccess;
-        return context;
-    };
+        return newCommands;
+    }
 }
 
 
@@ -101,7 +123,7 @@ static this()
         auto subprogram = context.pop!SubProgram();
 
         auto newScope = new Escopo(context.escopo);
-        // newScope.description = name;
+        newScope.description = name;
         auto newContext = context.next(newScope, context.size);
 
         // RUN!
@@ -117,7 +139,7 @@ static this()
         Command* initMethod = ("init" in newScope.commands);
         if (initMethod is null)
         {
-            auto msg = "The type " ~ name ~ " must have a `init` method";
+            auto msg = "The type " ~ name ~ " must have an `init` method";
             return context.error(msg, ErrorCode.InvalidSyntax, "");
         }
         context.escopo.commands[name] = new TypeCommand(name, newScope);

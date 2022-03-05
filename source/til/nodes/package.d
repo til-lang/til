@@ -16,7 +16,7 @@ public import til.escopo;
 public import til.context;
 
 public import til.command;
-public import til.nodes.listitem;
+public import til.nodes.item;
 
 public import til.nodes.baselist;
 public import til.nodes.extraction;
