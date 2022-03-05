@@ -3,7 +3,7 @@ module til.nodes.baselist;
 import til.nodes;
 
 
-class BaseList : ListItem
+class BaseList : Item
 {
     Items items;
 
@@ -11,7 +11,7 @@ class BaseList : ListItem
     {
         this([]);
     }
-    this(ListItem item)
+    this(Item item)
     {
         this([item]);
     }
@@ -23,7 +23,7 @@ class BaseList : ListItem
     // Operators:
     template opUnary(string operator)
     {
-        override ListItem opUnary()
+        override Item opUnary()
         {
             throw new Exception("Cannot apply " ~ operator ~ " to a List!");
         }

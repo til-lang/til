@@ -55,7 +55,7 @@ class InterpreterOutput : Queue
         this.outputFile = outputFile;
     }
 
-    override void push(ListItem item)
+    override void push(Item item)
     {
         // outputFile.write(to!string(item));
         stdout.write(to!string(item));

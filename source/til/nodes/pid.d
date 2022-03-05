@@ -10,7 +10,7 @@ import til.process;
 CommandsMap pidCommands;
 
 
-class Pid : ListItem
+class Pid : Item
 {
     Process process;
     auto type = ObjectType.Pid;

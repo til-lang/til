@@ -26,7 +26,7 @@ class Extraction : BaseList
             context.run(&(item.evaluate));
         }
 
-        ListItem target = context.pop();
+        Item target = context.pop();
 
         try
         {

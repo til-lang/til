@@ -6,11 +6,11 @@ import til.nodes;
 
 class Stack
 {
-    ListItem[64] stack;
+    Item[64] stack;
     ulong stackPointer = 0;
 
     // Stack manipulation:
-    ListItem peek(uint index=1)
+    Item peek(uint index=1)
     {
         long pointer = stackPointer - index;
         if (pointer < 0)
@@ -19,7 +19,7 @@ class Stack
         }
         return stack[pointer];
     }
-    ListItem pop()
+    Item pop()
     {
         auto item = stack[--stackPointer];
         return item;
@@ -37,7 +37,7 @@ class Stack
         }
         return items;
     }
-    void push(ListItem item)
+    void push(Item item)
     {
         stack[stackPointer++] = item;
     }

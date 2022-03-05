@@ -253,9 +253,9 @@ static this()
 
         class Comparator
         {
-            ListItem item;
+            Item item;
             Context context;
-            this(Context context, ListItem item)
+            this(Context context, Item item)
             {
                 this.context = context;
                 this.item = item;
@@ -303,7 +303,7 @@ static this()
         }
 
         SimpleList list = context.pop!SimpleList();
-        ListItem item = context.pop();
+        Item item = context.pop();
 
         context.exitCode = ExitCode.CommandSuccess;
         return context.push(

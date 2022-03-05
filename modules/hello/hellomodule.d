@@ -3,7 +3,7 @@ import std.stdio : writeln;
 import til.nodes;
 
 
-extern (C) CommandsMap getCommands(Process escopo)
+extern (C) CommandsMap getCommands(Escopo escopo)
 {
     CommandsMap commands;
 

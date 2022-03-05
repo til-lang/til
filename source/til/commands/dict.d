@@ -23,7 +23,7 @@ static this()
             context = l.forceEvaluate(context);
             l = cast(SimpleList)context.pop();
 
-            ListItem value = l.items.back;
+            Item value = l.items.back;
             l.items.popBack();
             string key = to!string(l.items.map!(x => to!string(x)).join("."));
             dict[key] = value;
@@ -44,7 +44,7 @@ static this()
             context = l.forceEvaluate(context);
             l = cast(SimpleList)context.pop();
 
-            ListItem value = l.items.back;
+            Item value = l.items.back;
             l.items.popBack();
             string key = to!string(l.items.map!(x => to!string(x)).join("."));
             dict[key] = value;

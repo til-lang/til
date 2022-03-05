@@ -11,7 +11,7 @@ CommandsMap floatCommands;
 CommandsMap nameCommands;
 
 
-class Atom : ListItem
+class Atom : Item
 {
 }
 

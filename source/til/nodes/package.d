@@ -36,8 +36,9 @@ public import til.nodes.command_call;
 public import til.nodes.string;
 public import til.nodes.atom;
 
-alias Item = ListItem;
-alias Items = ListItem[];
+// TODO: get rid of "ListItem" after some more versions.
+alias ListItem = Item;
+alias Items = Item[];
 
 
 enum ExitCode

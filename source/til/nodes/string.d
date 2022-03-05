@@ -12,7 +12,7 @@ CommandsMap stringCommands;
 
 
 // A string without substitutions:
-class String : ListItem
+class String : Item
 {
     string repr;
 
@@ -45,7 +45,7 @@ class String : ListItem
     }
     template opUnary(string operator)
     {
-        override ListItem opUnary()
+        override Item opUnary()
         {
             string newRepr;
             string repr = to!string(this);

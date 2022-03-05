@@ -3,18 +3,9 @@ module til.nodes.listitem;
 import til.nodes;
 
 
-class NotImplementedError : Exception
-{
-    this(string msg)
-    {
-        super(msg);
-    }
-}
-
-
 // A base class for all kind of items that
-// compose a list (including Lists):
-class ListItem
+// compose a sequence (including SimpleLists):
+class Item
 {
     ObjectType type;
     string typeName;
@@ -23,7 +14,7 @@ class ListItem
     // Operators:
     template opUnary(string operator)
     {
-        ListItem opUnary()
+        Item opUnary()
         {
             throw new Exception(
                 "Cannot apply " ~ operator ~ " to " ~ this.toString()
@@ -104,11 +95,11 @@ class ListItem
         if (cmd is null)
         {
             auto info = typeid(this);
-            throw new NotImplementedError(
+            string msg = 
                 name
                 ~ " not implemented for "
-                ~ info.toString()
-            );
+                ~ info.toString();
+            return context.error(msg, ErrorCode.NotImplemented, "");
         }
 
         context.push(this);

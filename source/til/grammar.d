@@ -261,7 +261,7 @@ class Parser
     {
         push("command");
         NameAtom commandName = cast(NameAtom)consumeAtom();
-        ListItem[] arguments;
+        Item[] arguments;
 
         // That is: if the command HAS any argument:
         while (currentChar == SPACE)
@@ -272,7 +272,7 @@ class Parser
                 break;
             }
 
-            arguments ~= consumeListItem();
+            arguments ~= consumeItem();
 
             if (currentChar == EOL)
             {
@@ -297,10 +297,10 @@ class Parser
         return new CommandCall(commandName.toString(), arguments);
     }
 
-    ListItem consumeListItem()
+    Item consumeItem()
     {
         debug {
-            stderr.writeln("   consumeListItem");
+            stderr.writeln("   consumeItem");
             stderr.writeln("    - currentChar: '", currentChar, "'");
         }
         switch(currentChar)
@@ -349,18 +349,18 @@ class Parser
     SimpleList consumeSimpleList()
     {
         push("SimpleList");
-        ListItem[] items;
+        Item[] items;
         auto open = consumeChar();
         assert(open == '(');
 
         if (currentChar != ')')
         {
-            items ~= consumeListItem();
+            items ~= consumeItem();
         }
         while (currentChar != ')')
         {
             consumeSpace();
-            items ~= consumeListItem();
+            items ~= consumeItem();
         }
 
         auto close = consumeChar();
@@ -370,10 +370,10 @@ class Parser
         return new SimpleList(items);
     }
 
-    ListItem consumeExtraction()
+    Item consumeExtraction()
     {
         push("Extraction");
-        ListItem[] items;
+        Item[] items;
         auto open = consumeChar();
         assert(open == '<');
 
@@ -387,7 +387,7 @@ class Parser
 
         do
         {
-            items ~= consumeListItem();
+            items ~= consumeItem();
             consumeWhitespaces();
         }
         while (currentChar != '>');

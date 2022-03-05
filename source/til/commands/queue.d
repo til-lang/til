@@ -173,7 +173,7 @@ static this()
             return context.error(msg, ErrorCode.InvalidArgument, "");
         }
 
-        class WaitingQueueIterator : ListItem
+        class WaitingQueueIterator : Item
         {
             Queue queue;
             this(Queue q)

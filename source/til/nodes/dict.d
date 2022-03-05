@@ -11,9 +11,9 @@ debug
 CommandsMap dictCommands;
 
 
-class Dict : ListItem
+class Dict : Item
 {
-    ListItem[string] values;
+    Item[string] values;
 
     this()
     {
@@ -21,7 +21,7 @@ class Dict : ListItem
         this.commands = dictCommands;
         this.typeName = "dict";
     }
-    this(ListItem[string] values)
+    this(Item[string] values)
     {
         this();
         this.values = values;
@@ -41,7 +41,7 @@ class Dict : ListItem
 
     // ------------------
     // Operators
-    ListItem opIndex(string k)
+    Item opIndex(string k)
     {
         auto v = values.get(k, null);
         if (v is null)
@@ -50,7 +50,7 @@ class Dict : ListItem
         }
         return v;
     }
-    void opIndexAssign(ListItem v, string k)
+    void opIndexAssign(Item v, string k)
     {
         debug {stderr.writeln(" dict[", k, "] = ", to!string(v));}
         values[k] = v;

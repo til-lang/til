@@ -8,7 +8,7 @@ import til.nodes;
 CommandsMap queueCommands;
 
 
-class Queue : ListItem
+class Queue : Item
 {
     ulong size;
     Items values;
@@ -48,11 +48,11 @@ class Queue : ListItem
         return values.length == 0;
     }
 
-    ListItem front()
+    Item front()
     {
         return values.front;
     }
-    void push(ListItem item)
+    void push(Item item)
     {
         if (values.length >= size)
         {
@@ -60,7 +60,7 @@ class Queue : ListItem
         }
         values ~= item;
     }
-    ListItem pop()
+    Item pop()
     {
         if (values.length == 0)
         {
@@ -89,7 +89,7 @@ class Queue : ListItem
 
     // ------------------
     // Operators
-    ListItem opIndex(ulong k)
+    Item opIndex(ulong k)
     {
         if (k >= values.length)
         {

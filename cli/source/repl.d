@@ -24,7 +24,7 @@ int repl(Dict envVars, SimpleList argumentsList)
 
     string command;
 
-    ListItem* promptString = ("TIL_PROMPT" in envVars.values);
+    Item* promptString = ("TIL_PROMPT" in envVars.values);
     if (promptString !is null)
     {
         escopo["prompt"] = *promptString;
