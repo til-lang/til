@@ -314,6 +314,7 @@ class Parser
             case '<':
                 return consumeExtraction();
             case '"':
+            case '\'':
                 return consumeString();
             default:
                 return consumeAtom();
@@ -402,15 +403,15 @@ class Parser
     String consumeString()
     {
         push("string");
-        auto open = consumeChar();
-        assert(open == '"');
+        auto opener = consumeChar();
+        assert(opener == '"' || opener == '\'');
 
         char[] token;
         StringPart[] parts;
         bool hasSubstitution = false;
 
         ulong index = 0;
-        do 
+        while (currentChar != opener)
         {
             if (currentChar == '$')
             {
@@ -486,12 +487,11 @@ class Parser
                         token ~= consumeChar();
                 }
             }
-            else if (currentChar != '"')
+            else
             {
                 token ~= consumeChar();
             }
         }
-        while (currentChar != '"');
 
         // Adds the eventual last part (in
         // simple strings it will be
@@ -501,8 +501,8 @@ class Parser
             parts ~= new StringPart(token, false);
         }
 
-        auto close = consumeChar();
-        assert(close == '"');
+        auto closer = consumeChar();
+        assert(closer == opener);
 
         pop();
         if (hasSubstitution)

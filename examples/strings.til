@@ -1,8 +1,11 @@
 print "START"
 
 print "A string with a \$ (dollar sign) in it."
+print 'A string with a \$ (dollar sign) in it.'
 print "A string with a \" (double quote) in it."
+print 'A string with a \" (double quote) in it.'
 print "A string with a \\ (backslash) in it."
+print 'A string with a \\ (backslash) in it.'
 
 set value 123
 print "value:" $value
@@ -73,5 +76,9 @@ print [typeof [strip $s]]
 assert ([strip $s] == "aa12345bb")
 assert ([strip.left $s "a "] == "12345bb ")
 assert ([strip.right $s "b "] == " aa12345")
+
+# Single-quote strings:
+assert ('$value' == "$value")
+assert ('$value' == [to.string $value])
 
 print "END"

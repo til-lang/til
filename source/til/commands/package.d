@@ -505,14 +505,14 @@ forLoop:
         string name = context.pop!string();
         auto contextManager = context.pop();
 
-        auto process = context.escopo;
+        auto escopo = context.escopo;
 
-        process[name] = contextManager;
+        escopo[name] = contextManager;
         context = contextManager.runCommand("open", context);
 
-        Items managers = process.internalVariables.require("cm", []);
+        Items managers = escopo.internalVariables.require("cm", []);
         managers ~= contextManager;
-        process.internalVariables["cm"] = managers;
+        escopo.internalVariables["cm"] = managers;
 
         context.exitCode = ExitCode.CommandSuccess;
         return context;
