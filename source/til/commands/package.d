@@ -284,48 +284,54 @@ static this()
         uint yieldStep = 0x07;
 
         uint index = 0;
-        auto target = context.pop();
 
-        // Remember: `context` is going to change a lot from now on.
-        auto nextContext = context;
-forLoop:
-        while (true)
+        foreach (target; context.items)
         {
-            nextContext = target.next(context.next());
-            switch (nextContext.exitCode)
+            debug {stderr.writeln("foreach.target:", target);}
+    forLoop:
+            while (true)
             {
-                case ExitCode.Break:
-                    break forLoop;
-                case ExitCode.Failure:
-                    return nextContext;
-                case ExitCode.Skip:
-                    continue;
-                case ExitCode.Continue:
+                auto nextContext = target.next(context.next());
+                switch (nextContext.exitCode)
+                {
+                    case ExitCode.Break:
+                        break forLoop;
+                    case ExitCode.Failure:
+                        return nextContext;
+                    case ExitCode.Skip:
+                        continue;
+                    case ExitCode.Continue:
+                        break;
+                    default:
+                        return nextContext;
+                }
+
+                loopScope[argName] = nextContext.items;
+
+                context = context.process.run(argBody, context.next());
+                debug {stderr.writeln("foreach context.exitCode:", to!string(context.exitCode));}
+
+                if (context.exitCode == ExitCode.Break)
+                {
                     break;
-                default:
-                    return nextContext;
-            }
+                }
+                else if (context.exitCode == ExitCode.ReturnSuccess)
+                {
+                    /*
+                    ReturnSuccess propagates up into the
+                    processes stack:
+                    */
+                    return context;
+                }
+                else if (context.exitCode == ExitCode.Failure)
+                {
+                    return context;
+                }
 
-            loopScope[argName] = nextContext.items;
-
-            context = context.process.run(argBody, context.next());
-
-            if (context.exitCode == ExitCode.Break)
-            {
-                break;
-            }
-            else if (context.exitCode == ExitCode.ReturnSuccess)
-            {
-                /*
-                ReturnSuccess propagates up into the
-                processes stack:
-                */
-                return context;
-            }
-
-            if ((index++ & yieldStep) == yieldStep)
-            {
-                context.yield();
+                if ((index++ & yieldStep) == yieldStep)
+                {
+                    context.yield();
+                }
             }
         }
 
@@ -336,20 +342,21 @@ forLoop:
     {
         class Transformer : Item
         {
-            Item target;
+            Items targets;
+            ulong targetIndex = 0;
             SubProgram body;
             Context context;
             string varName;
             bool empty;
 
             this(
-                Item target,
+                Items targets,
                 string varName,
                 SubProgram body,
                 Context context
             )
             {
-                this.target = target;
+                this.targets = targets;
                 this.varName = varName;
                 this.body = body;
                 this.context = context;
@@ -362,10 +369,18 @@ forLoop:
 
             override Context next(Context context)
             {
-                auto targetContext = this.target.next(context);
+                auto target = targets[targetIndex];
+                auto targetContext = target.next(context);
+
                 switch (targetContext.exitCode)
                 {
                     case ExitCode.Break:
+                        targetIndex++;
+                        if (targetIndex < targets.length)
+                        {
+                            return next(context);
+                        }
+                        goto case;
                     case ExitCode.Failure:
                     case ExitCode.Skip:
                         return targetContext;
@@ -373,7 +388,7 @@ forLoop:
                         break;
                     default:
                         throw new Exception(
-                            to!string(this.target)
+                            to!string(target)
                             ~ ".next returned "
                             ~ to!string(targetContext.exitCode)
                         );
@@ -406,13 +421,47 @@ forLoop:
             auto msg = "no target to transform";
             return context.error(msg, ErrorCode.InvalidSyntax, "");
         }
-        auto target = context.pop();
+        auto targets = context.items;
 
         auto iterator = new Transformer(
-            target, varName, body, context
+            targets, varName, body, context
         );
         context.push(iterator);
         return context;
+    });
+    commands["collect"] = new Command((string path, Context context)
+    {
+        if (context.size == 0)
+        {
+            auto msg = "`" ~ path ~ "` needs at least one input stream";
+            return context.error(msg, ErrorCode.InvalidSyntax, "");
+        }
+
+        Items items;
+
+        foreach (input; context.items)
+        {
+            while (true)
+            {
+                auto nextContext = input.next(context.next());
+                if (nextContext.exitCode == ExitCode.Break)
+                {
+                    break;
+                }
+                else if (nextContext.exitCode == ExitCode.Skip)
+                {
+                    continue;
+                }
+                else if (nextContext.exitCode == ExitCode.Failure)
+                {
+                    return nextContext;
+                }
+                auto x = nextContext.items;
+                items ~= x;
+            }
+        }
+
+        return context.push(new SimpleList(items));
     });
     commands["break"] = new Command((string path, Context context)
     {
@@ -581,7 +630,7 @@ forLoop:
         Item input = context.popOrNull();
         debug {stderr.writeln("input:", input); }
 
-        if (context.inputSize > 1)
+        if (context.size > 1)
         {
             auto msg = "`" ~ path ~ "` cannot handle multiple inputs";
             return context.error(msg, ErrorCode.InvalidInput, "");

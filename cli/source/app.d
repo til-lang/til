@@ -142,18 +142,16 @@ int main(string[] args)
     // The scheduler:
     auto scheduler = new Scheduler();
 
-    // The main Process:
-    auto process = new Process(scheduler, program);
-    process.description = "main";
-    process.input = new InterpreterInput(stdin);
-    process.output = new InterpreterOutput(stdout);
-
     // The scope:
     auto escopo = new Escopo();
     escopo["args"] = argumentsList;
     escopo["env"] = envVars;
     escopo.commands = commands;
-    process.context = process.context.next(escopo);
+
+    // The main Process:
+    auto process = new Process(scheduler, program, escopo, "main");
+    process.input = new InterpreterInput(stdin);
+    process.output = new InterpreterOutput(stdout);
 
     // Start!
     debug {sw.start();}

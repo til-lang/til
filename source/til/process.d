@@ -55,7 +55,7 @@ class Process : Fiber
 
     void fiberRun()
     {
-        this.run();
+        this.context = this.run();
     }
 
     // SubProgram execution:

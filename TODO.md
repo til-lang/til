@@ -2,7 +2,7 @@
 
 ## Low hanging fruits
 
-* collect: `set content [exec cat $file_path | collect]` - ?
+None at the moment.
 
 ## A little more complex ones
 
