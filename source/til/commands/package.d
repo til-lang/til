@@ -726,11 +726,22 @@ forLoop:
         {
             if (item.type == ObjectType.SimpleList)
             {
-                auto execContext = (cast(SimpleList)item).runAsInfixProgram(context);
+                SimpleList list = cast(SimpleList)item;
+                string debugString1 = list.items.map!(x => x.toString()).join(" ");
+
+                auto lContext = list.forceEvaluate(context);
+                list = lContext.pop!SimpleList();
+                string debugString2 = list.items.map!(x => x.toString()).join(" ");
+
+                auto execContext = list.runAsInfixProgram(lContext);
                 auto result = execContext.pop!bool();
                 if (!result)
                 {
-                    auto msg = "assertion error: " ~ item.toString();
+                    auto msg = "assertion error: ("
+                        ~ debugString1
+                        ~ ") -> ("
+                        ~ debugString2
+                        ~ ")";
                     return context.error(msg, ErrorCode.Assertion, "");
                 }
             }

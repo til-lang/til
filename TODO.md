@@ -7,11 +7,6 @@
 ## A little more complex ones
 
 * `--version` CLI option.
-* Make the REPL a command.
-    * `repl $prompt_string $handler_command`
-    * Don't execute the input, just pass that to the handler command.
-    * Allow to configure the prompt while using it, like changing the
-      prompt string.
 * Print `Process.description` for each process in the "stack" when an
   error occur and is not handled.
 * Use `scope` to create unit tests:
@@ -23,8 +18,6 @@ scope "conversion to float" {
 
 "conversion to float": assertion failed: 1.23 (float) == 1.234 (float)
 ```
-
-* Improve **string handling**!
 
 ## Complex
 
