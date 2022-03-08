@@ -69,6 +69,7 @@ enum ErrorCode
     Underflow,
     Assertion,
     RuntimeError,
+    NotFound,
 }
 
 enum ObjectType

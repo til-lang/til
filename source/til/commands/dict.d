@@ -3,11 +3,6 @@ module til.commands.dict;
 import til.nodes;
 import til.commands;
 
-debug
-{
-    import std.stdio;
-}
-
 
 // Commands:
 static this()
@@ -19,20 +14,19 @@ static this()
         foreach(argument; context.items)
         {
             SimpleList l = cast(SimpleList)argument;
-            debug {stderr.writeln(" l:", l); }
-            context = l.forceEvaluate(context);
-            l = cast(SimpleList)context.pop();
+            auto lContext = l.forceEvaluate(context);
+            l = cast(SimpleList)lContext.pop();
 
             Item value = l.items.back;
             l.items.popBack();
-            string key = to!string(l.items.map!(x => to!string(x)).join("."));
-            dict[key] = value;
-            debug {stderr.writeln(" ", key, ":", value); }
+
+            string lastKey = l.items.back.toString();
+            l.items.popBack();
+
+            auto nextDict = dict.navigateTo(l.items);
+            nextDict[lastKey] = value;
         }
-        debug {stderr.writeln("new dict:", dict.toString()); }
-        context.push(dict);
-        context.exitCode = ExitCode.CommandSuccess;
-        return context;
+        return context.push(dict);
     });
     dictCommands["set"] = new Command((string path, Context context)
     {
@@ -41,16 +35,25 @@ static this()
         foreach(argument; context.items)
         {
             SimpleList l = cast(SimpleList)argument;
-            context = l.forceEvaluate(context);
-            l = cast(SimpleList)context.pop();
+            auto lContext = l.forceEvaluate(context);
+            l = cast(SimpleList)lContext.pop();
+
+            if (l.items.length < 2)
+            {
+                auto msg = "`dict." ~ path ~ "` expects lists with at least 2 items";
+                return context.error(msg, ErrorCode.InvalidArgument, "dict");
+            }
 
             Item value = l.items.back;
             l.items.popBack();
-            string key = to!string(l.items.map!(x => to!string(x)).join("."));
-            dict[key] = value;
+
+            string lastKey = l.items.back.toString();
+            l.items.popBack();
+
+            auto nextDict = dict.navigateTo(l.items);
+            nextDict[lastKey] = value;
         }
 
-        context.exitCode = ExitCode.CommandSuccess;
         return context;
     });
     dictCommands["unset"] = new Command((string path, Context context)
@@ -60,35 +63,43 @@ static this()
         foreach (argument; context.items)
         {
             string key;
-            if (argument.type == ObjectType.SimpleList)
+            if (argument.type != ObjectType.SimpleList)
             {
-                auto list = cast(SimpleList)argument;
-                auto keysContext = list.evaluate(context.next());
-                auto evaluatedList = cast(SimpleList)keysContext.pop();
-                auto parts = evaluatedList.items;
+                argument = new SimpleList([argument]);
+            }
 
-                key = to!string(
-                    parts.map!(x => to!string(x)).join(".")
-                );
-            }
-            else
+            SimpleList l = cast(SimpleList)argument;
+            auto lContext = l.forceEvaluate(context);
+            l = cast(SimpleList)lContext.pop();
+
+            auto lastKey = l.items.back;
+            l.items.popBack();
+
+            auto innerDict = dict.navigateTo(l.items, false);
+            if (innerDict !is null)
             {
-                key = to!string(argument);
+                innerDict.values.remove(key);
             }
-            dict.values.remove(key);
         }
 
-        context.exitCode = ExitCode.CommandSuccess;
         return context;
     });
     dictCommands["extract"] = new Command((string path, Context context)
     {
-        Dict d = context.pop!Dict();
-        auto arguments = context.items!string;
-        string key = to!string(arguments.join("."));
-        context.push(d[key]);
+        Dict dict = context.pop!Dict();
 
-        context.exitCode = ExitCode.CommandSuccess;
-        return context;
+        Items items = context.items;
+
+        auto lastKey = items.back.toString();
+        items.popBack();
+
+        auto innerDict = dict.navigateTo(items);
+        if (innerDict is null)
+        {
+            auto msg = "Key `" ~ to!string(items.map!(x => x.toString()).join(".")) ~ "." ~ lastKey ~ "` not found";
+            return context.error(msg, ErrorCode.NotFound, "dict");
+        }
+
+        return context.push(innerDict[lastKey]);
     });
 }

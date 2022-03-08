@@ -31,11 +31,11 @@ class Dict : Item
     // Conversions
     override string toString()
     {
-        string s = "dict ";
-        foreach(key, value; values)
-        {
-            s ~= key ~ "=" ~ to!string(value) ~ " ";
-        }
+        string s = "dict("
+            ~ to!string(
+                values.keys.map!(key => key ~ "=" ~ values[key].toString()).join(" ")
+            )
+            ~ ")";
         return s;
     }
 
@@ -54,5 +54,34 @@ class Dict : Item
     {
         debug {stderr.writeln(" dict[", k, "] = ", to!string(v));}
         values[k] = v;
+    }
+
+    Dict navigateTo(Items items, bool autoCreate=true)
+    {
+        debug {stderr.writeln("navigateTo:", items, "/", autoCreate);}
+        auto pivot = this;
+        foreach (item; items)
+        {
+            string key = item.toString();
+            auto nextDict = (key in pivot.values);
+            if (nextDict is null)
+            {
+                if (autoCreate)
+                {
+                    auto d = new Dict();
+                    pivot[key] = d;
+                    pivot = d;
+                }
+                else
+                {
+                    return null;
+                }
+            }
+            else
+            {
+                pivot = cast(Dict)pivot[key];
+            }
+        }
+        return pivot;
     }
 }

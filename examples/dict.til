@@ -1,38 +1,30 @@
-# Creation
-set d [dict (x 11) (y 22) (z 33)]
+print "START"
+
+print "Dict creation"
+dict (x 11) (y 22) (z 33) | as d
 print "d: $d"
-print <$d x> <$d y> <$d z>
 assert (<$d x> == 11) (<$d y> == 22) (<$d z> == 33)
 
-# Set new keys
-set $d (a 1) (b 2)
+print "Set new keys"
+set $d (a 1) (b 0)
 set $d (b 2)
 set $d (c 3)
-print "a b c: " <$d a> <$d b> <$d c>
 assert (<$d a> == 1) (<$d b> == 2) (<$d c> == 3)
 
-# Set new keys with "dynamic set"
-set $d (a 11) (b 22)
-set $d (b 22)
-set $d (c 33)
-print "a b c: " <$d a> <$d b> <$d c>
-assert (<$d a> == 11) (<$d b> == 22) (<$d c> == 33)
+print "Multi-dimensional dicts"
+dict | as d
+set $d (x y z 321)
+assert (<$d x y z> == 321)
+print "unset"
+unset $d (x y z)
+set $d (x y z 123)
+assert (<$d x y z> == 123)
 
-# Multi-dimensional dicts:
-set $d (a b c 123)
-print "a.b.c: " <$d a b c>
-unset $d (a b c)
+dict (a a 1) (a b 2) (a c 3)
+   . (b a 4) (b b 5) (b c 6)
+   . (c a 7) (c b 8) (c c 9) | as map
 
-set $d (a b c 123)
-print "a.b.c (with simple `set`): " <$d a b c>
-assert (<$d a b c> == 123)
-
-set map [
-    dict (a a 1) (a b 2) (a c 3)
-       . (b a 4) (b b 5) (b c 6)
-       . (c a 7) (c b 8) (c c 9)
-]
-
+print "Map"
 set counter 0
 range (a b c) | foreach x {
     range (a b c) | foreach y {
@@ -41,3 +33,5 @@ range (a b c) | foreach x {
         assert (<$map $x $y> == $counter)
     }
 }
+
+print "END"
