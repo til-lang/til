@@ -525,8 +525,7 @@ static this()
         string name = context.pop!string();
         SubProgram body = context.pop!SubProgram();
 
-        auto escopo = new Escopo(context.escopo);
-        escopo.description = name;
+        auto escopo = new Escopo(context.escopo, name);
         escopo.variables = context.escopo.variables;
 
         auto returnedContext = context.process.run(
@@ -541,9 +540,11 @@ static this()
         Items managers = escopo.internalVariables.require("cm", []);
         foreach (contextManager; managers)
         {
-            returnedContext = contextManager.runCommand(
-                "close", returnedContext
-            );
+            auto closeContext = contextManager.runCommand("close", returnedContext);
+            if (closeContext.exitCode == ExitCode.Failure)
+            {
+                return closeContext;
+            }
         }
 
         return returnedContext;

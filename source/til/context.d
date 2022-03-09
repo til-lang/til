@@ -53,6 +53,22 @@ struct Context
         s ~= " process " ~ to!string(process.index);
         return s;
     }
+    string description()
+    {
+        string[] path;
+
+        auto pivot = escopo;
+        do
+        {
+            path ~= pivot.description;
+            pivot = pivot.parent;
+        }
+        while (pivot.parent);
+
+        path ~= process.description;
+
+        return path.retro.join("/");
+    }
 
     // Stack-related things:
     Item peek(uint index=1)
@@ -231,13 +247,9 @@ struct Context
     }
 
     // Errors
-    Context error(string message, int code, string classe)
+    Context error(string message, int code, string classe, Item object=null)
     {
-        return this.error(message, code, classe, null);
-    }
-    Context error(string message, int code, string classe, Item object)
-    {
-        auto e = new Erro(message, code, classe, object);
+        auto e = new Erro(message, code, classe, this, object);
         push(e);
         this.exitCode = ExitCode.Failure;
         return this;

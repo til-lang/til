@@ -18,18 +18,17 @@ class Erro : Item
     string classe;
     string message;
     Item object;
+    Context context;
 
-    this(string message, int code, string classe)
-    {
-        this(message, code, classe, null);
-    }
-    this(string message, int code, string classe, Item object)
+    this(string message, int code, string classe, Context context, Item object=null)
     {
         this.object = object;
         this.message = message;
         this.code = code;
         this.classe = classe;
         this.type = ObjectType.Error;
+        this.context = context;
+
         this.typeName = "error";
         this.commands = errorCommands;
     }
@@ -43,6 +42,7 @@ class Erro : Item
         {
             s ~= " (" ~ classe ~ ")";
         }
+        s ~= " on " ~ context.description;
         return s;
     }
 }
