@@ -833,7 +833,15 @@ static this()
             message = context.pop!string();
         }
 
-        return context.error(message, cast(int)code, classe);
+        if (code == 0)
+        {
+            context.exitCode = ExitCode.ReturnSuccess;
+            return context;
+        }
+        else
+        {
+            return context.error(message, cast(int)code, classe);
+        }
     });
 
     // Names:

@@ -48,7 +48,9 @@ struct Context
 
     string toString()
     {
-        string s = "STACK:" ~ to!string(process.stack);
+        debug {stderr.writeln("context.toString: ", process);}
+        string s = "";
+        // string s = "STACK:" ~ to!string(process.stack);
         s ~= " (" ~ to!string(size) ~ ")";
         s ~= " process " ~ to!string(process.index);
         return s;
@@ -58,14 +60,27 @@ struct Context
         string[] path;
 
         auto pivot = escopo;
-        do
+        while (pivot !is null)
         {
-            path ~= pivot.description;
+            if (pivot.description)
+            {
+                path ~= pivot.description;
+            }
+            else
+            {
+                path ~= "?";
+            }
             pivot = pivot.parent;
         }
-        while (pivot.parent);
 
-        path ~= process.description;
+        if (process.description)
+        {
+            path ~= process.description;
+        }
+        else
+        {
+            path ~= "?";
+        }
 
         return path.retro.join("/");
     }

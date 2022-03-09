@@ -22,7 +22,6 @@ static this()
 
         context.push(queue);
 
-        context.exitCode = ExitCode.CommandSuccess;
         return context;
     });
     queueCommands["push"] = new Command((string path, Context context)
@@ -38,7 +37,6 @@ static this()
             queue.push(argument);
         }
 
-        context.exitCode = ExitCode.CommandSuccess;
         return context;
     });
     queueCommands["push.no_wait"] = new Command((string path, Context context)
@@ -55,7 +53,6 @@ static this()
             queue.push(argument);
         }
 
-        context.exitCode = ExitCode.CommandSuccess;
         return context;
     });
     queueCommands["pop"] = new Command((string path, Context context)
@@ -76,7 +73,6 @@ static this()
             context.push(queue.pop());
         }
 
-        context.exitCode = ExitCode.CommandSuccess;
         return context;
     });
     queueCommands["pop.no_wait"] = new Command((string path, Context context)
@@ -98,7 +94,6 @@ static this()
             context.push(queue.pop());
         }
 
-        context.exitCode = ExitCode.CommandSuccess;
         return context;
     });
     queueCommands["send"] = new Command((string path, Context context)
@@ -130,7 +125,6 @@ static this()
         }
         while(nextContext.exitCode != ExitCode.Break);
 
-        context.exitCode = ExitCode.CommandSuccess;
         return context;
     });
     queueCommands["send.no_wait"] = new Command((string path, Context context)
@@ -162,7 +156,6 @@ static this()
         }
         while(nextContext.exitCode != ExitCode.Break);
 
-        context.exitCode = ExitCode.CommandSuccess;
         return context;
     });
     queueCommands["receive"] = new Command((string path, Context context)
@@ -179,6 +172,11 @@ static this()
             this(Queue q)
             {
                 this.queue = q;
+            }
+
+            override string toString()
+            {
+                return "WaitingQueueIterator";
             }
 
             override Context next(Context context)

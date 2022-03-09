@@ -41,7 +41,7 @@ class Queue : Item
 
     bool isFull()
     {
-        return values.length >= size;
+        return values.length > size;
     }
     bool isEmpty()
     {
@@ -54,7 +54,7 @@ class Queue : Item
     }
     void push(Item item)
     {
-        if (values.length >= size)
+        if (isFull)
         {
             throw new Exception("Queue is full");
         }
