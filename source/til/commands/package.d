@@ -547,7 +547,8 @@ static this()
             }
         }
 
-        return returnedContext;
+        context.exitCode = returnedContext.exitCode;
+        return context;
     });
     commands["with"] = new Command((string path, Context context)
     {

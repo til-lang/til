@@ -10,4 +10,15 @@ range (10 20 30) | foreach x {
 print " and now value is $value"
 assert ($value == 30)
 
+# Named scopes:
+scope "alfa" {
+    set x 1
+}
+scope "beta" {
+    set x 2
+}
+scope "gama" {
+    assert ($x == 2)
+}
+
 print "END"
