@@ -179,6 +179,11 @@ static this()
         context.exitCode = ExitCode.CommandSuccess;
         return context;
     });
+    integerCommands["to.char"] = new Command((string path, Context context)
+    {
+        IntegerAtom target = context.pop!IntegerAtom();
+        return context.push(to!string(cast(char)(target.value)));
+    });
 
     mixin(CreateOperator!("sum", "+"));
     mixin(CreateOperator!("sub", "-"));

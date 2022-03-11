@@ -87,19 +87,27 @@ static this()
     dictCommands["extract"] = new Command((string path, Context context)
     {
         Dict dict = context.pop!Dict();
-
         Items items = context.items;
 
         auto lastKey = items.back.toString();
         items.popBack();
 
-        auto innerDict = dict.navigateTo(items);
+        debug {stderr.writeln("navigateTo:", items);}
+        auto innerDict = dict.navigateTo(items, false);
+        debug {stderr.writeln(" innerDict:", innerDict);}
         if (innerDict is null)
         {
             auto msg = "Key `" ~ to!string(items.map!(x => x.toString()).join(".")) ~ "." ~ lastKey ~ "` not found";
             return context.error(msg, ErrorCode.NotFound, "dict");
         }
 
-        return context.push(innerDict[lastKey]);
+        try
+        {
+            return context.push(innerDict[lastKey]);
+        }
+        catch (Exception ex)
+        {
+            return context.error(ex.msg, ErrorCode.Unknown, "dict");
+        }
     });
 }
