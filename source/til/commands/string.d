@@ -1,9 +1,11 @@
 module til.commands.string;
 
 import std.array;
+import std.conv : ConvException;
 import std.regex : matchAll, matchFirst;
 import std.string;
 
+import til.conv;
 import til.nodes;
 
 
@@ -46,27 +48,34 @@ static this()
     });
     stringCommands["length"] = new Command((string path, Context context)
     {
-        auto s = context.pop!String();
+        foreach (item; context.items)
+        {
+            auto s = cast(String)item;
+            context.push(s.repr.length);
+        }
         context.exitCode = ExitCode.CommandSuccess;
-        return context.push(s.repr.length);
+        return context;
     });
     stringCommands["split"] = new Command((string path, Context context)
     {
-        auto s = context.pop!string;
+        auto separator = context.pop!string;
         if (context.size == 0)
         {
             auto msg = "`" ~ path ~ "` expects two arguments";
             return context.error(msg, ErrorCode.InvalidSyntax, "");
         }
-        auto separator = context.pop!string;
 
-        SimpleList l = new SimpleList(
-            cast(Items)(s.split(separator)
-                .map!(x => new String(x))
-                .array)
-        );
+        foreach (item; context.items)
+        {
+            auto s = item.toString();
+            SimpleList l = new SimpleList(
+                cast(Items)(s.split(separator)
+                    .map!(x => new String(x))
+                    .array)
+            );
 
-        context.push(l);
+            context.push(l);
+        }
         context.exitCode = ExitCode.CommandSuccess;
         return context;
     });
@@ -95,39 +104,36 @@ static this()
     });
     stringCommands["strip"] = new Command((string path, Context context)
     {
-        string s = context.pop!string();
+        auto chars = context.pop!string();
 
-        string chars = " ";
-        if (context.size > 0)
+        foreach (item; context.items)
         {
-            chars = context.pop!string();
+            string s = item.toString();
+            context.push(new String(s.strip(chars)));
         }
-
-        return context.push(new String(s.strip(chars)));
+        return context;
     });
     stringCommands["strip.left"] = new Command((string path, Context context)
     {
-        string s = context.pop!string();
+        auto chars = context.pop!string();
 
-        string chars = " ";
-        if (context.size > 0)
+        foreach (item; context.items)
         {
-            chars = context.pop!string();
+            string s = item.toString();
+            context.push(new String(s.stripLeft(chars)));
         }
-
-        return context.push(new String(s.stripLeft(chars)));
+        return context;
     });
     stringCommands["strip.right"] = new Command((string path, Context context)
     {
-        string s = context.pop!string();
+        auto chars = context.pop!string();
 
-        string chars = " ";
-        if (context.size > 0)
+        foreach (item; context.items)
         {
-            chars = context.pop!string();
+            string s = item.toString();
+            context.push(new String(s.stripRight(chars)));
         }
-
-        return context.push(new String(s.stripRight(chars)));
+        return context;
     });
     stringCommands["find"] = new Command((string path, Context context)
     {
@@ -154,14 +160,18 @@ static this()
             auto msg = "`" ~ path ~ "` expects two arguments";
             return context.error(msg, ErrorCode.InvalidSyntax, "");
         }
-        string target = context.pop!string();
 
-        SimpleList l = new SimpleList([]);
-        foreach(m; target.matchAll(expression))
+        foreach (item; context.items)
         {
-            l.items ~= new String(m.hit);
+            string target = item.toString();
+
+            SimpleList l = new SimpleList([]);
+            foreach(m; target.matchAll(expression))
+            {
+                l.items ~= new String(m.hit);
+            }
+            context.push(l);
         }
-        context.push(l);
 
         return context;
     });
@@ -173,11 +183,15 @@ static this()
             auto msg = "`" ~ path ~ "` expects two arguments";
             return context.error(msg, ErrorCode.InvalidSyntax, "");
         }
-        string target = context.pop!string();
 
-        foreach(m; target.matchFirst(expression))
+        foreach (item; context.items)
         {
-            context.push(m);
+            string target = item.toString();
+
+            foreach(m; target.matchFirst(expression))
+            {
+                context.push(m);
+            }
         }
 
         return context;
@@ -224,6 +238,7 @@ static this()
         return context;
     });
 
+    // Operators
     stringCommands["eq"] = new Command((string path, Context context)
     {
         if (context.size < 2)
@@ -262,4 +277,65 @@ static this()
         return context.push(true);
     });
     stringCommands["!="] = stringCommands["neq"];
+
+    // Conversions
+    stringCommands["to.int"] = new Command((string path, Context context)
+    {
+        foreach (item; context.items)
+        {
+            string target = item.toString();
+
+            auto result = toLong(target);
+            if (!result.success)
+            {
+                auto msg = "Could not convert to integer";
+                return context.error(msg, ErrorCode.InvalidArgument, "");
+            }
+
+            context.push(result.value);
+        }
+        return context;
+    });
+    stringCommands["to.float"] = new Command((string path, Context context)
+    {
+        foreach (item; context.items)
+        {
+            string target = item.toString();
+
+            if (target.length == 0)
+            {
+                target = "0.0";
+            }
+
+            float result;
+            try
+            {
+                result = to!float(target);
+            }
+            catch (ConvException)
+            {
+                auto msg = "Could not convert to float";
+                return context.error(msg, ErrorCode.InvalidArgument, "");
+            }
+
+            context.push(result);
+        }
+        return context;
+    });
+    stringCommands["to.ascii"] = new Command((string path, Context context)
+    {
+        foreach (item; context.items)
+        {
+            string s = item.toString();
+            if (s.length != 1)
+            {
+                auto msg = "Could not convert " ~ s ~ "to ascii";
+                return context.error(msg, ErrorCode.InvalidArgument, "");
+            }
+            long i = cast(long)(s[0]);
+            context.push(i);
+        }
+
+        return context;
+    });
 }

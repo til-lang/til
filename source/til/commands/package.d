@@ -1,7 +1,6 @@
 module til.commands;
 
 import std.array;
-import std.conv : to, ConvException;
 import std.file : read;
 import std.stdio;
 import std.string : toLower;
@@ -135,43 +134,6 @@ static this()
         Item target = context.pop();
         context.push(new NameAtom(to!string(target.typeName).toLower()));
 
-        return context;
-    });
-    stringCommands["to.int"] = new Command((string path, Context context)
-    {
-        string target = context.pop!string();
-
-        auto result = toLong(target);
-        if (!result.success)
-        {
-            auto msg = "Could not convert to integer";
-            return context.error(msg, ErrorCode.InvalidArgument, "");
-        }
-
-        context.push(result.value);
-        return context;
-    });
-    stringCommands["to.float"] = new Command((string path, Context context)
-    {
-        string target = context.pop!string();
-
-        if (target.length == 0)
-        {
-            target = "0.0";
-        }
-
-        float result;
-        try
-        {
-            result = to!float(target);
-        }
-        catch (ConvException)
-        {
-            auto msg = "Could not convert to float";
-            return context.error(msg, ErrorCode.InvalidArgument, "");
-        }
-
-        context.push(result);
         return context;
     });
     commands["to.string"] = new Command((string path, Context context)

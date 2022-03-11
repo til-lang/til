@@ -60,18 +60,20 @@ static this()
     {
         if (context.size != 1)
         {
-            auto msg = "`incr` expects one argument";
+            auto msg = "`" ~ path ~ "` expects at least 1 argument";
             return context.error(msg, ErrorCode.InvalidArgument, "");
         }
 
-        auto integer = context.pop!IntegerAtom();
-
-        if (integer.value > ++integer.value)
+        foreach (item; context.items)
         {
-            auto msg = "integer overflow";
-            return context.error(msg, ErrorCode.Overflow, "");
+            auto integer = cast(IntegerAtom)item;
+
+            if (integer.value > ++integer.value)
+            {
+                auto msg = "integer overflow";
+                return context.error(msg, ErrorCode.Overflow, "");
+            }
         }
-        context.push(integer);
         context.exitCode = ExitCode.CommandSuccess;
         return context;
     });
@@ -79,17 +81,19 @@ static this()
     {
         if (context.size != 1)
         {
-            auto msg = "`decr` expects one argument";
+            auto msg = "`" ~ path ~ "` expects at least 1 argument";
             return context.error(msg, ErrorCode.InvalidArgument, "");
         }
 
-        auto integer = context.pop!IntegerAtom();
-        if (integer.value < --integer.value)
+        foreach (item; context.items)
         {
-            auto msg = "integer underflow";
-            return context.error(msg, ErrorCode.Underflow, "");
+            auto integer = cast(IntegerAtom)item;
+            if (integer.value < --integer.value)
+            {
+                auto msg = "integer underflow";
+                return context.error(msg, ErrorCode.Underflow, "");
+            }
         }
-        context.push(integer);
         context.exitCode = ExitCode.CommandSuccess;
         return context;
     });
@@ -181,8 +185,23 @@ static this()
     });
     integerCommands["to.char"] = new Command((string path, Context context)
     {
-        IntegerAtom target = context.pop!IntegerAtom();
-        return context.push(to!string(cast(char)(target.value)));
+        foreach (item; context.items)
+        {
+            long x = item.toInt();
+            context.push(to!string(cast(char)x));
+        }
+        return context;
+    });
+    integerCommands["to.ascii"] = new Command((string path, Context context)
+    {
+        foreach (item; context.items)
+        {
+            long l = item.toInt();
+            char c = cast(char)(l);
+            string s = "" ~ c;
+            context.push(s);
+        }
+        return context;
     });
 
     mixin(CreateOperator!("sum", "+"));
