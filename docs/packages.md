@@ -1,13 +1,13 @@
-## Creating your own modules
+## Creating your own packages
 
-In order to write your own module you must have, installed in your system:
+In order to write your own package you must have, installed in your system:
 
 * The LDC2 compiler, version 1.26.0 or higher;
 * Dub, the D package manager.
 
 ## Real world example
 
-See [til_exec](https://github.com/til-lang/til-exec) module.
+See [til_exec](https://github.com/til-lang/til-exec) package.
 
 
 ## Dub init
@@ -24,7 +24,7 @@ adequate one):
 
 ```sdl
 name "til_teste"
-description "Your module description"
+description "Your package description"
 authors "Your Name"
 
 dependency "til" version="~>0.3.0"
@@ -32,17 +32,17 @@ targetType "dynamicLibrary"
 dflags "-L-L$LIBTIL_PATH" "-L-ltil"
 ```
 
-Note that it´s very important that **your module name be prefixed with
+Note that it´s very important that **your package name be prefixed with
 `til_`**. The end result should be a file in the format
-`libtil_<your_module_name>.so`.
+`libtil_<your_package_name>.so`.
 
 Also, note that you must set an environment variable called `LIBTIL_PATH`,
 that is the path where the `libtil.so` library you're going to use is
 located.
 
-## Your module code
+## Your package code
 
-You can write your module code in `source/app.d` (Dub creates it
+You can write your package code in `source/app.d` (Dub creates it
 automatically for you). Start with the following example:
 
 ```d
@@ -90,7 +90,7 @@ project directory.
 
 ## Test file
 
-Now let´s write a simple test file in Til so you can load your module and
+Now let´s write a simple test file in Til so you can load your package and
 see it working:
 
 ```tcl
@@ -101,7 +101,7 @@ Save it as "test.til"
 
 ## Run!
 
-To allow Til to find your new module while developing it, you must export
+To allow Til to find your new package while developing it, you must export
 a `TIL_PATH` environment variable. Inside your project directory, run:
 
 ```bash
@@ -126,18 +126,18 @@ delta
 (Some debugging info can be presented to you, but that is sent to
 `stderr`.)
 
-## Using your module as a command
+## Using your package as a command
 
-If you want your module´s users to be able to simply call `teste` (that
-is: your own module name) as a command in Til you can simply name the main
+If you want your package´s users to be able to simply call `teste` (that
+is: your own package name) as a command in Til you can simply name the main
 command `null`, like this:
 
 ```d
     commands[null] = (string path, CommandContext context) ...
 ```
 
-If you want **both** things (a named command in the module and the call to
-the module itself), you can create this kind of "alias":
+If you want **both** things (a named command in the package and the call to
+the package itself), you can create this kind of "alias":
 
 ```d
     commands["test"] = (string path, CommandContext context) ...

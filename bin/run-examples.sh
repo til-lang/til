@@ -12,7 +12,7 @@ else
     version=$1
 fi
 
-export TIL_PATH=$PWD
+source bin/settings.sh
 
 results=""
 

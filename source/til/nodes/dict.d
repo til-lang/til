@@ -1,12 +1,7 @@
 module til.nodes.dict;
 
-import til.modules;
 import til.nodes;
 
-debug
-{
-    import std.stdio;
-}
 
 CommandsMap dictCommands;
 

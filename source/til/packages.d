@@ -1,4 +1,4 @@
-module til.modules;
+module til.packages;
 
 import std.array : split;
 import std.file : dirEntries, SpanMode;
@@ -15,7 +15,7 @@ debug
 }
 
 
-string[] modulesPath;
+string[] packagesPath;
 
 
 static this()
@@ -27,23 +27,23 @@ static this()
     );
     foreach(p; til_path.split(":"))
     {
-        modulesPath ~= to!string(asAbsolutePath(
+        packagesPath ~= to!string(asAbsolutePath(
             to!string(asNormalizedPath(p))
         ));
     }
 }
 
 
-bool importModule(Escopo escopo, string modulePath)
+bool importModule(Escopo escopo, string packagePath)
 {
-    return importModule(escopo, modulePath, modulePath);
+    return importModule(escopo, packagePath, packagePath);
 }
-bool importModule(Escopo escopo, string modulePath, string prefix)
+bool importModule(Escopo escopo, string packagePath, string prefix)
 {
     CommandsMap source;
 
     try {
-        source = importFromSharedLibrary(escopo, modulePath, prefix);
+        source = importFromSharedLibrary(escopo, packagePath, prefix);
     }
     catch(Exception ex)
     {
@@ -58,7 +58,7 @@ bool importModule(Escopo escopo, string modulePath, string prefix)
 
 // Import commands from a .so:
 CommandsMap importFromSharedLibrary(
-    Escopo escopo, string libraryPath, string moduleAlias
+    Escopo escopo, string libraryPath, string packageAlias
 )
 {
     // We don't want users informing the library preffix and suffix:
@@ -68,7 +68,7 @@ CommandsMap importFromSharedLibrary(
 
     char* lastError;
 
-    foreach(path; modulesPath)
+    foreach(path; packagesPath)
     {
         debug {stderr.writeln("path:",path);}
         // Scan directories recursively searching for a match

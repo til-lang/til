@@ -11,7 +11,7 @@ worlds.
 
 Being a command language means it is **easy to learn** and the syntax is
 very extensible. And being built with D means it is **very simple to build
-new modules** for it.
+new packages** for it.
 
 
 Til makes use of **Fibers** so the interpreter is **async by default** and
@@ -217,7 +217,7 @@ range 3 | foreach x {
 (Yup, `range` **will** include the "limit" -- "3" in this case.)
 
 
-`range` is a very versatile command (it´s actually the **module**
+`range` is a very versatile command (it´s actually the **package**
 `std.range`) that allows you to create various kinds of ranges and even
 transform a SimpleList into a data stream.
 
@@ -306,8 +306,8 @@ That is: other processes won´t be affected.)
 ## Includes
 
 There is a core concept in Til that is: **every program is one file
-only**. There is no "module" in the Python or Ruby sense, like an entity
-that lives somewhere inside the interpreter´s memory. In Til your modules
+only**. There is no "package" in the Python or Ruby sense, like an entity
+that lives somewhere inside the interpreter´s memory. In Til your packages
 are only **commands providers** and any Til code you would want to include
 into your program must be... **included** in your program.
 
@@ -322,7 +322,7 @@ include "path/my_code.til"
 
 You see, Til is a nice language, but **you´re not supposed to write
 complex code in Til**. If you want to implement some algorithm, **write it
-in D** and share it as a module.
+in D** and share it as a package.
 
 The rationale is going to be explained in more details in another article,
 but for now it suffices to say that **Til is a scripting language** and
@@ -354,6 +354,6 @@ print "Procedure `throw_error` was called and the error was handled."
 
 In the Til repository, look for the `examples` directory.
 
-## Building your own modules
+## Building your own packages
 
-See [Building your own module](modules).
+See [Building your own package](packages).

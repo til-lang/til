@@ -31,15 +31,15 @@ til.debug: lib-debug
 
 debug: lib-debug til.debug
 
-libtil_hellomodule.so: modules/hello/hellomodule.d
+libtil_hello.so: packages/hello/hello.d
 	ldc2 --shared \
-		modules/hello/hellomodule.d \
+		packages/hello/hello.d \
 		-I=source \
 		-link-defaultlib-shared \
 		-L-L${PWD}/dist -L-ltil \
-		--O2 -of=libtil_hellomodule.so
+		--O2 -of=libtil_hello.so
 
-test: libtil_hellomodule.so til.release
+test: libtil_hello.so til.release
 	./run-examples.sh
 
 clean:

@@ -2,7 +2,7 @@
 
 ## Open
 
-* Is it possible for an external module to add commands to native types?
+* Is it possible for an external package to add commands to native types?
     * Use case: string handling and vectors.
 * Procs can be considered "higher order" or not? Do they need to?
     * How could I write a `map` proc?

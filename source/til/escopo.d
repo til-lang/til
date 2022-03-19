@@ -3,7 +3,7 @@ module til.escopo;
 import std.array : join, split;
 import std.container : DList;
 
-import til.modules;
+import til.packages;
 import til.nodes;
 import til.procedures;
 import til.scheduler;
@@ -93,20 +93,20 @@ class Escopo
             }
         }
 
-        // If the command is present in an external module:
+        // If the command is present in an external package:
         bool success = {
             // exec -> exec
             if (this.importModule(name, name)) return true;
 
             // http.get -> http
-            string modulePath = to!string(name.split(".")[0..$-1].join("."));
-            if (this.importModule(modulePath)) return true;
+            string packagePath = to!string(name.split(".")[0..$-1].join("."));
+            if (this.importModule(packagePath)) return true;
 
             return false;
         }();
 
         if (success) {
-            // We imported the module, but we're not sure if this
+            // We imported the package, but we're not sure if this
             // name actually exists inside it:
             // (Important: do NOT call this method recursively!)
             c = (name in commands);
