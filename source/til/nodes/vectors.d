@@ -98,8 +98,8 @@ class Vector(T) : Item
 }
 
 
-class ByteVector : Vector!byte {}
-class FloatVector : Vector!float {}
-class IntVector : Vector!int {}
-class LongVector : Vector!long {}
-class DoubleVector : Vector!double {}
+alias ByteVector = Vector!byte;
+alias FloatVector = Vector!float;
+alias IntVector = Vector!int;
+alias LongVector = Vector!long;
+alias DoubleVector = Vector!double;
