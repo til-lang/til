@@ -13,6 +13,11 @@ class Vector(T) : Item
     auto type = ObjectType.Vector;
     string typeName = T.stringof ~ "_vector";
 
+    this(T[] values)
+    {
+        this();
+        this.values = values;
+    }
     this()
     {
         this.commands["length"] = new Command(function(string path, Context context)
