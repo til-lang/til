@@ -98,8 +98,12 @@ class Escopo
             // exec -> exec
             if (this.importModule(name, name)) return true;
 
-            // http.get -> http
+            // http.client.get -> http.client
             string packagePath = to!string(name.split(".")[0..$-1].join("."));
+            if (this.importModule(packagePath)) return true;
+
+            // http.client.get -> http
+            packagePath = to!string(name.split(".")[0]);
             if (this.importModule(packagePath)) return true;
 
             return false;
