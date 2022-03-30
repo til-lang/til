@@ -36,4 +36,19 @@ static this ()
     addCommands!(int, IntVector);
     addCommands!(long, LongVector);
     addCommands!(double, DoubleVector);
+
+    byteVectorCommands["to.string"] = new Command((string path, Context context)
+    {
+        foreach (item; context.items)
+        {
+            auto vector = cast(ByteVector)item;
+            string s = "";
+            foreach (value; vector.values)
+            {
+                s ~= cast(char)value;
+            }
+            context.push(s);
+        }
+        return context;
+    });
 }

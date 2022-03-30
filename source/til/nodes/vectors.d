@@ -5,6 +5,8 @@ import std.string : capitalize;
 import til.nodes;
 
 
+CommandsMap byteVectorCommands;
+
 
 class Vector(T) : Item
 {
