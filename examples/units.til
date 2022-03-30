@@ -16,4 +16,10 @@ print "$x + $y + $z"
 print $($x + $y + $z)
 assert ($($x + $y + $z) == 2357403648)
 
+proc meters (x) {
+    return "${x}m"
+}
+assert ([meters 10] == "10m")
+assert ($(10 meters) == "10m")
+
 print "END"

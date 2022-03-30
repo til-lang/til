@@ -322,20 +322,27 @@ static this()
         }
         return context;
     });
+
     stringCommands["to.ascii"] = new Command((string path, Context context)
     {
         foreach (item; context.items)
         {
-            string s = item.toString();
-            if (s.length != 1)
-            {
-                auto msg = "Could not convert " ~ s ~ "to ascii";
-                return context.error(msg, ErrorCode.InvalidArgument, "");
-            }
-            long i = cast(long)(s[0]);
-            context.push(i);
+            auto s = cast(String)item;
+            auto items = s.toBytes()
+                .map!(x => new IntegerAtom(x))
+                .map!(x => cast(Item)x)
+                .array;
+            context.push(new SimpleList(items));
         }
-
+        return context;
+    });
+    stringCommands["to.byte_vector"] = new Command((string path, Context context)
+    {
+        foreach (item; context.items)
+        {
+            auto s = cast(String)item;
+            context.push(new ByteVector(s.toBytes()));
+        }
         return context;
     });
 }

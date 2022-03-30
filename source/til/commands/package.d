@@ -261,6 +261,7 @@ static this()
                     case ExitCode.Failure:
                         return nextContext;
                     case ExitCode.Skip:
+                        context.yield();
                         continue;
                     case ExitCode.Continue:
                         break;

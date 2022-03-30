@@ -60,6 +60,19 @@ class String : Item
             return new String(newRepr);
         }
     }
+
+    byte[] toBytes()
+    {
+        byte[] bytes;
+
+        string s = this.toString();
+        foreach (c; s)
+        {
+            bytes ~= cast(byte)c;
+        }
+
+        return bytes;
+    }
 }
 
 // Part of a SubstString
