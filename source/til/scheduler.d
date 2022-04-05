@@ -45,46 +45,31 @@ class Scheduler
         activeProcesses = [];
     }
 
-    ExitCode run()
+    uint run()
     {
-        uint activeCounter;
-        do
+        uint activeCounter = 0;
+        Process[] finishedProcesses;
+
+        foreach(process; activeProcesses)
         {
-            activeCounter = 0;
-            Process[] finishedProcesses;
-
-            foreach(process; activeProcesses)
+            if (process.state == Fiber.State.TERM)
             {
-                if (process.state == Fiber.State.TERM)
-                {
-                    finishedProcesses ~= process;
-                    continue;
-                }
-                activeCounter++;
-                process.call();
+                finishedProcesses ~= process;
+                continue;
             }
-
-            // Clean up finished processes:
-            if (finishedProcesses.length != 0)
-            {
-                activeProcesses = array(
-                    activeProcesses.filter!(item => !finishedProcesses.canFind(item))
-                );
-            }
-        } while (activeCounter > 0);
-
-        /*
-        In the end, check if any of the processes
-        was terminated with failure:
-        */
-        foreach(process; processes)
-        {
-            if (process.context.exitCode == ExitCode.Failure)
-            {
-                return process.context.exitCode;
-            }
+            activeCounter++;
+            process.call();
         }
-        return ExitCode.CommandSuccess;
+
+        // Clean up finished processes:
+        if (finishedProcesses.length != 0)
+        {
+            activeProcesses = array(
+                activeProcesses.filter!(item => !finishedProcesses.canFind(item))
+            );
+        }
+
+        return activeCounter;
     }
 
     Context[] failingContexts()
@@ -102,7 +87,6 @@ class Scheduler
 
     void yield()
     {
-        if (processes.length == 1) return;
         Fiber.yield();
     }
 }

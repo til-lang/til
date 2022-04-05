@@ -3,6 +3,7 @@ print "START"
 queue | as q
 
 proc p (q) {
+    print "new call to p"
     read | foreach msg {
         push $q $msg
         break
@@ -14,11 +15,13 @@ proc p (q) {
 
 spawn {p $q} | as p1
 
+print "sending data to p1"
 range 3 | foreach x {
     send $p1 $x
 }
 
 sleep 50
+print "receiving (nowait) from q"
 set result ""
 receive.no_wait $q | foreach x {
     set result "$result $x"

@@ -20,7 +20,8 @@ int repl(Dict envVars, SimpleList argumentsList)
     escopo["args"] = argumentsList;
     escopo["env"] = envVars;
     escopo.commands = commands;
-    auto process = new Process(scheduler, null, escopo, "repl");
+    auto process = new MainProcess(scheduler, null, escopo);
+    int returnCode = 0;
 
     string command;
 
@@ -80,33 +81,57 @@ mainLoop:
             continue;
         }
 
-        debug {stderr.writeln("Running scheduler..."); }
-        process.reset();
         scheduler.reset();
-        scheduler.add(process);
-        ExitCode exitCode = scheduler.run();
 
-        File output;
+        // Run the main process:
+        debug {stderr.writeln("Running main process..."); }
+        auto context = process.run();
+
+        // Reset the returnCode:
+        returnCode = 0;
+
+        // Find failed sub-processes:
         foreach (p; scheduler.processes)
         {
-            if (p.context.exitCode != ExitCode.Proceed)
-            {
-                stdout.writeln(p.description, ":");
-                stderr.writeln(" exitCode ", p.context.exitCode);
-                output = stderr;
-            }
-            else
-            {
-                output = stdout;
-            }
-
-            foreach (item; p.context.items)
-            {
-                output.writeln(" ", item);
-            }
+            returnCode = finishProcess(p, returnCode);
         }
+
+        returnCode = finishProcess(process, returnCode);
+        if (returnCode != 0) break;
     }
     clear_history();
 
-    return 0;
+    return returnCode;
+}
+
+int finishProcess(Process p, int returnCode)
+{
+    File output;
+
+    // Search for errors:
+    if (p.context.exitCode != ExitCode.Proceed)
+    {
+        stdout.writeln(p.description, ":");
+        stderr.writeln(" exitCode ", p.context.exitCode);
+
+        if (p.context.exitCode == ExitCode.Failure)
+        {
+            auto e = p.context.pop!Erro();
+            stderr.writeln(e);
+            returnCode = e.code;
+        }
+        output = stderr;
+    }
+    else
+    {
+        output = stdout;
+    }
+
+    // Print the stack:
+    foreach (item; p.context.items)
+    {
+        output.writeln(" ", item);
+    }
+
+    return returnCode;
 }

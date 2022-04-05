@@ -139,47 +139,34 @@ int main(string[] args)
         );
     }
 
-    // The scheduler:
-    auto scheduler = new Scheduler();
-
     // The scope:
     auto escopo = new Escopo();
     escopo["args"] = argumentsList;
     escopo["env"] = envVars;
     escopo.commands = commands;
 
+    // The scheduler:
+    auto scheduler = new Scheduler();
+
     // The main Process:
-    auto process = new Process(scheduler, program, escopo, "main");
+    auto process = new MainProcess(scheduler, program, escopo);
     process.input = new InterpreterInput(stdin);
     process.output = new InterpreterOutput(stdout);
 
     // Start!
     debug {sw.start();}
-    scheduler.add(process);
-    scheduler.run();
+
+    // Run the main process:
+    auto context = process.run();
 
     // Print everything remaining in the stack:
     int returnCode = 0;
     foreach(p; scheduler.processes)
     {
-        stderr.write("Process ", p.index, ": ");
-        if (p.context.exitCode == ExitCode.Failure)
-        {
-            stderr.writeln("ERROR");
-            auto e = p.context.pop!Erro();
-            stderr.writeln(e);
-            returnCode = e.code;
-        }
-        else
-        {
-            stderr.writeln("Success");
-            debug {stderr.writeln("  context.size:", p.context.size);}
-            foreach(item; p.context.items)
-            {
-                stderr.writeln(item);
-            }
-        }
+        returnCode = finishProcess(p, returnCode);
     }
+    returnCode = finishProcess(process, returnCode);
+
     debug
     {
         sw.stop();

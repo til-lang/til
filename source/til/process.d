@@ -27,7 +27,7 @@ class Process : Fiber
     Item input = null;
     Item output = null;
 
-    this(Scheduler scheduler, string description=null)
+    this(Scheduler scheduler)
     {
         this(scheduler, null, null, description);
     }
@@ -152,3 +152,37 @@ class Process : Fiber
     }
 }
 
+
+class MainProcess : Process
+{
+    this(Scheduler scheduler, SubProgram subprogram, Escopo escopo=null)
+    {
+        super(scheduler, subprogram, escopo, "main");
+    }
+
+    override void yield()
+    {
+        // Give a run on the scheduler.
+        this.scheduler.run();
+    }
+
+    override void fiberRun()
+    {
+        throw new Exception("MainProcess is not supposed to run as a Fiber");
+    }
+
+    override Context run()
+    {
+        context = super.run();
+
+        // Wait until all processes die:
+        uint activeCounter = 0;
+        do
+        {
+            activeCounter = this.scheduler.run();
+        }
+        while (activeCounter != 0);
+
+        return context;
+    }
+}

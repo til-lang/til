@@ -605,7 +605,7 @@ static this()
             context.process.scheduler,
             subprogram,
             new Escopo(context.escopo),
-            "spawn"
+            "spawned process"
         );
 
         // Piping:
@@ -650,7 +650,7 @@ static this()
     {
         if (context.process.input is null)
         {
-            auto msg = "`read.no_wait`: process input is null";
+            auto msg = "`" ~ path ~ "`: process input should not be null";
             return context.error(msg, ErrorCode.InvalidArgument, "");
         }
         // Probably a WaitingQueue:
@@ -661,7 +661,7 @@ static this()
     {
         if (context.process.input is null)
         {
-            auto msg = "`read.no_wait`: process input is null";
+            auto msg = "`" ~ path ~ "`: process input should not be null";
             return context.error(msg, ErrorCode.InvalidArgument, "");
         }
         // Probably a WaitingQueue, let's change its behavior to
@@ -786,7 +786,7 @@ static this()
         string message = "Process was stopped";
 
         long code = 0;
-        
+
         if (context.size)
         {
             code = context.pop!long();
