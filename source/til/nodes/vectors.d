@@ -34,7 +34,7 @@ class Vector(T) : Item
             auto item = context.pop!(typeof(this))();
 
             auto startItem = context.pop();
-            long start = 0;
+            size_t start = 0;
             if (startItem.toString() == "end")
             {
                 start = item.values.length - 1;
@@ -45,7 +45,7 @@ class Vector(T) : Item
             }
             else
             {
-                start = startItem.toInt();
+                start = cast(size_t)(startItem.toInt());
                 if (start < 0)
                 {
                     start = item.values.length + start;
@@ -57,7 +57,7 @@ class Vector(T) : Item
                 return context.push(item.values[start]);
             }
 
-            auto end = start + 1;
+            size_t end = start + 1;
             auto endItem = context.pop();
             if (endItem.toString() == "end")
             {
@@ -65,7 +65,7 @@ class Vector(T) : Item
             }
             else
             {
-                end = endItem.toInt();
+                end = cast(size_t)(endItem.toInt());
                 if (end < 0)
                 {
                     end = item.values.length + end;

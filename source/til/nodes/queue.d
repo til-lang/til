@@ -89,7 +89,7 @@ class Queue : Item
 
     // ------------------
     // Operators
-    Item opIndex(ulong k)
+    Item opIndex(uint k)
     {
         if (k >= values.length)
         {

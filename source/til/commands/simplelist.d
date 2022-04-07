@@ -165,13 +165,12 @@ static this()
         if (context.size == 0) return context.push(l);
 
         // start:
-        auto start = context.pop().toInt();
+        auto start = cast(size_t)(context.pop().toInt());
 
         if (start < 0)
         {
             start = l.items.length + start;
         }
-
 
         // end:
         if (context.size == 0)
@@ -179,7 +178,7 @@ static this()
             return context.push(l.items[start]);
         }
 
-        auto end = context.pop().toInt();
+        auto end = cast(size_t)(context.pop().toInt());
         if (end < 0)
         {
             end = l.items.length + end;

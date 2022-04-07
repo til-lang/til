@@ -18,7 +18,7 @@ static this()
 
         if (context.size == 0) return context.push(s);
 
-        auto start = context.pop().toInt();
+        auto start = cast(size_t)(context.pop().toInt());
         if (start < 0)
         {
             start = s.repr.length + start;
@@ -34,7 +34,7 @@ static this()
             }
             else
             {
-                end = item.toInt();
+                end = cast(size_t)(item.toInt());
                 if (end < 0)
                 {
                     end = s.repr.length + end;

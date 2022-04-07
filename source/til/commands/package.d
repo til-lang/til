@@ -306,7 +306,7 @@ static this()
         class Transformer : Item
         {
             Items targets;
-            ulong targetIndex = 0;
+            size_t targetIndex = 0;
             SubProgram body;
             Context context;
             string varName;

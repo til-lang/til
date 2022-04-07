@@ -7,12 +7,12 @@ import til.nodes;
 class Stack
 {
     Item[64] stack;
-    ulong stackPointer = 0;
+    uint stackPointer = 0;
 
     // Stack manipulation:
     Item peek(uint index=1)
     {
-        long pointer = stackPointer - index;
+        uint pointer = stackPointer - index;
         if (pointer < 0)
         {
             return null;
