@@ -1,5 +1,7 @@
 module til.nodes.item;
 
+import std.variant;
+
 import til.nodes;
 
 
@@ -10,6 +12,9 @@ class Item
     ObjectType type;
     string typeName;
     CommandsMap commands;
+
+    // For third-party modules encapsulating other classes:
+    Variant content;
 
     // Operators:
     template opUnary(string operator)
