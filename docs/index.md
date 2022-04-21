@@ -72,7 +72,7 @@ current context with name `s`.
 ```tcl
 set a 11
 set b 22
-set result [math ($a + $b)]
+set result [+ $a $b]
 print "The result is $result"
 ```
 
@@ -81,14 +81,48 @@ the use of square brackets (`[]`). They form what we call an ExecList.
 
 An ExecList contains any SubProgram and **are evaluated immediately**,
 that is, the SubProgram is executed before the command (in this case,
-`set`) is run. So, when saying `set result [math ($a + $b)]`,
-`math ($a + $b)` will be executed and the result (`33`) will become the
-last argument of the `set` command, becoming `set result 33`.
+`set`) is run. So, when saying `set result [+ $a $b]`, `+ $a
+$b` will be executed and the result (`33`) will become the last
+argument of the `set` command, becoming `set result 33`.
 
 
 The last item in this session is **string substitution**. It works as
 expected, really: you can reference values inside a string using the `$`
 sign.
+
+## Infix notation
+
+Til cares about your *comfort*, so you don't have to work with prefix
+notation! Instead of writing
+
+```tcl
+set result [+ $a $b]
+```
+
+you can write
+
+```tcl
+set result $($a + $b)
+```
+
+Til tries to **avoid creating new syntax** whenever possible, but this
+kind of "sugar" makes the programmer's life **much** easier.
+
+Notice that prefix notation is the default way of working in Til, since
+it's a *command language*. What the `$()` does is simply to turn infix
+into prefix notation.
+
+Thus,
+
+```tcl
+$(t1 op1 t2 op2 t3 op3 t4)
+```
+
+will become
+
+```tcl
+[op3 [op2 [op1 t1 t2] t3] t4]
+```
 
 ## Extractions
 
@@ -146,7 +180,7 @@ proc cmd_push {fd argv dir} {
 
 ```tcl
 proc f (x y) {
-    return [math ($x * $y)]
+    return $($x * $y)
 }
 ```
 
