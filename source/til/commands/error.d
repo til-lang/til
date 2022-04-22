@@ -8,9 +8,7 @@ static this()
 {
     errorCommands["extract"] = new Command((string path, Context context)
     {
-        if (context.size == 0) return context;
-
-        Erro target = context.pop!Erro();
+        auto target = context.pop!Erro();
         auto args = context.items!string;
         auto arg = args.join(" ");
 
@@ -28,5 +26,12 @@ static this()
                 auto msg = "Invalid argument to Error extraction";
                 return context.error(msg, ErrorCode.InvalidArgument, "");
         }
+    });
+    errorCommands["return"] = new Command((string path, Context context)
+    {
+        // Do not pop the error: we would stack it back, anyway...
+        // auto target = context.pop!Erro();
+        context.exitCode = ExitCode.Failure;
+        return context;
     });
 }

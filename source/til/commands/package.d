@@ -510,6 +510,7 @@ static this()
             }
         }
 
+        context.size = returnedContext.size;
         context.exitCode = returnedContext.exitCode;
         return context;
     });
