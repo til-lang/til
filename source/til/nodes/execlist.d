@@ -28,6 +28,11 @@ class ExecList : BaseList
         */
         auto escopo = new Escopo(context.escopo);
         escopo.description = "ExecList.evaluate";
-        return context.process.run(this.subprogram, context);
+
+        auto returnedContext = context.process.run(this.subprogram, context.next(escopo));
+
+        context.size += returnedContext.size;
+        context.exitCode = returnedContext.exitCode;
+        return context;
     }
 }

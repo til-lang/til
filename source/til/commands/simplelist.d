@@ -165,30 +165,28 @@ static this()
         if (context.size == 0) return context.push(l);
 
         // start:
-        auto start = cast(size_t)(context.pop().toInt());
-
-        if (start < 0)
+        long s = context.pop().toInt();
+        if (s < 0)
         {
-            start = l.items.length + start;
+            s = l.items.length + s;
         }
+        size_t start = cast(size_t)s;
 
-        // end:
         if (context.size == 0)
         {
             return context.push(l.items[start]);
         }
 
-        auto end = cast(size_t)(context.pop().toInt());
-        if (end < 0)
+        // end:
+        long e = context.pop().toInt();
+        if (e < 0)
         {
-            end = l.items.length + end;
+            e = l.items.length + e;
         }
+        size_t end = cast(size_t)e;
 
         // slice:
-        context.push(new SimpleList(l.items[start..end]));
-
-        context.exitCode = ExitCode.CommandSuccess;
-        return context;
+        return context.push(new SimpleList(l.items[start..end]));
     });
     simpleListCommands["eval"] = new Command((string path, Context context)
     {

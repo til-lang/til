@@ -48,7 +48,7 @@ struct Context
 
     string toString()
     {
-        debug {stderr.writeln("context.toString: ", process);}
+        debug {stderr.writeln("context.toString: ", process, "/", escopo);}
         string s = "";
         // string s = "STACK:" ~ to!string(process.stack);
         s ~= " (" ~ to!string(size) ~ ")";

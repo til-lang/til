@@ -4,14 +4,19 @@ proc e () {
     error "Test error"
 }
 
+proc on.error (e) {
+    print "on.error 0: $e"
+}
+
 scope "everything" {
     proc on.error (e) {
-        print "on.error 0: $e"
+        print "on.error 1: $e"
     }
 
+    proc nop () {
     scope "handling error directly inside the scope" {
         proc on.error (e) {
-            print "on.error 1: $e"
+            print "on.error 2: $e"
         }
 
         print "First test"
@@ -19,11 +24,12 @@ scope "everything" {
         e
     }
     print "Procedure `e` was called and the error was handled"
+    }
 
     print "Second test"
     scope "handling error from ExecList" {
         proc on.error (e) {
-            print "on.error 2: $e"
+            print "on.error 3: $e"
             return $e
         }
         # This should work this way:

@@ -14,37 +14,39 @@ static this()
 {
     stringCommands["extract"] = new Command((string path, Context context)
     {
-        String s = context.pop!String();
+        String target = context.pop!String();
 
-        if (context.size == 0) return context.push(s);
+        if (context.size == 0) return context.push(target);
 
-        auto start = cast(size_t)(context.pop().toInt());
-        if (start < 0)
+        long s = context.pop().toInt();
+        if (s < 0)
         {
-            start = s.repr.length + start;
+            s = target.repr.length + s;
+        }
+        size_t start = cast(size_t)s;
+
+        if (context.size == 0)
+        {
+            return context.push(target.repr[start..start+1]);
         }
 
-        auto end = start + 1;
-        if (context.size)
+        size_t end;
+        auto item = context.pop();
+        if (item.toString() == "end")
         {
-            auto item = context.pop();
-            if (item.toString() == "end")
+            end = target.repr.length;
+        }
+        else
+        {
+            long e = item.toInt();
+            if (e < 0)
             {
-                end = s.repr.length;
+                e = target.repr.length + e;
             }
-            else
-            {
-                end = cast(size_t)(item.toInt());
-                if (end < 0)
-                {
-                    end = s.repr.length + end;
-                }
-            }
+            end = cast(size_t)e;
         }
 
-        context.exitCode = ExitCode.CommandSuccess;
-        context.push(new String(s.repr[start..end]));
-        return context;
+        return context.push(target.repr[start..end]);
     });
     stringCommands["length"] = new Command((string path, Context context)
     {

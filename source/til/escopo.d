@@ -67,7 +67,8 @@ class Escopo
     override string toString()
     {
         return (
-            "Escopo\n"
+            "Escopo "
+            ~ description ~ "\n"
             ~ " vars:" ~ to!string(variables.byKey) ~ "\n"
             ~ " cmds:" ~ to!string(commands.byKey) ~ "\n"
         );
