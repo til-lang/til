@@ -3,7 +3,6 @@ import std.datetime.stopwatch;
 import std.file;
 import std.process : environment;
 import std.stdio;
-import std.string : stripRight;
 
 import til.commands;
 import til.exceptions;
@@ -14,58 +13,6 @@ import til.scheduler;
 
 import cli.repl;
 
-
-class InterpreterInput : Item
-{
-    File inputFile;
-
-    this(File inputFile)
-    {
-        this.inputFile = inputFile;
-    }
-
-    override Context next(Context context)
-    {
-        if (inputFile.eof)
-        {
-            context.exitCode = ExitCode.Break;
-        }
-        else
-        {
-            auto input = inputFile.readln();
-            context.push(new String(to!string(input).stripRight("\n")));
-            context.exitCode = ExitCode.Continue;
-        }
-        return context;
-    }
-
-    override string toString()
-    {
-        return "InterpreterInput";
-    }
-}
-
-class InterpreterOutput : Queue
-{
-    File outputFile;
-
-    this(File outputFile)
-    {
-        super(0);
-        this.outputFile = outputFile;
-    }
-
-    override void push(Item item)
-    {
-        // outputFile.write(to!string(item));
-        stdout.write(to!string(item));
-    }
-
-    override string toString()
-    {
-        return "stdout";
-    }
-}
 
 int main(string[] args)
 {
@@ -150,8 +97,6 @@ int main(string[] args)
 
     // The main Process:
     auto process = new MainProcess(scheduler, program, escopo);
-    process.input = new InterpreterInput(stdin);
-    process.output = new InterpreterOutput(stdout);
 
     // Start!
     debug {sw.start();}

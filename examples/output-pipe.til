@@ -1,18 +1,20 @@
 print "START"
 
-proc generator (x) {
+proc generator (q n) {
     print "generator started"
 
-    range $x | foreach i {
-        write "i=$i"
+    range $n | foreach i {
+        push $q "i=$i"
     }
 
-    write "quit"
+    push $q "quit"
     print "generator ended"
 }
 
 set counter 0
-spawn {generator 4} | foreach i {
+queue | as queue
+spawn {generator $queue 4}
+receive $queue | foreach i {
     print "i:$i"
     if ($i == "quit") {
         break

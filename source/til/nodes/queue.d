@@ -8,6 +8,22 @@ import til.nodes;
 CommandsMap queueCommands;
 
 
+class FullException : Exception
+{
+    this(string msg)
+    {
+        super(msg);
+    }
+}
+class EmptyException : Exception
+{
+    this(string msg)
+    {
+        super(msg);
+    }
+}
+
+
 class Queue : Item
 {
     ulong size;
@@ -52,19 +68,19 @@ class Queue : Item
     {
         return values.front;
     }
-    void push(Item item)
+    override void write(Item item)
     {
         if (isFull)
         {
-            throw new Exception("Queue is full");
+            throw new FullException("Queue is full");
         }
         values ~= item;
     }
-    Item pop()
+    override Item read()
     {
         if (values.length == 0)
         {
-            throw new Exception("Queue is empty");
+            throw new EmptyException("Queue is empty");
         }
         auto value = values.front;
         values.popFront();
@@ -81,7 +97,7 @@ class Queue : Item
         }
         else
         {
-            context.push(pop());
+            context.push(read());
             context.exitCode = ExitCode.Continue;
         }
         return context;
@@ -118,7 +134,7 @@ class WaitingQueue : Queue
             context.yield();
         }
 
-        auto item = pop();
+        auto item = read();
         context.push(item);
         context.exitCode = ExitCode.Continue;
         return context;

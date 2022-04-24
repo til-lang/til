@@ -34,7 +34,7 @@ static this()
             {
                 context.yield();
             }
-            queue.push(argument);
+            queue.write(argument);
         }
 
         return context;
@@ -50,7 +50,7 @@ static this()
                 auto msg = "queue is full";
                 return context.error(msg, ErrorCode.Full, "");
             }
-            queue.push(argument);
+            queue.write(argument);
         }
 
         return context;
@@ -70,7 +70,7 @@ static this()
             {
                 context.yield();
             }
-            context.push(queue.pop());
+            context.push(queue.read());
         }
 
         return context;
@@ -91,7 +91,7 @@ static this()
                 auto msg = "queue is empty";
                 return context.error(msg, ErrorCode.Empty, "");
             }
-            context.push(queue.pop());
+            context.push(queue.read());
         }
 
         return context;
@@ -105,26 +105,26 @@ static this()
             auto msg = "no target to send from";
             return context.error(msg, ErrorCode.InvalidArgument, "");
         }
-        auto target = context.pop();
 
-        auto nextContext = context;
-        do
+        foreach(target; context.items)
         {
-            nextContext = target.next(context);
-            if (nextContext.exitCode == ExitCode.Break)
+            auto nextContext = context;
+            while (true)
             {
-                break;
-            }
-            auto item = nextContext.pop();
+                nextContext = target.next(context);
+                if (nextContext.exitCode == ExitCode.Break)
+                {
+                    break;
+                }
+                auto item = nextContext.pop();
 
-            while (queue.isFull)
-            {
-                context.yield();
+                while (queue.isFull)
+                {
+                    context.yield();
+                }
+                queue.write(item);
             }
-            queue.push(item);
         }
-        while(nextContext.exitCode != ExitCode.Break);
-
         return context;
     });
     queueCommands["send.no_wait"] = new Command((string path, Context context)
@@ -136,25 +136,26 @@ static this()
             auto msg = "no target to send from";
             return context.error(msg, ErrorCode.InvalidArgument, "");
         }
-        auto target = context.pop();
 
-        auto nextContext = context;
-        do
+        foreach (target; context.items)
         {
-            nextContext = target.next(context);
-            if (nextContext.exitCode == ExitCode.Break)
+            auto nextContext = context;
+            while (true)
             {
-                break;
+                nextContext = target.next(context);
+                if (nextContext.exitCode == ExitCode.Break)
+                {
+                    break;
+                }
+                auto item = nextContext.pop();
+                if (queue.isFull)
+                {
+                    auto msg = "queue is full";
+                    return context.error(msg, ErrorCode.Full, "");
+                }
+                queue.write(item);
             }
-            auto item = nextContext.pop();
-            if (queue.isFull)
-            {
-                auto msg = "queue is full";
-                return context.error(msg, ErrorCode.Full, "");
-            }
-            queue.push(item);
         }
-        while(nextContext.exitCode != ExitCode.Break);
 
         return context;
     });
@@ -186,7 +187,7 @@ static this()
                     context.yield();
                 }
 
-                auto item = queue.pop();
+                auto item = queue.read();
                 context.push(item);
                 context.exitCode = ExitCode.Continue;
                 return context;

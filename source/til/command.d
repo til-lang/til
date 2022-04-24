@@ -1,5 +1,7 @@
 module til.command;
 
+import std.stdio;
+
 import til.nodes;
 
 
@@ -11,6 +13,7 @@ alias CommandHandlerMap = CommandHandler[string];
 class Command
 {
     private CommandHandler _handler;
+    bool isDeprecated = false;
 
     this(CommandHandler handler)
     {
@@ -19,6 +22,10 @@ class Command
 
     Context run(CommandName name, Context context)
     {
+        if (isDeprecated)
+        {
+            stderr.writeln("Warning: the command `" ~ name ~ "` is deprecated");
+        }
         context.exitCode = ExitCode.CommandSuccess;
         auto newContext = this._handler(name, context);
         return newContext;

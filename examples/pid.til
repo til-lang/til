@@ -1,7 +1,7 @@
 print "START"
 
-proc procedure () {
-    read | foreach msg {
+proc procedure (q) {
+    receive $q | foreach msg {
         if ($msg == "quit") {
             return
         } else {
@@ -10,7 +10,8 @@ proc procedure () {
     }
 }
 
-spawn {procedure} | as pid
+queue | as queue
+spawn {procedure $queue} | as pid
 
 assert (<$pid is_running>)
 print "$pid is running"
@@ -18,7 +19,7 @@ print "$pid is running"
 set state <$pid state>
 print " the state is $state"
 
-send $pid "quit"
+push $queue "quit"
 
 set not_running false
 range 128 | foreach x {

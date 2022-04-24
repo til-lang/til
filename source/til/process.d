@@ -23,10 +23,6 @@ class Process : Fiber
     string description;
     uint index;
 
-    // I/O:
-    Item input = null;
-    Item output = null;
-
     this(Scheduler scheduler)
     {
         this(scheduler, null, null, description);
@@ -68,6 +64,32 @@ class Process : Fiber
         return run(this.subprogram, context);
     }
     Context run(SubProgram subprogram, Context context)
+    {
+        // Save the ORIGINAL escopo
+        // XXX: Should we try the returned context escopo?
+        //      Are they the same every time?
+        //      Should we check something?
+        auto returnedContext = runPipelines(subprogram, context);
+
+        foreach (contextManager; context.escopo.contextManagers)
+        {
+            auto closeContext = contextManager.runCommand("close", returnedContext);
+            if (closeContext.exitCode == ExitCode.Failure)
+            {
+                // If the subprogram itself failed, we're going
+                // to be very forgiving with autoclose errors,
+                // since it could cloud the real issue from the
+                // programmers view:
+                if (returnedContext.exitCode != ExitCode.Failure)
+                {
+                    return closeContext;
+                }
+            }
+        }
+
+        return returnedContext;
+    }
+    Context runPipelines(SubProgram subprogram, Context context)
     {
         foreach(index, pipeline; subprogram.pipelines)
         {
@@ -149,6 +171,7 @@ class Process : Fiber
 
         // Returns the context of the last expression:
         return context;
+
     }
 }
 

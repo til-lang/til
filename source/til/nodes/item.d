@@ -61,6 +61,23 @@ class Item
         );
     }
 
+    // I/O:
+    void write(Item item)
+    {
+        auto thisInfo = typeid(this);
+        throw new Exception(
+            thisInfo.toString() ~ " `write` not implemented."
+        );
+    }
+    Item read()
+    {
+        auto thisInfo = typeid(this);
+        throw new Exception(
+            thisInfo.toString() ~ " `read` not implemented."
+        );
+    }
+
+    // Evaluation:
     Context evaluate(Context context, bool force)
     {
         return this.evaluate(context);
@@ -76,6 +93,7 @@ class Item
         return context;
     }
 
+    // Commands:
     Command getCommand(string name)
     {
         auto cmd = (name in this.commands);

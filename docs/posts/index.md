@@ -1,5 +1,6 @@
 # Blog
 
+* [autoclose and Processes I/O](2022-04-23--autoclose.md)
 * [About 0.12.0 - Context managers and NO MORE PRECEDENCE](2022-01-17.md)
 * [About 0.8.0 - Classes and objects](2022-01-03.md)
 * [About 0.7.0 - No more InputName](2021-12-24.md)

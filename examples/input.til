@@ -1,8 +1,6 @@
 print "START"
 
-read | foreach line {
-    print "[$line]"
-    break
-}
+read | as line
+print "line:$line"
 
 print "END"

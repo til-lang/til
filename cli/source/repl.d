@@ -16,11 +16,14 @@ import editline;
 int repl(Dict envVars, SimpleList argumentsList)
 {
     auto scheduler = new Scheduler();
+
     auto escopo = new Escopo();
     escopo["args"] = argumentsList;
     escopo["env"] = envVars;
     escopo.commands = commands;
+
     auto process = new MainProcess(scheduler, null, escopo);
+
     int returnCode = 0;
 
     string command;

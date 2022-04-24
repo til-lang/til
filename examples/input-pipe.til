@@ -2,19 +2,20 @@ print "START"
 
 set counter 0
 
-proc printer () {
+proc printer (q) {
     print "printer started"
     sleep 500
-    read.no_wait | foreach line {
+    receive.no_wait $q | foreach line {
         print "> $line"
     }
     print "printer ended"
     incr $counter
 }
 
-set p [spawn {printer}]
+queue | as queue
+set p [spawn {printer $queue}]
 range 4 | foreach x {
-    send $p $x
+    push $queue $x
 }
 
 assert ($counter == 0)

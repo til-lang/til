@@ -22,7 +22,7 @@ class Escopo
 {
     Escopo parent;
     Items[string] variables;
-    Items[string] internalVariables;
+    Items contextManagers;
     CommandsMap commands;
     string description;
 

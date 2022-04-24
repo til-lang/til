@@ -26,8 +26,4 @@ class Pid : Item
     {
         return "Pid for Process " ~ to!string(this.process.index);
     }
-    override Context next(Context context)
-    {
-        return this.process.output.next(context);
-    }
 }

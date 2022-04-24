@@ -3,7 +3,7 @@ module til.commands;
 import std.array;
 import std.file : read;
 import std.stdio;
-import std.string : toLower;
+import std.string : toLower, stripRight;
 
 import til.grammar;
 
@@ -500,16 +500,6 @@ static this()
             returnedContext.exitCode = ExitCode.CommandSuccess;
         }
 
-        Items managers = escopo.internalVariables.require("cm", []);
-        foreach (contextManager; managers)
-        {
-            auto closeContext = contextManager.runCommand("close", returnedContext);
-            if (closeContext.exitCode == ExitCode.Failure)
-            {
-                return closeContext;
-            }
-        }
-
         context.size = returnedContext.size;
         context.exitCode = returnedContext.exitCode;
         return context;
@@ -525,13 +515,33 @@ static this()
         escopo[name] = contextManager;
         context = contextManager.runCommand("open", context);
 
-        Items managers = escopo.internalVariables.require("cm", []);
-        managers ~= contextManager;
-        escopo.internalVariables["cm"] = managers;
+        // XXX: check context.exitCode?
+        escopo.contextManagers ~= contextManager;
 
         context.exitCode = ExitCode.CommandSuccess;
         return context;
     });
+    commands["with"].isDeprecated = true;
+
+    commands["autoclose"] = new Command((string path, Context context)
+    {
+        // context_manager 1 2 3 | autoclose | as cm
+        auto contextManager = context.peek();
+        auto escopo = context.escopo;
+
+        context = contextManager.runCommand("open", context);
+
+        if (context.exitCode == ExitCode.Failure)
+        {
+            return context;
+        }
+
+        escopo.contextManagers ~= contextManager;
+
+        context.exitCode = ExitCode.CommandSuccess;
+        return context;
+    });
+
     commands["uplevel"] = new Command((string path, Context context)
     {
         /*
@@ -593,33 +603,12 @@ static this()
 
         auto subprogram = context.pop!SubProgram;
 
-        Item input = context.popOrNull();
-        debug {stderr.writeln("input:", input); }
-
-        if (context.size > 1)
-        {
-            auto msg = "`" ~ path ~ "` cannot handle multiple inputs";
-            return context.error(msg, ErrorCode.InvalidInput, "");
-        }
-
         auto process = new Process(
             context.process.scheduler,
             subprogram,
             new Escopo(context.escopo),
             "spawned process"
         );
-
-        // Piping:
-        if (input !is null)
-        {
-            // receive $queue | spawn some_procedure
-            process.input = input;
-        }
-        else
-        {
-            process.input = new WaitingQueue(64);
-        }
-        process.output = new WaitingQueue(64);
 
         auto pid = context.process.scheduler.add(process);
         context.push(pid);
@@ -631,7 +620,7 @@ static this()
     });
 
     // ---------------------------------------------
-    // Printing:
+    // Text I/O:
     commands["print"] = new Command((string path, Context context)
     {
         while(context.size) stdout.write(context.pop!string());
@@ -645,43 +634,12 @@ static this()
         return context;
     });
 
-    // ---------------------------------------------
-    // Piping
     commands["read"] = new Command((string path, Context context)
     {
-        if (context.process.input is null)
-        {
-            auto msg = "`" ~ path ~ "`: process input should not be null";
-            return context.error(msg, ErrorCode.InvalidArgument, "");
-        }
-        // Probably a WaitingQueue:
-        context.push(context.process.input);
-        return context;
+        // read a line from std.stdin
+        return context.push(new String(stdin.readln().stripRight("\n")));
     });
-    commands["read.no_wait"] = new Command((string path, Context context)
-    {
-        if (context.process.input is null)
-        {
-            auto msg = "`" ~ path ~ "`: process input should not be null";
-            return context.error(msg, ErrorCode.InvalidArgument, "");
-        }
-        // Probably a WaitingQueue, let's change its behavior to
-        // a regular Queue:
-        auto q = cast(WaitingQueue)context.process.input;
-        context.push(new Queue(q));
-        return context;
-    });
-    commands["write"] = new Command((string path, Context context)
-    {
-        if (context.size > 1)
-        {
-            auto msg = "`write` expects only one argument";
-            return context.error(msg, ErrorCode.InvalidArgument, "");
-        }
-        Queue output = cast(Queue)context.process.output;
-        output.push(context.pop());
-        return context;
-    });
+
     // ---------------------------------------------
     // Time
     integerCommands["sleep"] = new Command((string path, Context context)
