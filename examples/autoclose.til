@@ -35,4 +35,15 @@ scope "context_manager test" {
 print "global_cm is $global_cm"
 assert ($global_cm == 0)
 
+proc p () {
+    push $global_cm | autoclose | as cm
+    assert ($cm == 1)
+    print "okay, cm is 1 on spawned `p`"
+}
+
+spawn { p }
+sleep 5
+assert ($global_cm == 0)
+print " and 0 after `p` is closed."
+
 print "END"

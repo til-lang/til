@@ -51,7 +51,8 @@ class Process : Fiber
 
     void fiberRun()
     {
-        this.context = this.run();
+        auto ctx = this.run();
+        this.context = this.closeCMs(ctx);
     }
 
     // SubProgram execution:

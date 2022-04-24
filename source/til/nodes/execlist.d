@@ -30,6 +30,7 @@ class ExecList : BaseList
         escopo.description = "ExecList.evaluate";
 
         auto returnedContext = context.process.run(this.subprogram, context.next(escopo));
+        returnedContext = context.process.closeCMs(returnedContext);
 
         context.size += returnedContext.size;
         context.exitCode = returnedContext.exitCode;
