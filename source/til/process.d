@@ -65,32 +65,6 @@ class Process : Fiber
     }
     Context run(SubProgram subprogram, Context context)
     {
-        // Save the ORIGINAL escopo
-        // XXX: Should we try the returned context escopo?
-        //      Are they the same every time?
-        //      Should we check something?
-        auto returnedContext = runPipelines(subprogram, context);
-
-        foreach (contextManager; context.escopo.contextManagers)
-        {
-            auto closeContext = contextManager.runCommand("close", returnedContext);
-            if (closeContext.exitCode == ExitCode.Failure)
-            {
-                // If the subprogram itself failed, we're going
-                // to be very forgiving with autoclose errors,
-                // since it could cloud the real issue from the
-                // programmers view:
-                if (returnedContext.exitCode != ExitCode.Failure)
-                {
-                    return closeContext;
-                }
-            }
-        }
-
-        return returnedContext;
-    }
-    Context runPipelines(SubProgram subprogram, Context context)
-    {
         foreach(index, pipeline; subprogram.pipelines)
         {
             context = pipeline.run(context);
@@ -171,7 +145,26 @@ class Process : Fiber
 
         // Returns the context of the last expression:
         return context;
+    }
 
+    Context closeCMs(Context context)
+    {
+        foreach (contextManager; context.escopo.contextManagers)
+        {
+            auto closeContext = contextManager.runCommand("close", context);
+            if (closeContext.exitCode == ExitCode.Failure)
+            {
+                // If the subprogram itself failed, we're going
+                // to be very forgiving with autoclose errors,
+                // since it could cloud the real issue from the
+                // programmers view:
+                if (context.exitCode != ExitCode.Failure)
+                {
+                    return closeContext;
+                }
+            }
+        }
+        return context;
     }
 }
 
@@ -197,6 +190,7 @@ class MainProcess : Process
     override Context run()
     {
         context = super.run();
+        context = super.closeCMs(context);
 
         // Wait until all processes die:
         uint activeCounter = 0;

@@ -43,6 +43,7 @@ class Procedure : Command
 
         // RUN!
         newContext = context.process.run(body, newContext);
+        newContext = context.process.closeCMs(newContext);
 
         context.size = newContext.size;
 

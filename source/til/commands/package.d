@@ -494,6 +494,7 @@ static this()
         auto returnedContext = context.process.run(
             body, context.next(escopo, 0)
         );
+        returnedContext = context.process.closeCMs(returnedContext);
 
         if (returnedContext.exitCode == ExitCode.Proceed)
         {
