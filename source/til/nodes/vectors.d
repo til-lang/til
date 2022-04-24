@@ -19,6 +19,10 @@ class Vector(T) : Item
     {
         this();
         this.values = values;
+        static if (T.stringof == "byte")
+        {
+            this.commands = byteVectorCommands;
+        }
     }
     this()
     {
