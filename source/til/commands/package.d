@@ -13,7 +13,7 @@ import til.packages;
 import til.nodes;
 import til.procedures;
 import til.process;
-import til.sharedlibs;
+// import til.sharedlibs;
 
 
 // Global variable:
@@ -83,12 +83,12 @@ static this()
     });
     nameCommands["import"] = new Command((string path, Context context)
     {
-        // import std.io as x
+        // import std.io
         auto packagePath = context.pop!string();
         string newName = packagePath;
 
         // import std.io x
-        if (context.size == 1)
+        if (context.size)
         {
             newName = context.pop!string();
         }
@@ -96,7 +96,7 @@ static this()
         if (!context.escopo.importModule(packagePath, newName))
         {
             auto msg = "Module not found: " ~ packagePath;
-            return context.error(msg, ErrorCode.InvalidArgument, "");
+            return context.error(msg, ErrorCode.NotFound, "");
         }
 
         return context;
@@ -463,7 +463,10 @@ static this()
         // proc name (parameters) {body}
         string name = context.pop!string();
 
-        auto parameters = context.pop!SimpleList();
+        string[] parameters = context.pop!SimpleList()
+            .items
+            .map!(x => x.toString())
+            .array;
         auto body = context.pop!SubProgram();
 
         auto proc = new Procedure(

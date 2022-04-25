@@ -3,7 +3,6 @@ module til.grammar;
 import std.algorithm : among, canFind;
 import std.conv : to;
 import std.math : pow;
-import std.range : back, popBack;
 
 import til.conv;
 import til.exceptions;
@@ -12,7 +11,6 @@ import til.nodes;
 
 debug
 {
-    import std.array : join;
     import std.stdio;
 }
 
@@ -58,22 +56,8 @@ class Parser
     }
 
     // --------------------------------------------
-    void push(string s)
-    {
-        stack ~= s ~ ":" ~ to!string(line);
-        debug {stderr.writeln("NODES:", to!string(stack.join(" ")), " ← ");}
-    }
-    void pop()
-    {
-        auto popped = stack.back;
-        stack.popBack;
-        debug {stderr.writeln("NODES:", to!string(stack.join(" ")), " → ", popped);}
-    }
-
-    // --------------------------------------------
     SubProgram run()
     {
-        push("program");
         SubProgram sp;
         try
         {
@@ -89,7 +73,6 @@ class Parser
                 ": " ~ to!string(ex)
             );
         }
-        pop();
         return sp;
     }
 
@@ -216,7 +199,6 @@ class Parser
     // Nodes
     SubProgram consumeSubProgram()
     {
-        push("subprogram");
         Pipeline[] pipelines;
 
         consumeWhitespaces();
@@ -226,13 +208,11 @@ class Parser
             pipelines ~= consumePipeline();
         }
 
-        pop();
         return new SubProgram(pipelines);
     }
 
     Pipeline consumePipeline()
     {
-        push("pipeline");
         CommandCall[] commands;
 
         consumeWhitespaces();
@@ -253,13 +233,11 @@ class Parser
         }
 
         if (isEndOfLine && !eof) consumeChar();
-        pop();
         return new Pipeline(commands);
     }
 
     CommandCall consumeCommandCall()
     {
-        push("command");
         NameAtom commandName = cast(NameAtom)consumeAtom();
         Item[] arguments;
 
@@ -293,7 +271,6 @@ class Parser
                 }
             }
         }
-        pop();
         return new CommandCall(commandName.toString(), arguments);
     }
 
@@ -323,33 +300,28 @@ class Parser
 
     SubProgram consumeSubList()
     {
-        push("SubProgram");
         auto open = consumeChar();
         assert(open == '{');
         auto subprogram = consumeSubProgram();
         auto close = consumeChar();
         assert(close == '}');
 
-        pop();
         return subprogram;
     }
 
     ExecList consumeExecList()
     {
-        push("ExecList");
         auto open = consumeChar();
         assert(open == '[');
         auto subprogram = consumeSubProgram();
         auto close = consumeChar();
         assert(close == ']');
 
-        pop();
         return new ExecList(subprogram);
     }
 
     SimpleList consumeSimpleList()
     {
-        push("SimpleList");
         Item[] items;
         auto open = consumeChar();
         assert(open == '(');
@@ -367,13 +339,11 @@ class Parser
         auto close = consumeChar();
         assert(close == ')');
 
-        pop();
         return new SimpleList(items);
     }
 
     Item consumeExtraction()
     {
-        push("Extraction");
         Item[] items;
         auto open = consumeChar();
         assert(open == '<');
@@ -396,13 +366,11 @@ class Parser
         auto close = consumeChar();
         assert(close == '>');
 
-        pop();
         return new Extraction(items);
     }
 
     String consumeString()
     {
-        push("string");
         auto opener = consumeChar();
         assert(opener == '"' || opener == '\'');
 
@@ -504,7 +472,6 @@ class Parser
         auto closer = consumeChar();
         assert(closer == opener);
 
-        pop();
         if (hasSubstitution)
         {
             debug {stderr.writeln("new SubstString: ", parts);}
@@ -523,7 +490,6 @@ class Parser
 
     Item consumeAtom()
     {
-        push("atom");
         char[] token;
 
         bool isNumber = true;
@@ -588,7 +554,6 @@ class Parser
         }
 
         debug {stderr.writeln(" token: ", token);}
-        pop();
 
         string s = cast(string)token;
         debug {stderr.writeln(" s: ", s);}
@@ -646,12 +611,10 @@ class Parser
         // Handle hexadecimal format, like 0xabcdef
         if (s.length > 2 && s[0..2] == "0x")
         {
+            // XXX: should we handle FormatException, here?
             auto result = toLong(s);
-            if (result.success)
-            {
-                debug {stderr.writeln("new IntegerAtom: ", result.value);}
-                return new IntegerAtom(result.value);
-            }
+            debug {stderr.writeln("new IntegerAtom: ", result);}
+            return new IntegerAtom(result);
         }
 
         // Names that are boolean:

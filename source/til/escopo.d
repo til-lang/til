@@ -3,19 +3,11 @@ module til.escopo;
 import std.array : join, split;
 import std.container : DList;
 
+import til.exceptions;
 import til.packages;
 import til.nodes;
 import til.procedures;
 import til.scheduler;
-
-
-class NotFoundError : Exception
-{
-    this(string msg)
-    {
-        super(msg);
-    }
-}
 
 
 class Escopo
@@ -45,7 +37,7 @@ class Escopo
             }
             else
             {
-                throw new NotFoundError("`" ~ name ~ "` variable not found!");
+                throw new NotFoundException("`" ~ name ~ "` variable not found!");
             }
         }
         else
@@ -67,8 +59,7 @@ class Escopo
     override string toString()
     {
         return (
-            "Escopo "
-            ~ description ~ "\n"
+            "Escopo " ~ description ~ "\n"
             ~ " vars:" ~ to!string(variables.byKey) ~ "\n"
             ~ " cmds:" ~ to!string(commands.byKey) ~ "\n"
         );

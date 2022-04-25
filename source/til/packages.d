@@ -5,7 +5,7 @@ import std.file : dirEntries, SpanMode;
 import std.path : asAbsolutePath, asNormalizedPath;
 import std.process : environment;
 import core.sys.posix.dlfcn;
-import std.string : strip, toStringz;
+import std.string : toStringz;
 
 import til.nodes;
 
@@ -73,17 +73,15 @@ CommandsMap importFromSharedLibrary(
         debug {stderr.writeln("path:",path);}
         // Scan directories recursively searching for a match
         // with libraryPath:
-        foreach(dirEntry; path.dirEntries(libraryPath, SpanMode.depth, true))
+        foreach(dirEntry; path.dirEntries(libraryPath, SpanMode.shallow, true))
         {
             debug {stderr.writeln(" dirEntry:", dirEntry);}
-
-            auto libraryPathZ = dirEntry.toStringz;
 
             // Clean up any old error messages:
             dlerror();
 
             // lh = "library handler"
-            void* lh = dlopen(libraryPathZ, RTLD_LAZY);
+            void* lh = dlopen(dirEntry.toStringz, RTLD_LAZY);
 
             auto error = dlerror();
             if (error !is null)

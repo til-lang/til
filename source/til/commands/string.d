@@ -287,14 +287,18 @@ static this()
         {
             string target = item.toString();
 
-            auto result = toLong(target);
-            if (!result.success)
+            long result;
+            try
             {
-                auto msg = "Could not convert to integer";
+                result = toLong(target);
+            }
+            catch (Exception ex)
+            {
+                string msg = "Could not convert to integer: " ~ ex.msg;
                 return context.error(msg, ErrorCode.InvalidArgument, "");
             }
 
-            context.push(result.value);
+            context.push(result);
         }
         return context;
     });

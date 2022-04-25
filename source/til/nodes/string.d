@@ -125,7 +125,7 @@ class SubstString : String
                 {
                     values = context.escopo[part.value];
                 }
-                catch (NotFoundError)
+                catch (NotFoundException)
                 {
                     auto msg = "Variable " ~ to!string(part.value) ~ " is not set";
                     return context.error(msg, ErrorCode.InvalidArgument, "");

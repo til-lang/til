@@ -1,7 +1,5 @@
 module til.procedures;
 
-import std.conv : to;
-
 import til.exceptions;
 import til.nodes;
 
@@ -9,10 +7,10 @@ import til.nodes;
 class Procedure : Command
 {
     string name;
-    SimpleList parameters;
+    string[] parameters;
     SubProgram body;
 
-    this(string name, SimpleList parameters, SubProgram body)
+    this(string name, string[] parameters, SubProgram body)
     {
         this.name = name;
         this.parameters = parameters;
@@ -26,7 +24,7 @@ class Procedure : Command
         newScope.description = name;
 
         // Empty the caller scope context/stack:
-        foreach (parameter; parameters.items)
+        foreach (parameter; parameters)
         {
             if (context.size == 0)
             {
@@ -34,9 +32,8 @@ class Procedure : Command
                     ~ " `" ~ name ~ "`.";
                 return context.error(msg, ErrorCode.InvalidSyntax, "");
             }
-            string parameterName = to!string(parameter);
             auto argument = context.pop();
-            newScope[parameterName] = argument;
+            newScope[parameter] = argument;
         }
 
         auto newContext = context.next(newScope, context.size);

@@ -58,7 +58,7 @@ class SubstAtom : NameAtom
         {
             values = context.escopo[value];
         }
-        catch (NotFoundError)
+        catch (NotFoundException)
         {
             auto msg = "Variable " ~ to!string(value) ~ " is not set";
             return context.error(msg, ErrorCode.InvalidArgument, "");

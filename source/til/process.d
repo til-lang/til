@@ -11,11 +11,7 @@ class Process : Fiber
 {
     Scheduler scheduler;
     SubProgram subprogram;
-
-    // To store the execution results:
     Context context;
-
-    // Stack:
     Stack stack;
 
     // Process identification:
@@ -23,11 +19,7 @@ class Process : Fiber
     string description;
     uint index;
 
-    this(Scheduler scheduler)
-    {
-        this(scheduler, null, null, description);
-    }
-    this(Scheduler scheduler, SubProgram subprogram, Escopo escopo=null, string description=null)
+    this(Scheduler scheduler, SubProgram subprogram, Escopo escopo, string description)
     {
         this.scheduler = scheduler;
         this.subprogram = subprogram;
@@ -48,7 +40,6 @@ class Process : Fiber
     {
         this.scheduler.yield();
     }
-
     void fiberRun()
     {
         auto ctx = this.run();

@@ -23,7 +23,11 @@ class Extraction : BaseList
         context.size = 0;
         foreach(item; this.items.retro)
         {
-            context.run(&(item.evaluate));
+            context = item.evaluate(context);
+            if (context.exitCode == ExitCode.Failure)
+            {
+                return context;
+            }
         }
 
         Item target = context.pop();

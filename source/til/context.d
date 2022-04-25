@@ -27,19 +27,11 @@ struct Context
         this.size = size;
     }
 
-    Context next()
-    {
-        return this.next(0);
-    }
-    Context next(int argumentCount)
+    Context next(int argumentCount=0)
     {
         return this.next(escopo, argumentCount);
     }
-    Context next(Escopo escopo)
-    {
-        return this.next(escopo, 0);
-    }
-    Context next(Escopo escopo, int size)
+    Context next(Escopo escopo, int size=0)
     {
         this.size -= size;
         auto newContext = Context(process, escopo, size);
@@ -48,11 +40,8 @@ struct Context
 
     string toString()
     {
-        debug {stderr.writeln("context.toString: ", process, "/", escopo);}
-        string s = "";
-        // string s = "STACK:" ~ to!string(process.stack);
+        string s = " process " ~ to!string(process.index);
         s ~= " (" ~ to!string(size) ~ ")";
-        s ~= " process " ~ to!string(process.index);
         return s;
     }
     string description()
@@ -234,31 +223,10 @@ struct Context
         }
     }
 
-    void assimilate(Context other)
-    {
-        this.size += other.size;
-    }
-
     // Scheduler-related things
     void yield()
     {
         process.yield();
-    }
-
-    // Execution
-    void run(Context function(Context) f)
-    {
-        return this.run(f, 0);
-    }
-    void run(Context function(Context) f, int argumentCount)
-    {
-        auto rContext = f(this.next(argumentCount));
-        this.assimilate(rContext);
-    }
-    void run(Context delegate(Context) f)
-    {
-        auto rContext = f(this.next);
-        this.assimilate(rContext);
     }
 
     // Errors

@@ -1,18 +1,18 @@
 module til.exceptions;
 
 
-class InvalidException : Exception
+template customException(string name)
+{
+    const string customException = "
+class " ~ name ~ " : Exception
 {
     this(string msg)
     {
         super(msg);
     }
+}
+    ";
 }
 
-class NotFound : Exception
-{
-    this(string msg)
-    {
-        super(msg);
-    }
-}
+mixin(customException!"InvalidException");
+mixin(customException!"NotFoundException");
