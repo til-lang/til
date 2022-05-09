@@ -21,6 +21,7 @@ print " the state is $state"
 
 push $queue "quit"
 
+print "waiting for subprocess to die"
 set not_running false
 range 128 | foreach x {
     if (<$pid is_running> == false) {

@@ -116,27 +116,33 @@ class Queue : Item
 }
 
 
-class WaitingQueue : Queue
+class WaitingQueue : Item
 {
-    this(ulong size)
-    {
-        super(size);
-    }
+    Queue queue;
     this(Queue q)
     {
-        super(q);
+        this.queue = q;
     }
 
     override Context next(Context context)
     {
-        while (isEmpty)
+        while (queue.isEmpty)
         {
             context.yield();
         }
 
-        auto item = read();
+        auto item = queue.read();
         context.push(item);
         context.exitCode = ExitCode.Continue;
         return context;
+    }
+
+    // ------------------
+    // Conversions
+    override string toString()
+    {
+        string s = "waiting_queue " ~ to!string(queue.size);
+        s ~= " (" ~ to!string(queue.values.length) ~ ")";
+        return s;
     }
 }

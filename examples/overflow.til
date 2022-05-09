@@ -9,7 +9,7 @@ proc overflow () {
     }
 
     incr $max
-    
+
     error "Increasing \$max should overflow."
     exit 1
 }

@@ -167,35 +167,8 @@ static this()
             return context.error(msg, ErrorCode.InvalidArgument, "");
         }
 
-        class WaitingQueueIterator : Item
-        {
-            Queue queue;
-            this(Queue q)
-            {
-                this.queue = q;
-            }
-
-            override string toString()
-            {
-                return "WaitingQueueIterator";
-            }
-
-            override Context next(Context context)
-            {
-                while (queue.isEmpty)
-                {
-                    context.yield();
-                }
-
-                auto item = queue.read();
-                context.push(item);
-                context.exitCode = ExitCode.Continue;
-                return context;
-            }
-        }
-
         auto queue = context.pop!Queue();
-        return context.push(new WaitingQueueIterator(queue));
+        return context.push(new WaitingQueue(queue));
     });
     queueCommands["receive.no_wait"] = new Command((string path, Context context)
     {
