@@ -92,7 +92,6 @@ static this()
         auto lastKey = items.back.toString();
         items.popBack();
 
-        debug {stderr.writeln("navigateTo:", items);}
         auto innerDict = dict.navigateTo(items, false);
         debug {stderr.writeln(" innerDict:", innerDict);}
         if (innerDict is null)
@@ -107,7 +106,7 @@ static this()
         }
         catch (Exception ex)
         {
-            return context.error(ex.msg, ErrorCode.Unknown, "dict");
+            return context.error(ex.msg, ErrorCode.NotFound, "dict");
         }
     });
 }

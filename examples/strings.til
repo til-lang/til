@@ -26,15 +26,19 @@ proc test_undefined_variable () {
 
 test_undefined_variable
 
-# Extractions:
-set s "123456789"
-assert (<$s 0> == "1")
-assert (<$s -1> == "9")
+scope "extractions" {
+    set s "123456789"
+    assert (<$s 0> == "1")
+    assert (<$s -1> == "9")
+}
 
-# Methods
-assert ([length $s] == 9)
-set pointed "1.2.3.4.5.6.7"
-split "." $pointed | as parts
+scope "methods" {
+    set s "123456789"
+    assert ([length $s] == 9)
+    set pointed "1.2.3.4.5.6.7"
+    split "." $pointed | as parts
+}
+
 set counter 1
 print "parts: $parts"
 range $parts | foreach part {

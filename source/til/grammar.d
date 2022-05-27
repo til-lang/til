@@ -242,27 +242,17 @@ class Parser
         Item[] arguments;
 
         // That is: if the command HAS any argument:
-        while (currentChar == SPACE)
+        while (true)
         {
-            consumeSpace();
-            if (currentChar.among('}', ']', ')', '>', PIPE))
-            {
-                break;
-            }
-
-            arguments ~= consumeItem();
-
             if (currentChar == EOL)
             {
-                /*
-                Verify if it is not a continuation:
-                cmd a b c
-                  . d e
-                */
+                consumeChar();
                 consumeWhitespaces();
                 if (currentChar == '.')
                 {
                     consumeChar();
+                    consumeSpace();
+                    arguments ~= consumeItem();
                     continue;
                 }
                 else
@@ -270,7 +260,21 @@ class Parser
                     break;
                 }
             }
+            else if (currentChar == SPACE)
+            {
+                consumeSpace();
+                if (currentChar.among('}', ']', ')', '>', PIPE))
+                {
+                    break;
+                }
+                arguments ~= consumeItem();
+            }
+            else
+            {
+                break;
+            }
         }
+
         return new CommandCall(commandName.toString(), arguments);
     }
 
