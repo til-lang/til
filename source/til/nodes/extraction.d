@@ -41,7 +41,10 @@ class Extraction : BaseList
             return context.error(ex.msg, ErrorCode.Unknown, "");
         }
 
-        context.exitCode = ExitCode.Proceed;
+        if (context.exitCode != ExitCode.Failure)
+        {
+            context.exitCode = ExitCode.Proceed;
+        }
         return context;
     }
 }

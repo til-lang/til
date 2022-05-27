@@ -28,4 +28,15 @@ dicio | as d
 print <$d x>
 assert (<$d y> == "none")
 
+proc buggy_extraction () {
+    proc on.error (e) {
+        print "error: $e"
+        return "HANDLED"
+    }
+    dict | as d
+    set x <$d not_existent>
+    return $x
+}
+assert ([buggy_extraction] == "HANDLED")
+
 print "END"
