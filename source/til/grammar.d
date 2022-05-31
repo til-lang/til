@@ -9,12 +9,6 @@ import til.exceptions;
 import til.nodes;
 
 
-debug
-{
-    import std.stdio;
-}
-
-
 const EOL = '\n';
 const SPACE = ' ';
 const TAB = '\t';
@@ -263,7 +257,7 @@ class Parser
             else if (currentChar == SPACE)
             {
                 consumeSpace();
-                if (currentChar.among('}', ']', ')', '>', PIPE))
+                if (currentChar.among!('}', ']', ')', '>', PIPE))
                 {
                     break;
                 }
@@ -287,7 +281,7 @@ class Parser
         switch(currentChar)
         {
             case '{':
-                return consumeSubList();
+                return consumeSubString();
             case '[':
                 return consumeExecList();
             case '(':
@@ -302,6 +296,70 @@ class Parser
         }
     }
 
+    Item consumeSubString()
+    {
+        /*
+        set s {{
+            something and something else
+        }}
+        // $s -> "something and something else"
+        */
+
+        auto open = consumeChar();
+        assert(open == '{');
+
+        if (currentChar == '{')
+        {
+            // It's a subString!
+
+            // Consume the current (and second) '{':
+            consumeChar();
+
+            // Consume any opening newlines and spaces:
+            consumeWhitespaces();
+
+            char[] token;
+            while (true)
+            {
+                if (currentChar == '}')
+                {
+                    consumeChar();
+                    if (currentChar == '}')
+                    {
+                        // Find all the blankspaces in the end of the string:
+                        size_t end = token.length;
+                        do
+                        {
+                            end--;
+                        }
+                        while (token[end].among!(SPACE, TAB, EOL));
+
+                        return new String(to!string(token[0..end+1]));
+                    }
+                    else
+                    {
+                        token ~= '}';
+                    }
+                }
+                else if (currentChar == '\n')
+                {
+                    token ~= consumeChar();
+                    consumeWhitespaces();
+                    continue;
+                }
+                token ~= consumeChar();
+            }
+        }
+        else
+        {
+            auto subprogram = consumeSubProgram();
+            auto close = consumeChar();
+            assert(close == '}');
+            return subprogram;
+        }
+    }
+
+    // Not used since consumeSubString:
     SubProgram consumeSubList()
     {
         auto open = consumeChar();
