@@ -2,7 +2,7 @@ print "START"
 
 list | as results
 range 10 | transform x {
-    if (($x % 2) == 0) {
+    if $(($x % 2) == 0) {
         skip
     } else {
         return $x
@@ -11,6 +11,6 @@ range 10 | transform x {
     push $results $x
 }
 print "results: $results"
-assert ([join " " $results] == "1 3 5 7 9")
+assert $([join " " $results] == "1 3 5 7 9")
 
 print "END"

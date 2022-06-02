@@ -34,30 +34,6 @@ not going to be carried around or displayed anywhere.
 set this_is_a_name_atom 0
 ```
 
-## InputNameAtom
-
-An InputNameAtom is defined by using a `>` token right before the name,
-indicating it is supposed to **receive** values somehow:
-
-```tcl
-range 5 | transform x {
-    return $x "$x"
-} | case (>value "0") {
-    io.out "The first value is $value"
-} | case (>value "1") {
-    io.out "The second value is $value"
-} | case (>value "2") {
-    io.out "The third value is $value"
-} | case (>value >name) {
-    io.out "And the $name-th value is $value" 
-}
-```
-
-Til itself only marks the Atom as an InputNameAtom and it's up to each
-command implementation to decide what to do with this information. `case`,
-for instance, works in a pattern-matching fashion, but it could be useful
-in other situations.
-
 ## SubstAtom
 
 It's defined by using a `$` token right before the name and indicates

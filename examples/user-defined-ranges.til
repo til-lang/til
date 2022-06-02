@@ -1,0 +1,15 @@
+type generator {
+    proc init () {
+        return 0
+    }
+    proc next ($x) {
+        print "next($x)"
+        incr $x
+        if $($x > 5) {
+            break
+        }
+        continue $x
+    }
+}
+
+generator | foreach x { print "=> $x" }

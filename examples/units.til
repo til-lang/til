@@ -6,7 +6,7 @@ set z 200K
 
 print "$x + $y + $z"
 print $($x + $y + $z)
-assert ($($x + $y + $z) == 2200200000)
+assert $($($x + $y + $z) == 2200200000)
 
 set x 2Gi
 set y 200Mi
@@ -14,12 +14,12 @@ set z 200Ki
 
 print "$x + $y + $z"
 print $($x + $y + $z)
-assert ($($x + $y + $z) == 2357403648)
+assert $($($x + $y + $z) == 2357403648)
 
 proc meters (x) {
     return "${x}m"
 }
-assert ([meters 10] == "10m")
-assert ($(10 meters) == "10m")
+assert $([meters 10] == "10m")
+assert $($(10 meters) == "10m")
 
 print "END"

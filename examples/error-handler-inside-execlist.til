@@ -6,4 +6,4 @@ set x [
     invalidcommand
 ]
 print "x: $x"
-assert ($x == "boom")
+assert $($x == "boom")

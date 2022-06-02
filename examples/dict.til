@@ -3,22 +3,22 @@ print "START"
 print "Dict creation"
 dict (x 11) (y 22) (z 33) | as d
 print "d: $d"
-assert (<$d x> == 11) (<$d y> == 22) (<$d z> == 33)
+assert $(<$d x> == 11) $(<$d y> == 22) $(<$d z> == 33)
 
 print "Set new keys"
 set $d (a 1) (b 0)
 set $d (b 2)
 set $d (c 3)
-assert (<$d a> == 1) (<$d b> == 2) (<$d c> == 3)
+assert $(<$d a> == 1) $(<$d b> == 2) $(<$d c> == 3)
 
 print "Multi-dimensional dicts"
 dict | as d
 set $d (x y z 321)
-assert (<$d x y z> == 321)
+assert $(<$d x y z> == 321)
 print "unset"
 unset $d (x y z)
 set $d (x y z 123)
-assert (<$d x y z> == 123)
+assert $(<$d x y z> == 123)
 
 dict (a a 1) (a b 2) (a c 3)
    . (b a 4) (b b 5) (b c 6)
@@ -30,7 +30,7 @@ range (a b c) | foreach x {
     range (a b c) | foreach y {
         incr $counter
         print "$x $y: " <$map $x $y>
-        assert (<$map $x $y> == $counter)
+        assert $(<$map $x $y> == $counter)
     }
 }
 

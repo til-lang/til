@@ -7,7 +7,6 @@ import til.exceptions;
 import til.packages;
 import til.nodes;
 import til.procedures;
-import til.scheduler;
 
 
 class Escopo
@@ -111,6 +110,11 @@ class Escopo
                 commands[name] = *c;
                 cmd = *c;
             }
+        }
+        else
+        {
+            debug {stderr.writeln("importModule failed");}
+            debug {stderr.writeln("cmd:", cmd);}
         }
 
         // If such command doesn't seem to exist, `cmd` will be null:

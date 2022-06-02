@@ -2,6 +2,6 @@ print "START"
 
 set x 123
 print $x
-assert ($x == 123)
+assert $($x == 123)
 
 print "END"

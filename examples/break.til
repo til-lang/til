@@ -2,7 +2,7 @@ print "START"
 
 set result [
     range 1000 | foreach x {
-        if ($x >= 5) {
+        if $($x >= 5) {
             break "Last item was $x"
         }
         print $x
@@ -10,6 +10,6 @@ set result [
 ]
 
 print "Result: $result"
-assert ($result == "Last item was 5")
+assert $($result == "Last item was 5")
 
 print "END"

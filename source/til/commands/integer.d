@@ -74,7 +74,6 @@ static this()
                 return context.error(msg, ErrorCode.Overflow, "");
             }
         }
-        context.exitCode = ExitCode.CommandSuccess;
         return context;
     });
     integerCommands["decr"] = new Command((string path, Context context)
@@ -94,7 +93,6 @@ static this()
                 return context.error(msg, ErrorCode.Underflow, "");
             }
         }
-        context.exitCode = ExitCode.CommandSuccess;
         return context;
     });
     integerCommands["range"] = new Command((string path, Context context)
@@ -179,9 +177,7 @@ static this()
         }
 
         auto range = new IntegerRange(start, limit, step);
-        context.push(range);
-        context.exitCode = ExitCode.CommandSuccess;
-        return context;
+        return context.push(range);
     });
     integerCommands["to.char"] = new Command((string path, Context context)
     {

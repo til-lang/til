@@ -1,7 +1,7 @@
 print "START"
 
 set x 123
-assert ($x == 123)
+assert $($x == 123)
 
 proc f () {
     return 123
@@ -9,17 +9,17 @@ proc f () {
 
 set x [f]
 print "x:$x"
-assert ($x == 123)
+assert $($x == 123)
 
 f | as y
 print "y:$y"
-assert ($y == 123)
+assert $($y == 123)
 
 proc g () {
     return a b c
 }
 g | list | as (x y z)
 print "x:$x y:$y z:$z"
-assert ($z == c)
+assert $($z == c)
 
 print "END"

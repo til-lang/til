@@ -25,13 +25,13 @@ static this()
 {
     // ---------------------------------------------
     // Stack
-    commands["push"] = new Command((string path, Context context)
+    commands["stack.push"] = new Command((string path, Context context)
     {
         // Do nothing, the value is already on stack.
         return context;
     });
 
-    commands["pop"] = new Command((string path, Context context)
+    commands["stack.pop"] = new Command((string path, Context context)
     {
         if (context.process.stack.stackPointer == 0)
         {
@@ -77,7 +77,7 @@ static this()
         // What if I want to include a code that returns Continue?
         if (context.exitCode != ExitCode.Failure)
         {
-            context.exitCode = ExitCode.CommandSuccess;
+            context.exitCode = ExitCode.Success;
         }
         return context;
     });
@@ -113,10 +113,6 @@ static this()
         SubProgram subprogram = parser.run();
 
         context = context.process.run(subprogram, context.next());
-        if (context.exitCode == ExitCode.Proceed)
-        {
-            context.exitCode = ExitCode.CommandSuccess;
-        }
         return context;
     });
 
@@ -164,14 +160,11 @@ static this()
 
     // ---------------------------------------------
     // Flow control
-    simpleListCommands["if"] = new Command((string path, Context context)
+    commands["if"] = new Command((string path, Context context)
     {
         while(true)
         {
-            auto condition = context.pop!SimpleList();
-            auto execContext = condition.runAsInfixProgram(context);
-            auto isConditionTrue = execContext.pop!bool();
-
+            auto isConditionTrue = context.pop!bool();
             auto thenBody = context.pop!SubProgram();
 
             if (isConditionTrue)
@@ -185,7 +178,7 @@ static this()
             // no else:
             else if (context.size == 0)
             {
-                context.exitCode = ExitCode.CommandSuccess;
+                context.exitCode = ExitCode.Success;
                 break;
             }
             // else {...}
@@ -223,10 +216,6 @@ static this()
             }
         }
 
-        if (context.exitCode == ExitCode.Proceed)
-        {
-            context.exitCode = ExitCode.CommandSuccess;
-        }
         return context;
     });
     nameCommands["foreach"] = new Command((string path, Context context)
@@ -243,8 +232,6 @@ static this()
         */
         auto loopScope = context.escopo;
 
-        uint yieldStep = 0x07;
-
         uint index = 0;
 
         foreach (target; context.items)
@@ -254,6 +241,7 @@ static this()
             while (true)
             {
                 auto nextContext = target.next(context.next());
+                debug {stderr.writeln("foreach next.exitCode:", nextContext.exitCode);}
                 switch (nextContext.exitCode)
                 {
                     case ExitCode.Break:
@@ -261,10 +249,9 @@ static this()
                     case ExitCode.Failure:
                         return nextContext;
                     case ExitCode.Skip:
-                        context.yield();
                         continue;
                     case ExitCode.Continue:
-                        break;
+                        break;  // <-- break the switch, not the while.
                     default:
                         return nextContext;
                 }
@@ -272,16 +259,16 @@ static this()
                 loopScope[argName] = nextContext.items;
 
                 context = context.process.run(argBody, context.next());
-                debug {stderr.writeln("foreach context.exitCode:", to!string(context.exitCode));}
+                debug {stderr.writeln("foreach context.exitCode:", context.exitCode);}
 
                 if (context.exitCode == ExitCode.Break)
                 {
                     break;
                 }
-                else if (context.exitCode == ExitCode.ReturnSuccess)
+                else if (context.exitCode == ExitCode.Return)
                 {
                     /*
-                    ReturnSuccess propagates up into the
+                    Return propagates up into the
                     processes stack:
                     */
                     return context;
@@ -290,15 +277,10 @@ static this()
                 {
                     return context;
                 }
-
-                if ((index++ & yieldStep) == yieldStep)
-                {
-                    context.yield();
-                }
             }
         }
 
-        context.exitCode = ExitCode.CommandSuccess;
+        context.exitCode = ExitCode.Success;
         return context;
     });
     commands["transform"] = new Command((string path, Context context)
@@ -363,9 +345,8 @@ static this()
 
                 switch(execContext.exitCode)
                 {
-                    case ExitCode.ReturnSuccess:
-                    case ExitCode.CommandSuccess:
-                    case ExitCode.Proceed:
+                    case ExitCode.Return:
+                    case ExitCode.Success:
                         execContext.exitCode = ExitCode.Continue;
                         break;
 
@@ -483,7 +464,7 @@ static this()
 
     commands["return"] = new Command((string path, Context context)
     {
-        context.exitCode = ExitCode.ReturnSuccess;
+        context.exitCode = ExitCode.Return;
         return context;
     });
     commands["scope"] = new Command((string path, Context context)
@@ -499,33 +480,10 @@ static this()
         );
         returnedContext = context.process.closeCMs(returnedContext);
 
-        if (returnedContext.exitCode == ExitCode.Proceed)
-        {
-            returnedContext.exitCode = ExitCode.CommandSuccess;
-        }
-
         context.size = returnedContext.size;
         context.exitCode = returnedContext.exitCode;
         return context;
     });
-    commands["with"] = new Command((string path, Context context)
-    {
-        // with cm [context_manager 1 2 3]
-        string name = context.pop!string();
-        auto contextManager = context.pop();
-
-        auto escopo = context.escopo;
-
-        escopo[name] = contextManager;
-        context = contextManager.runCommand("open", context);
-
-        // XXX: check context.exitCode?
-        escopo.contextManagers ~= contextManager;
-
-        context.exitCode = ExitCode.CommandSuccess;
-        return context;
-    });
-    commands["with"].isDeprecated = true;
 
     commands["autoclose"] = new Command((string path, Context context)
     {
@@ -542,7 +500,7 @@ static this()
 
         escopo.contextManagers ~= contextManager;
 
-        context.exitCode = ExitCode.CommandSuccess;
+        context.exitCode = ExitCode.Success;
         return context;
     });
 
@@ -592,36 +550,11 @@ static this()
 
         if (returnedContext.exitCode != ExitCode.Failure)
         {
-            context.exitCode = ExitCode.CommandSuccess;
+            context.exitCode = ExitCode.Success;
         }
         return context;
     });
 
-    // ---------------------------------------------
-    // Scheduler-related:
-    commands["spawn"] = new Command((string path, Context context)
-    {
-        // set pid [spawn {f $x}]
-        // spawn {f} | read | foreach x { ... }
-        // range 5 | spawn {g} | foreach y { ... }
-
-        auto subprogram = context.pop!SubProgram;
-
-        auto process = new Process(
-            context.process.scheduler,
-            subprogram,
-            new Escopo(context.escopo),
-            "spawned process"
-        );
-
-        auto pid = context.process.scheduler.add(process);
-        context.push(pid);
-
-        // Give some time for the new process to start:
-        context.yield();
-
-        return context;
-    });
 
     // ---------------------------------------------
     // Text I/O:
@@ -660,10 +593,6 @@ static this()
             {
                 break;
             }
-            else
-            {
-                context.yield();
-            }
         }
         return context;
     });
@@ -701,37 +630,12 @@ static this()
     {
         foreach (item; context.items)
         {
-            if (item.type == ObjectType.SimpleList)
+            if (!item.toBool())
             {
-                SimpleList list = cast(SimpleList)item;
-                string debugString1 = list.items.map!(x => x.toString()).join(" ");
-
-                auto lContext = list.forceEvaluate(context);
-                list = lContext.pop!SimpleList();
-                string debugString2 = list.items.map!(x => x.toString()).join(" ");
-
-                auto execContext = list.runAsInfixProgram(lContext);
-                auto result = execContext.pop!bool();
-                if (!result)
-                {
-                    auto msg = "assertion error: ("
-                        ~ debugString1
-                        ~ ") -> ("
-                        ~ debugString2
-                        ~ ")";
-                    return context.error(msg, ErrorCode.Assertion, "");
-                }
-            }
-            else
-            {
-                if (!item.toBool())
-                {
-                    auto msg = "assertion error: " ~ item.toString();
-                    return context.error(msg, ErrorCode.Assertion, "");
-                }
+                auto msg = "assertion error: " ~ item.toString();
+                return context.error(msg, ErrorCode.Assertion, "");
             }
         }
-
         return context;
     });
 
@@ -762,7 +666,7 @@ static this()
 
         if (code == 0)
         {
-            context.exitCode = ExitCode.ReturnSuccess;
+            context.exitCode = ExitCode.Return;
             return context;
         }
         else
@@ -785,78 +689,12 @@ static this()
 
         return context;
     });
-    commands["as"] = new Command((string path, Context context)
-    {
-        if (context.inputSize == 0)
-        {
-            auto msg = "`" ~ path ~ "` must receive its values as input";
-            return context.error(msg, ErrorCode.InvalidArgument, "");
-        }
-        if (context.size < 1)
-        {
-            auto msg = "`" ~ path ~ "` must receive at least one argument.";
-            return context.error(msg, ErrorCode.InvalidArgument, "");
-        }
-
-        auto key = context.pop!string();
-        context.escopo[key] = context.items;
-
-        return context;
-    });
+    commands["as"] = commands["set"];
 
     nameCommands["unset"] = new Command((string path, Context context)
     {
         auto firstArgument = context.pop();
         context.escopo.variables.remove(to!string(firstArgument));
-        return context;
-    });
-
-    // ---------------------------------------
-    // Sequences
-    commands["zip"] = new Command((string path, Context context)
-    {
-        class Zipper : Item
-        {
-            Items items;
-            this(Items items)
-            {
-                this.items = items;
-            }
-            override string toString()
-            {
-                return "Zipper";
-            }
-            override Context next(Context context)
-            {
-                Items iterationItems;
-                foreach (item; items.retro)
-                {
-zipIteration:
-                    while (true)
-                    {
-                        auto itemContext = item.next(context.next());
-                        switch (itemContext.exitCode)
-                        {
-                            case ExitCode.Skip:
-                                continue;
-                            case ExitCode.Break:
-                            case ExitCode.Failure:
-                                return itemContext;
-                            default:
-                                iterationItems ~= itemContext.items;
-                                break zipIteration;
-                        }
-                    }
-                }
-
-                context.push(iterationItems);
-                context.exitCode = ExitCode.Continue;
-                return context;
-            }
-        }
-
-        context.push(new Zipper(context.items));
-        context.exitCode = ExitCode.CommandSuccess;
         return context;
     });
 

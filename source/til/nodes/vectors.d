@@ -76,7 +76,7 @@ class Vector(T) : Item
                 }
             }
 
-            context.exitCode = ExitCode.CommandSuccess;
+            context.exitCode = ExitCode.Success;
             Items items;
             foreach (x; item.values[start..end])
             {

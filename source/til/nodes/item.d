@@ -61,22 +61,6 @@ class Item
         );
     }
 
-    // I/O:
-    void write(Item item)
-    {
-        auto thisInfo = typeid(this);
-        throw new Exception(
-            thisInfo.toString() ~ " `write` not implemented."
-        );
-    }
-    Item read()
-    {
-        auto thisInfo = typeid(this);
-        throw new Exception(
-            thisInfo.toString() ~ " `read` not implemented."
-        );
-    }
-
     // Evaluation:
     Context evaluate(Context context, bool force)
     {

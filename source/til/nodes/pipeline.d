@@ -32,23 +32,18 @@ class Pipeline
         foreach(index, command; commandCalls)
         {
             context = command.run(context, inputSize);
+            debug {stderr.writeln("command.run.exitCode: ", context.exitCode);}
 
             final switch(context.exitCode)
             {
                 case ExitCode.Undefined:
                     throw new Exception(to!string(command) ~ " returned Undefined");
 
-                case ExitCode.Proceed:
-                    throw new InvalidException(
-                        "Commands should not return `Proceed`: " ~ to!string(context)
-                        ~ " (command: " ~ to!string(command) ~ ")"
-                    );
-
                 // -----------------
                 // Proc execution:
-                case ExitCode.ReturnSuccess:
+                case ExitCode.Return:
                     // That is what a `return` command returns.
-                    // ReturnSuccess should keep stopping SubPrograms
+                    // Return should keep stopping SubPrograms
                     // until a procedure or a program stops.
                     // (Imagine a `return` inside some nested loops.)
                     return context;
@@ -65,7 +60,7 @@ class Pipeline
                     return context;
 
                 // -----------------
-                case ExitCode.CommandSuccess:
+                case ExitCode.Success:
                     if (context.size > 0)
                     {
                         inputSize = context.size;
@@ -74,8 +69,7 @@ class Pipeline
             }
         }
 
-        // The expected exit code of a pipeline is "Proceed".
-        context.exitCode = ExitCode.Proceed;
+        context.exitCode = ExitCode.Success;
         return context;
     }
 }

@@ -3,7 +3,6 @@ print "START"
 set x "not 10"
 set cmd_str "set x 10"
 eval $cmd_str
-assert ($x == 10)
-print "x is 10 ($x)"
+assert $($x == 10)
 
 print "END"

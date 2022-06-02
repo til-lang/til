@@ -4,11 +4,6 @@ import std.array : join;
 
 import til.nodes;
 
-debug
-{
-    import std.stdio;
-}
-
 
 class CommandCall
 {
@@ -43,9 +38,7 @@ class CommandCall
             Each item already pushes its evaluation
             result into the stack
             */
-            debug {
-                stderr.writeln("   evaluating argument ", argument);
-            }
+            debug {stderr.writeln("   evaluating argument ", argument);}
             context = argument.evaluate(context.next);
 
             /*
@@ -108,6 +101,7 @@ class CommandCall
         }
 
         auto cmd = getCommand(context.escopo, target);
+        debug {stderr.writeln(name, ".cmd:", cmd);}
         if (cmd is null)
         {
             return context.error(

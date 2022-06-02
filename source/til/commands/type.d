@@ -4,11 +4,6 @@ import til.commands;
 import til.procedures;
 import til.nodes;
 
-debug
-{
-    import std.stdio;
-}
-
 
 class TypeCommand : Command
 {
@@ -46,9 +41,7 @@ class TypeCommand : Command
         returnedObject.commands = resolveCommands(returnedObject);
         returnedObject.typeName = this.name;
 
-        context.push(returnedObject);
-        context.exitCode = ExitCode.CommandSuccess;
-        return context;
+        return context.push(returnedObject);
     };
 
     CommandsMap resolveCommands(Item returnedObject)
@@ -144,7 +137,6 @@ static this()
         }
         context.escopo.commands[name] = new TypeCommand(name, newScope);
 
-        context.exitCode = ExitCode.CommandSuccess;
         return context;
     });
 }

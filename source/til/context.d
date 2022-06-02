@@ -10,7 +10,7 @@ struct Context
 {
     Escopo escopo;
     Process process;
-    ExitCode exitCode = ExitCode.Proceed;
+    ExitCode exitCode = ExitCode.Success;
     uint inputSize = 0;
 
     /*
@@ -185,13 +185,13 @@ struct Context
     Context ret(Item item)
     {
         push(item);
-        exitCode = ExitCode.CommandSuccess;
+        exitCode = ExitCode.Success;
         return this;
     }
     Context ret(Items items)
     {
         this.push(items);
-        exitCode = ExitCode.CommandSuccess;
+        exitCode = ExitCode.Success;
         return this;
     }
 
@@ -221,12 +221,6 @@ struct Context
         {
             return [];
         }
-    }
-
-    // Scheduler-related things
-    void yield()
-    {
-        process.yield();
     }
 
     // Errors

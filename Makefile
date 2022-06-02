@@ -21,7 +21,7 @@ til.release: dist/libtil.so
 		-link-defaultlib-shared \
 		--O2 -of=til.release
 
-til.debug: lib-debug
+til.debug:
 	ldc2 --d-debug \
 		cli/source/*.d \
 		-L-L${PWD}/dist -L-ltil -L-ledit \

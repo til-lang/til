@@ -4,10 +4,10 @@ set list (30 20 10 0 40)
 print "list: $list"
 sort $list | as sorted
 print "sorted: $sorted"
-assert ("$sorted" == [to.string (0 10 20 30 40)])
+assert $("$sorted" == [to.string (0 10 20 30 40)])
 
 reverse $sorted | as r
 print "reversed: $r"
-assert ("$r" == [to.string (40 30 20 10 0)])
+assert $("$r" == [to.string (40 30 20 10 0)])
 
 print "END"

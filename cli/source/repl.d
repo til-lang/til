@@ -8,21 +8,18 @@ import til.exceptions;
 import til.grammar;
 import til.nodes;
 import til.process;
-import til.scheduler;
 
 import editline;
 
 
 int repl(Dict envVars, SimpleList argumentsList)
 {
-    auto scheduler = new Scheduler();
-
     auto escopo = new Escopo();
     escopo["args"] = argumentsList;
     escopo["env"] = envVars;
     escopo.commands = commands;
 
-    auto process = new MainProcess(scheduler, null, escopo);
+    auto process = new Process("repl");
 
     int returnCode = 0;
 
@@ -37,6 +34,8 @@ int repl(Dict envVars, SimpleList argumentsList)
     {
         escopo["prompt"] = new String("> ");
     }
+
+    SubProgram subprogram;
 
 mainLoop:
     while (true)
@@ -58,7 +57,7 @@ mainLoop:
             auto parser = new Parser(command);
             try
             {
-                process.subprogram = parser.consumeSubProgram();
+                subprogram = parser.consumeSubProgram();
             }
             catch (IncompleteInputException)
             {
@@ -68,7 +67,7 @@ mainLoop:
             catch (Exception ex)
             {
                 stdout.writeln("Exception: ", ex.msg);
-                process.subprogram = null;
+                subprogram = null;
             }
             break;
         }
@@ -79,27 +78,17 @@ mainLoop:
         }
         command = "";
 
-        if (process.subprogram is null)
+        if (subprogram is null)
         {
             continue;
         }
 
-        scheduler.reset();
-
         // Run the main process:
         debug {stderr.writeln("Running main process..."); }
-        auto context = process.run();
+        auto context = process.run(subprogram, escopo);
 
         // Reset the returnCode:
-        returnCode = 0;
-
-        // Find failed sub-processes:
-        foreach (p; scheduler.processes)
-        {
-            returnCode = finishProcess(p, returnCode);
-        }
-
-        returnCode = finishProcess(process, returnCode);
+        returnCode = finishProcess(process, context);
         if (returnCode != 0) break;
     }
     clear_history();
@@ -107,33 +96,24 @@ mainLoop:
     return returnCode;
 }
 
-int finishProcess(Process p, int returnCode)
+int finishProcess(Process p, Context context)
 {
-    File output;
+    int returnCode = p.unixExitStatus(context);
 
     // Search for errors:
-    if (p.context.exitCode != ExitCode.Proceed)
+    if (context.exitCode == ExitCode.Failure)
     {
-        stdout.writeln(p.description, ":");
-        stderr.writeln(" exitCode ", p.context.exitCode);
-
-        if (p.context.exitCode == ExitCode.Failure)
-        {
-            auto e = p.context.pop!Erro();
-            stderr.writeln(e);
-            returnCode = e.code;
-        }
-        output = stderr;
+        // Log the error:
+        auto e = context.pop!Erro();
+        stderr.writeln(e);
     }
     else
     {
-        output = stdout;
-    }
-
-    // Print the stack:
-    foreach (item; p.context.items)
-    {
-        output.writeln(" ", item);
+        // Return the stack values:
+        foreach (item; context.items)
+        {
+            stdout.writeln(" ", item);
+        }
     }
 
     return returnCode;

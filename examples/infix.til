@@ -9,37 +9,37 @@ proc fold (start items operation) {
 }
 
 proc sum () {
-    set items [pop $args.count | list]
+    set items [stack.pop $args.count | list]
     set result [fold 0 $items ($result + $x)]
     print "sum $items -> $result"
     return $result
 }
 
 proc mul () {
-    set items [pop $args.count | list]
+    set items [stack.pop $args.count | list]
     set result [fold 1 $items ($result * $x)]
     print "mul $items -> $result"
     return $result
 }
 
 print "Prefix:"
-assert ([sum [sum 1 2] 4] == 7)
+assert $([sum [sum 1 2] 4] == 7)
 
 print "Infix:"
-assert ($(1 sum 2 sum 4) == 7)
+assert $($(1 sum 2 sum 4) == 7)
 
 print "Simple infix:"
-assert ($(1 sum 2) == 3)
-assert ($(1 mul 2) == 2)
+assert $($(1 sum 2) == 3)
+assert $($(1 mul 2) == 2)
 
 print "Infix with two of the same operators:"
-assert ($(1 mul 2 mul 4) == 8)
+assert $($(1 mul 2 mul 4) == 8)
 
 print "Infix with two different operators:"
-assert ($(1 sum 2 mul 4) == 12)
+assert $($(1 sum 2 mul 4) == 12)
 
 print "Infix with multiple operators:"
-assert ($(1 sum 2 sum 4 mul 1 mul 2 sum 1) == 15)
+assert $($(1 sum 2 sum 4 mul 1 mul 2 sum 1) == 15)
 # [sum [mul [sum 1 2 4] 1 2] 1]
 
 print "END"

@@ -1,7 +1,7 @@
 print "START"
 
 # NameAtom:
-assert (a == a)
+assert $(a == a)
 print "a == a"
 
 type number {
@@ -15,9 +15,9 @@ type number {
 }
 
 set n [number 5]
-assert ((1 - $n) == -4)
+assert $((1 - $n) == -4)
 print $(1 + $n)
-assert ((1 + $n) == 6)
-assert (($n + 1) == 0)
+assert $((1 + $n) == 6)
+assert $(($n + 1) == 0)
 
 print "END"

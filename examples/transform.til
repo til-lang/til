@@ -8,6 +8,6 @@ range 0 10 | transform x {
     set sum $($sum + $y)
 }
 
-assert ($sum == 11)
+assert $($sum == 11)
 
 print "END"

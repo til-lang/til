@@ -2,7 +2,7 @@ print "START"
 
 proc test (formula expected_result) {
     print "$formula == $expected_result?"
-    assert ([infix $formula] == $expected_result)
+    assert $([infix $formula] == $expected_result)
     print " yes"
 }
 print "Integer math:"
@@ -25,7 +25,7 @@ test (1 * 0.1) 0.1
 test (1 + 0.2) 1.2
 
 set r $(4.0 / 2.3)
-assert ((1.73 < $r) && ($r < 1.74))
+assert $((1.73 < $r) && ($r < 1.74))
 print "1.73 < $r < 1.74"
 
 test (5.0 - 2.4) 2.6

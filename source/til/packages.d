@@ -9,11 +9,6 @@ import std.string : toStringz;
 
 import til.nodes;
 
-debug
-{
-    import std.stdio;
-}
-
 
 string[] packagesPath;
 
@@ -47,7 +42,7 @@ bool importModule(Escopo escopo, string packagePath, string prefix)
     }
     catch(Exception ex)
     {
-        debug {stderr.writeln(ex);}
+        // debug {stderr.writeln(ex);}
         return false;
     }
 

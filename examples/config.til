@@ -1,21 +1,21 @@
 print "START"
 # Config files should not need to import anything.
 
-set font.family "Fira Code"
-set font.size 14
-set theme.name "Industrial"
+set font_family "Fira Code"
+set font_size 14
+set theme_name "Industrial"
 
 # set hour [time.current.hour]
 set hour 19
 
-if ((1 > 2) || ($hour >= 6) && ($hour < 18)) {
-    set theme.mode "light"
+if $((1 > 2) || ($hour >= 6) && ($hour < 18)) {
+    set theme_mode "light"
 } else {
-    set theme.mode "dark"
+    set theme_mode "dark"
 }
 
-assert ($font.family == "Fira Code")
-assert ($font.size == 14)
-assert ($theme.mode == "dark")
+assert $($font_family == "Fira Code")
+assert $($font_size == 14)
+assert $($theme_mode == "dark")
 
 print "END"

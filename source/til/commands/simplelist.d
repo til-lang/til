@@ -17,7 +17,6 @@ static this()
         set l [list 1 2 3 4]
         # l = (1 2 3 4)
         */
-        context.exitCode = ExitCode.CommandSuccess;
         return context.push(new SimpleList(context.items));
     });
     simpleListCommands["set"] = new Command((string path, Context context)
@@ -32,12 +31,6 @@ static this()
 
         auto l1 = context.pop!SimpleList();
         auto l2 = context.pop!SimpleList();
-
-        if (l2.type != ObjectType.SimpleList)
-        {
-            auto msg = "You can only use `" ~ path ~ "` with two SimpleLists";
-            return context.error(msg, ErrorCode.InvalidArgument, "");
-        }
 
         names = l1.items.map!(x => to!string(x)).array;
 
@@ -67,7 +60,6 @@ static this()
             values.popFront();
         }
 
-        context.exitCode = ExitCode.CommandSuccess;
         return context;
     });
     simpleListCommands["as"] = simpleListCommands["set"];
@@ -109,9 +101,7 @@ static this()
         }
 
         SimpleList list = context.pop!SimpleList();
-        context.push(new ItemsRange(list.items));
-        context.exitCode = ExitCode.CommandSuccess;
-        return context;
+        return context.push(new ItemsRange(list.items));
     });
     simpleListCommands["range.enumerate"] = new Command((string path, Context context)
     {
@@ -154,9 +144,7 @@ static this()
         }
 
         SimpleList list = context.pop!SimpleList();
-        context.push(new ItemsRangeEnumerate(list.items));
-        context.exitCode = ExitCode.CommandSuccess;
-        return context;
+        return context.push(new ItemsRangeEnumerate(list.items));
     });
     simpleListCommands["extract"] = new Command((string path, Context context)
     {
@@ -195,14 +183,12 @@ static this()
         // Force evaluation:
         auto newContext = list.evaluate(context, true);
 
-        newContext.exitCode = ExitCode.CommandSuccess;
         return newContext;
     });
     simpleListCommands["infix"] = new Command((string path, Context context)
     {
         SimpleList list = context.pop!SimpleList();
         context = list.runAsInfixProgram(context);
-        context.exitCode = ExitCode.CommandSuccess;
         return context;
     });
     simpleListCommands["expand"] = new Command((string path, Context context)
@@ -214,7 +200,6 @@ static this()
             context.push(item);
         }
 
-        context.exitCode = ExitCode.CommandSuccess;
         return context;
     });
     simpleListCommands["push"] = new Command((string path, Context context)
@@ -224,7 +209,6 @@ static this()
         Items items = context.items;
         list.items ~= items;
 
-        context.exitCode = ExitCode.CommandSuccess;
         return context;
     });
     simpleListCommands["pop"] = new Command((string path, Context context)
@@ -241,7 +225,6 @@ static this()
         context.push(lastItem);
         list.items.popBack;
 
-        context.exitCode = ExitCode.CommandSuccess;
         return context;
     });
     simpleListCommands["sort"] = new Command((string path, Context context)
@@ -279,17 +262,13 @@ static this()
 
         Comparator[] comparators = list.items.map!(x => new Comparator(context, x)).array;
         Items sorted = comparators.sort.map!(x => x.item).array;
-        context.push(new SimpleList(sorted));
-        context.exitCode = ExitCode.CommandSuccess;
-        return context;
+        return context.push(new SimpleList(sorted));
     });
     simpleListCommands["reverse"] = new Command((string path, Context context)
     {
         SimpleList list = context.pop!SimpleList();
         Items reversed = list.items.retro.array;
-        context.push(new SimpleList(reversed));
-        context.exitCode = ExitCode.CommandSuccess;
-        return context;
+        return context.push(new SimpleList(reversed));
     });
     simpleListCommands["contains"] = new Command((string path, Context context)
     {
@@ -302,7 +281,6 @@ static this()
         SimpleList list = context.pop!SimpleList();
         Item item = context.pop();
 
-        context.exitCode = ExitCode.CommandSuccess;
         return context.push(
             list.items
                 .map!(x => to!string(x))
@@ -312,7 +290,6 @@ static this()
     simpleListCommands["length"] = new Command((string path, Context context)
     {
         auto l = context.pop!SimpleList();
-        context.exitCode = ExitCode.CommandSuccess;
         return context.push(l.items.length);
     });
     simpleListCommands["eq"] = new Command((string path, Context context)

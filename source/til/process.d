@@ -1,17 +1,11 @@
 module til.process;
 
-import core.thread.fiber : Fiber;
-
 import til.nodes;
-import til.scheduler;
 import til.stack;
 
 
-class Process : Fiber
+class Process
 {
-    Scheduler scheduler;
-    SubProgram subprogram;
-    Context context;
     Stack stack;
 
     // Process identification:
@@ -19,62 +13,40 @@ class Process : Fiber
     string description;
     uint index;
 
-    this(Scheduler scheduler, SubProgram subprogram, Escopo escopo, string description)
+    this(string description)
     {
-        this.scheduler = scheduler;
-        this.subprogram = subprogram;
-        this.stack = new Stack();
-        this.index = this.counter++;
         this.description = description;
 
-        if (escopo is null)
-        {
-            escopo = new Escopo();
-        }
-        this.context = Context(this, escopo);
-        super(&fiberRun);
-    }
-
-    // Scheduler-related things
-    void yield()
-    {
-        this.scheduler.yield();
-    }
-    void fiberRun()
-    {
-        auto ctx = this.run();
-        this.context = this.closeCMs(ctx);
+        this.stack = new Stack();
+        this.index = this.counter++;
     }
 
     // SubProgram execution:
-    Context run()
+    Context run(SubProgram subprogram, Escopo escopo)
     {
-        return run(this.subprogram, this.context);
-    }
-    Context run(Context context)
-    {
-        return run(this.subprogram, context);
+        return run(subprogram, Context(this, escopo));
     }
     Context run(SubProgram subprogram, Context context)
     {
-        foreach(index, pipeline; subprogram.pipelines)
+        foreach(pipeline; subprogram.pipelines)
         {
             context = pipeline.run(context);
+            debug {stderr.writeln("pipeline.run.exitCode: ", context.exitCode);}
 
             final switch(context.exitCode)
             {
                 case ExitCode.Undefined:
                     throw new Exception(to!string(pipeline) ~ " returned Undefined");
 
-                case ExitCode.Proceed:
+                case ExitCode.Success:
                     // That is the expected result.
                     // So we just proceed.
                     break;
 
                 // -----------------
                 // Proc execution:
-                case ExitCode.ReturnSuccess:
-                    // ReturnSuccess should keep stopping
+                case ExitCode.Return:
+                    // Return should keep stopping
                     // processes until properly
                     // handled.
                     return context;
@@ -122,17 +94,7 @@ class Process : Fiber
                 case ExitCode.Continue:
                 case ExitCode.Skip:
                     return context;
-
-                // -----------------
-                // Pipeline execution:
-                case ExitCode.CommandSuccess:
-                    throw new Exception(
-                        to!string(pipeline) ~ " returned CommandSuccess."
-                        ~ " Expected a Proceed exit code."
-                    );
             }
-            // Each N pipelines we yield fiber/thread control:
-            if ((index & 0x07) == 0x07) this.yield();
         }
 
         // Returns the context of the last expression:
@@ -158,40 +120,19 @@ class Process : Fiber
         }
         return context;
     }
-}
 
-
-class MainProcess : Process
-{
-    this(Scheduler scheduler, SubProgram subprogram, Escopo escopo=null)
+    int unixExitStatus(Context context)
     {
-        super(scheduler, subprogram, escopo, "main");
-    }
-
-    override void yield()
-    {
-        // Give a run on the scheduler.
-        this.scheduler.run();
-    }
-
-    override void fiberRun()
-    {
-        throw new Exception("MainProcess is not supposed to run as a Fiber");
-    }
-
-    override Context run()
-    {
-        context = super.run();
-        context = super.closeCMs(context);
-
-        // Wait until all processes die:
-        uint activeCounter = 0;
-        do
+        // Search for errors:
+        if (context.exitCode == ExitCode.Failure)
         {
-            activeCounter = this.scheduler.run();
+            Item x = context.peek();
+            Erro e = cast(Erro)x;
+            return e.code;
         }
-        while (activeCounter != 0);
-
-        return context;
+        else
+        {
+            return 0;
+        }
     }
 }

@@ -5,24 +5,15 @@
 ## A command language on top of D
 
 Til is a **command language**, like [Tcl](https://www.tcl.tk/), built
-on top of [D](https://dlang.org/), so it kind of has a foot in both
-worlds.
+using [D](https://dlang.org/).
 
 
-Being a command language means it is **easy to learn** and the syntax is
-very extensible. And being built with D means it is **very simple to build
+Being a command language means it is **easy to learn** -- the syntax is
+restricted. And being built with D means it is **very simple to build
 new packages** for it.
 
 
-Til makes use of **Fibers** so the interpreter is **async by default** and
-spawning a new *process* ("process" not in the OS sense, but in the
-**Erlang** sense) is trivial.
-
-And, finally, Til has **data streams** that allow you to process data
-using a (hopefully) familiar concept: **pipes**.
-
-
-(Oh, and [Til is very opinionated](opinionated.md). Beware.)
+(But beware: [Til is very opinionated](opinionated.md).)
 
 
 ## So, in brief, Til is
@@ -31,7 +22,6 @@ using a (hopefully) familiar concept: **pipes**.
 * loosely based on **Tcl**;
 * built with **D**;
 * easily extensible;
-* async by default.
 
 ## Examples
 
@@ -231,6 +221,19 @@ proc $procedure_name $parameters_list $body
 As long as each variable represents an Atom, a SimpleList and a SubList,
 you´ll be able to define a new procedure without any problem.
 
+## Pipes
+
+There's not much magic in pipes: basically, whatever is left on the stack
+by the command on the left is kept there to be "consumed" by the command
+on the right.
+
+```tcl
+list 1 2 3 | print
+# (1 2 3)
+```
+
+A sequence of commands connected through pipes is called a Pipeline.
+
 ## Ranges, foreach, comments and Streams
 
 The simplest example showing the use of streams is this `foreach` that
@@ -251,18 +254,38 @@ range 3 | foreach x {
 (Yup, `range` **will** include the "limit" -- "3" in this case.)
 
 
-`range` is a very versatile command (it´s actually the **package**
-`std.range`) that allows you to create various kinds of ranges and even
-transform a SimpleList into a data stream.
+`range` is a very versatile command that allows you to create various
+kinds of ranges and even transform a SimpleList into a data stream.
 
-**Data streams travel through pipes** (`|`) and various commands connected
-by pipes are called a **Pipeline**.
+Any object that have a "method" `next` is considered a Stream. You can
+even create your own:
 
+```tcl
+type my_generator {
+    proc init () {
+        return 0
+    }
+    proc next ($obj) {
+        incr $obj
+        if $($obj > 5) { break }
+        continue $obj
+    }
+}
 
-The rules governing the use of data streams are these:
+my_generator | foreach x { print $x }
+# 1
+# 2
+# 3
+# 4
+# 5
+```
+
+### When to use a Stream?
+
+The rules governing the use of Streams are these:
 
 * if you can easily predict the number of items, use common parameters;
-* if you have no idea how many items there are, use streams.
+* if you have no idea how many items there are, use Streams.
 
 
 So, for instance, if you want to *walk through a directory* you should use
@@ -288,54 +311,6 @@ a SimpleList:
 ```tcl
 set a b c (1 2 3)
 ```
-
-## Spawning processes, messages and backpressure
-
-```tcl
-proc ping (target) {
-    receive | foreach msg {
-        send $target $msg
-        break
-    }
-}
-
-proc pong () {
-    receive | foreach msg {
-        print "Received $msg"
-        break
-    }
-}
-
-set writer_process [spawn pong]
-set sender_process [spawn ping $writer_process]
-
-send $sender_process "a message and exited"
-```
-
-The expected output of this program would be:
-
-`Received a message and exited`
-
-The summary of what happened is as follows:
-
-* `ping` procedure is defined;
-* `pong` procedure is defined;
-* A `pong` process is spawned and its **Pid** is stored into
-  `writer_process` variable;
-* A `ping` process is spawned and its Pid is stored into `sender_process`
-  variable;
-* The main process sends a message `"a message and exited"` to
-  `$sender_process`, that is the Pid of the `ping` process, **and quits**.
-* The `ping` process receives the message, sends it to `$target` (that is
-  the `pong` process), breaks the loop and quits.
-* The `pong` process prints to standard output, breaks the loop and quits.
-
-About **backpressure**: each process has a **message box** with limited
-size. If your own process is trying to send a message to another one whose
-message box is already full, **your process will be blocked**.
-
-(It will block its execution, but not the *scheduler* itself, of course.
-That is: other processes won´t be affected.)
 
 ## Includes
 
@@ -381,6 +356,23 @@ print "Calling procedure `throw_error`..."
 throw_error
 print "Procedure `throw_error` was called and the error was handled."
 ```
+
+## Scopes
+
+If you want to divide a long algorithm in different scopes but can't do
+that using new procedures (for instance: when loading a lot of local
+variables), you can create a new `scope`:
+
+```tcl
+
+scope "load all the necessary variables" {
+    # load them all here
+}
+
+The new scope share variables with its parent, so they are still visible
+when it closes, but don't share new procedures, so you can define them as
+needed without messing with the parent scope -- it's useful if you have
+many procedures with the same name but for different contexts
 
 ## And more
 

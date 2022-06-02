@@ -44,13 +44,13 @@ class Procedure : Command
 
         context.size = newContext.size;
 
-        if (newContext.exitCode == ExitCode.Failure)
+        if (newContext.exitCode == ExitCode.Return)
         {
-            context.exitCode = newContext.exitCode;
+            context.exitCode = ExitCode.Success;
         }
         else
         {
-            context.exitCode = ExitCode.CommandSuccess;
+            context.exitCode = newContext.exitCode;
         }
 
         return context;

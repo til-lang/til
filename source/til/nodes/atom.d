@@ -35,9 +35,7 @@ class NameAtom : Atom
 
     override Context evaluate(Context context)
     {
-        context.push(this);
-        context.exitCode = ExitCode.Proceed;
-        return context;
+        return context.push(this);
     }
 }
 
@@ -69,7 +67,6 @@ class SubstAtom : NameAtom
             context.push(value);
         }
 
-        context.exitCode = ExitCode.Proceed;
         return context;
     }
 }

@@ -2,6 +2,6 @@ print "START"
 
 set x 10
 incr $x
-assert ($x == 11)
+assert $($x == 11)
 
 print "END"

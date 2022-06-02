@@ -1,7 +1,7 @@
 set result [
     set r 0
     range 100 | foreach x {
-        if ($x >= 5) {
+        if $($x >= 5) {
             continue
         }
         print $x
@@ -12,4 +12,4 @@ set result [
 ]
 
 print "Result: $result (expected: 4)"
-assert ($result == 4)
+assert $($result == 4)

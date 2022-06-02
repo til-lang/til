@@ -3,10 +3,10 @@ print "START"
 set a 1
 set b 2
 
-assert ("$a $b" == "1 2")
+assert $("$a $b" == "1 2")
 print "a b = $a $b"
 
-assert ("${a}_${b}" == "1_2")
+assert $("${a}_${b}" == "1_2")
 print "a_b = ${a}_${b}"
 
 print "END"

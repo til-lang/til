@@ -145,8 +145,6 @@ class SubstString : String
             }
         }
 
-        context.push(new String(result));
-        context.exitCode = ExitCode.Proceed;
-        return context;
+        return context.push(new String(result));
     }
 }

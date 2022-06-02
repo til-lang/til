@@ -9,7 +9,6 @@ import til.exceptions;
 import til.grammar;
 import til.nodes;
 import til.process;
-import til.scheduler;
 
 import cli.repl;
 
@@ -72,10 +71,9 @@ int main(string[] args)
         );
     }
 
-    SubProgram program;
     debug {sw.start();}
 
-    program = parser.run();
+    auto program = parser.run();
 
     debug
     {
@@ -92,25 +90,17 @@ int main(string[] args)
     escopo["env"] = envVars;
     escopo.commands = commands;
 
-    // The scheduler:
-    auto scheduler = new Scheduler();
-
     // The main Process:
-    auto process = new MainProcess(scheduler, program, escopo);
+    auto process = new Process("main");
 
     // Start!
     debug {sw.start();}
 
     // Run the main process:
-    auto context = process.run();
+    auto context = process.run(program, escopo);
 
     // Print everything remaining in the stack:
-    int returnCode = 0;
-    foreach(p; scheduler.processes)
-    {
-        returnCode = finishProcess(p, returnCode);
-    }
-    returnCode = finishProcess(process, returnCode);
+    int returnCode = finishProcess(process, context);
 
     debug
     {
@@ -120,5 +110,6 @@ int main(string[] args)
             sw.peek.total!"msecs", " miliseconds"
         );
     }
+
     return returnCode;
 }

@@ -14,6 +14,6 @@ proc error_test () {
 }
 
 set result [error_test]
-assert ($result == "something else")
+assert $($result == "something else")
 
 print "END"

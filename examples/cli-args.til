@@ -2,6 +2,6 @@ print "START"
 
 print "args:" $args
 print "args 1:" <$args 1>
-assert (<$args 1> == "examples/cli-args.til")
+assert $(<$args 1> == "examples/cli-args.til")
 
 print "END"

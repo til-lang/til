@@ -5,20 +5,20 @@ set b 2
 
 set something_is_wrong false
 
-if ($a > ($b + 3)) {
+if $($a > ($b + 3)) {
     print "Wrong! [1]"
     set something_is_wrong true
 } else {
     print "Correct. [1]"
 }
 
-if (($a + 1) >= $b) {
+if $(($a + 1) >= $b) {
     print "Correct. [2]"
 } else {
     print "Wrong! [2]"
     set something_is_wrong true
 }
 
-assert ($something_is_wrong == false)
+assert $($something_is_wrong == false)
 
 print "END"

@@ -7,7 +7,7 @@ proc test_range (args expected_result) {
         set s "$s $x"
     }
     print "s/expected_result: $s/$expected_result"
-    assert ($s == $expected_result)
+    assert $($s == $expected_result)
     print "---"
 }
 test_range (5) " 0 1 2 3 4 5"
@@ -17,10 +17,10 @@ test_range (5 15 4) " 5 9 13"
 
 range 3 | as r
 set s ""
-push $r | foreach x {
+stack.push $r | foreach x {
     set s "$s $x"
 }
-assert ($s == " 0 1 2 3")
+assert $($s == " 0 1 2 3")
 
 set lista (0 1 2 3 4 5)
 range $lista | foreach x {
@@ -31,7 +31,7 @@ print "---"
 set counter 0
 range $lista | foreach x {
     print "x:$x"
-    assert ($x == $counter)
+    assert $($x == $counter)
     incr $counter
 }
 print "---"

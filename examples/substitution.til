@@ -4,6 +4,6 @@ set first_name "Cléber"
 set last_name "Zavadniak"
 set name "$first_name $last_name"
 print $name
-assert ($name == "Cléber Zavadniak")
+assert $($name == "Cléber Zavadniak")
 
 print "END"

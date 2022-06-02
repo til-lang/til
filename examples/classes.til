@@ -29,16 +29,16 @@ print $c1
 set $c1 x 12
 set $c1 y 34
 print $c1
-assert (<$c1 x> == 12)
-assert (<$c1 y> == 34)
+assert $(<$c1 x> == 12)
+assert $(<$c1 y> == 34)
 print "to.string test: $c1"
-assert (<$c1 to_string_call_count> == 3)
+assert $(<$c1 to_string_call_count> == 3)
 
 print "INDEPENDENCE TEST:"
 coordinates 3 4 | as c2
 print $c2
 print "c2 to_string_call_count: " <$c2 to_string_call_count>
-assert (<$c2 to_string_call_count> == 1)
+assert $(<$c2 to_string_call_count> == 1)
 
 
 print "\nINHERITANCE TEST:"
@@ -63,13 +63,13 @@ position 34 56 | as p1
 
 mark $p1 123
 print "c1 teste: " <$c1 teste>
-assert (<$c1 teste> != 123)
+assert $(<$c1 teste> != 123)
 
 print "p1 to_string_call_count: " <$p1 to_string_call_count>
 set $p1 x 78
-assert (<$p1 x> == 78)
+assert $(<$p1 x> == 78)
 print $p1
 print "p1 to_string_call_count: " <$p1 to_string_call_count>
-assert (<$p1 to_string_call_count> == 1)
+assert $(<$p1 to_string_call_count> == 1)
 
 print "END"

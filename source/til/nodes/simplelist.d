@@ -49,9 +49,7 @@ class SimpleList : BaseList
     }
     override Context evaluate(Context context)
     {
-        context.push(this);
-        context.exitCode = ExitCode.Proceed;
-        return context;
+        return context.push(this);
     }
     Context forceEvaluate(Context context)
     {
@@ -162,7 +160,7 @@ class SimpleList : BaseList
                     Becomes:
                         if ([push true])
                     */
-                    auto commandCalls = [new CommandCall("push", arguments)];
+                    auto commandCalls = [new CommandCall("stack.push", arguments)];
                     auto pipeline = new Pipeline(commandCalls);
                     auto subprogram = new SubProgram([pipeline]);
                     return new ExecList(subprogram);

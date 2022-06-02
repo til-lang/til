@@ -6,46 +6,46 @@ set c 3
 
 set something_is_wrong false
 
-if (1 > 2) {
+if $(1 > 2) {
     print "WRONG"
     set something_is_wrong true
 }
-if (1 < 2) {
+if $(1 < 2) {
     print "1 < 2"
 }
-if ($a > $b) {
+if $($a > $b) {
     print "WRONG"
     set something_is_wrong true
 }
-if ($a < $b) {
+if $($a < $b) {
     print "a < b ($a < $b)"
 }
 
-if (($a > $b) || ($a > 10) || ($a < $b)) {
+if $(($a > $b) || ($a > 10) || ($a < $b)) {
     print "three OR is okay"
 } else {
     set something_is_wrong true
 }
-if (($a > $b) || ($a < $b) && (1 > 2)) {
+if $(($a > $b) || ($a < $b) && (1 > 2)) {
     print "OR+AND is WRONG"
     set something_is_wrong true
 } else {
     print "OR+AND is okay"
 }
 
-if (($a > $b) || true || ($a < $b)) {
+if $(($a > $b) || true || ($a < $b)) {
     print "three OR with boolean in the middle is okay"
 } else {
     set something_is_wrong true
 }
-if (($a > $b) || ($a < $b) && (1 > 2)) {
+if $(($a > $b) || ($a < $b) && (1 > 2)) {
     print "OR+AND with boolean is WRONG"
     set something_is_wrong true
 } else {
     print "OR+AND with boolean is okay"
 }
 
-if (false || ($a < $b)) {
+if $(false || ($a < $b)) {
     print "bool and comparison is okay"
 } else {
     print "bool and comparison is WRONG"
@@ -53,7 +53,7 @@ if (false || ($a < $b)) {
 }
 
 #       t            f            t
-if ((($a < $b) && (1 > 2)) || ($a < $b)) {
+if $((($a < $b) && (1 > 2)) || ($a < $b)) {
     print "Parenthesis is okay"
 } else {
     print "Parenthesis is WRONG"
@@ -61,7 +61,7 @@ if ((($a < $b) && (1 > 2)) || ($a < $b)) {
 }
 
 #         t            f             t              f            t
-if ((($a < $b) && (54 > 57)) || (($a < $b) && ((95 > 96) || (12 < 34)))) {
+if $((($a < $b) && (54 > 57)) || (($a < $b) && ((95 > 96) || (12 < 34)))) {
     print "Lots of parenthesis is okay"
 } else {
     print "Lots of parenthesis is WRONG"
@@ -71,18 +71,18 @@ if ((($a < $b) && (54 > 57)) || (($a < $b) && ((95 > 96) || (12 < 34)))) {
 print "stack: " [stack]
 
 #         t      f     f       f      t      f      t      f     f
-if (((($a < $b) && (55 > 58)) || (($a < $b) && ((97 < 98) && (12 > 34))))) {
+if $(((($a < $b) && (55 > 58)) || (($a < $b) && ((97 < 98) && (12 > 34))))) {
     print "Second lot of parenthesis is WRONG"
     set something_is_wrong true
 } else {
     print "Second lot of parenthesis is okay"
 }
 
-assert ($something_is_wrong == false)
+assert $($something_is_wrong == false)
 
-assert (true)
+assert true
 print "true is working"
-assert (false != true)
+assert $(false != true)
 print "false != true is working"
 
 print "END"

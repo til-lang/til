@@ -6,8 +6,8 @@ scope "substring" {
 
     }}
     split "\n" $s | as parts
-    assert ([length $parts] == 2)
-    assert (<$parts 0> == "alfa, beta,")
-    assert (<$parts 1> == "\$x")
-    assert (<$parts 1> != "gama")
+    assert $([length $parts] == 2)
+    assert $(<$parts 0> == "alfa, beta,")
+    assert $(<$parts 1> == "\$x")
+    assert $(<$parts 1> != "gama")
 }

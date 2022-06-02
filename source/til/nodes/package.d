@@ -24,11 +24,9 @@ public import til.nodes.simplelist;
 public import til.nodes.execlist;
 
 public import til.nodes.dict;
-public import til.nodes.queue;
 public import til.nodes.vectors;
 
 public import til.nodes.error;
-public import til.nodes.pid;
 
 public import til.nodes.subprogram;
 public import til.nodes.pipeline;
@@ -44,13 +42,12 @@ alias Items = Item[];
 enum ExitCode
 {
     Undefined,
-    Proceed,          // keep running
-    ReturnSuccess,    // returned without errors
-    Failure,          // terminated with errors
-    CommandSuccess,   // A command was executed with success
-    Break,            // Break the current loop
-    Continue,         // Continue to the next iteraction
-    Skip,             // Skip this iteration and call `next` again
+    Success,  // A command was executed with success
+    Failure,  // terminated with errors
+    Return,  // returned without errors
+    Break,  // Break the current loop
+    Continue,  // Continue to the next iteraction
+    Skip,  // Skip this iteration and call `next` again
 }
 
 enum ErrorCode
@@ -80,11 +77,9 @@ enum ObjectType
     SimpleList,
     ExecList,
     SubProgram,
-    Pid,
     SystemProcess,
     Error,
     Dict,
-    Queue,
     String,
     Name,
     Atom,

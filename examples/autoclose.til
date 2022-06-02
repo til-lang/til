@@ -5,7 +5,7 @@ set x 1
 scope "change the value of x" {
     set x 2
 }
-assert ($x == 2)
+assert $($x == 2)
 print "okay, x is 2"
 
 
@@ -26,24 +26,13 @@ type context_manager {
 
 context_manager | as global_cm
 scope "context_manager test" {
-    push $global_cm | autoclose | as cm
+    stack.push $global_cm | autoclose | as cm
 
-    assert ($cm == 1)
+    assert $($cm == 1)
     print "okay, cm is 1"
 }
 
 print "global_cm is $global_cm"
-assert ($global_cm == 0)
-
-proc p () {
-    push $global_cm | autoclose | as cm
-    assert ($cm == 1)
-    print "okay, cm is 1 on spawned `p`"
-}
-
-spawn { p }
-sleep 5
-assert ($global_cm == 0)
-print " and 0 after `p` is closed."
+assert $($global_cm == 0)
 
 print "END"

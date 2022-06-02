@@ -24,9 +24,9 @@ class Command
     {
         if (isDeprecated)
         {
-            stderr.writeln("Warning: the command `" ~ name ~ "` is deprecated");
+            stderr.writeln("WARNING: the command `" ~ name ~ "` is deprecated");
         }
-        context.exitCode = ExitCode.CommandSuccess;
+        context.exitCode = ExitCode.Success;
         auto newContext = this._handler(name, context);
         return newContext;
     }

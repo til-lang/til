@@ -55,7 +55,6 @@ static this()
             auto s = cast(String)item;
             context.push(s.repr.length);
         }
-        context.exitCode = ExitCode.CommandSuccess;
         return context;
     });
     stringCommands["split"] = new Command((string path, Context context)
@@ -78,7 +77,6 @@ static this()
 
             context.push(l);
         }
-        context.exitCode = ExitCode.CommandSuccess;
         return context;
     });
     stringCommands["join"] = new Command((string path, Context context)
@@ -101,7 +99,6 @@ static this()
                 new String(l.items.map!(x => to!string(x)).join(joiner))
             );
         }
-        context.exitCode = ExitCode.CommandSuccess;
         return context;
     });
     stringCommands["strip"] = new Command((string path, Context context)
@@ -151,7 +148,6 @@ static this()
             string haystack = item.toString();
             context.push(haystack.indexOf(needle));
         }
-        context.exitCode = ExitCode.CommandSuccess;
         return context;
     });
     stringCommands["matches"] = new Command((string path, Context context)
@@ -235,9 +231,7 @@ static this()
         }
 
         string s = context.pop!string();
-        context.push(new StringRange(s));
-        context.exitCode = ExitCode.CommandSuccess;
-        return context;
+        return context.push(new StringRange(s));
     });
 
     // Operators

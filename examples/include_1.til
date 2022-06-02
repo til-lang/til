@@ -4,6 +4,6 @@ print "Including a file..."
 
 include "examples/include_2.til"
 
-assert ([hello "include_1"] == "hello!")
+assert $([hello "include_1"] == "hello!")
 
 print "END"
