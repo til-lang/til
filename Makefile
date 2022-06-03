@@ -55,3 +55,9 @@ dist/libeditline.so: 3rd-parties/editline
 		-I=3rd-parties/editline/source \
 		-L-ledit \
 		-of=dist/libeditline.so
+
+c/cli:
+	gcc \
+		-Ic -L${PWD}/dist -ltil \
+		c/cli.c \
+		-o c/cli

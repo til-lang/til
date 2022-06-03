@@ -1,5 +1,6 @@
 dist/
 3rd-parties/
+c/cli
 
 til.*
 
