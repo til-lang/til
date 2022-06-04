@@ -326,6 +326,8 @@ class Parser
                     consumeChar();
                     if (currentChar == '}')
                     {
+                        consumeChar();
+
                         // Find all the blankspaces in the end of the string:
                         size_t end = token.length;
                         do
