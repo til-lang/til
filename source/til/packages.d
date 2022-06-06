@@ -82,7 +82,7 @@ CommandsMap importFromSharedLibrary(
             if (error !is null)
             {
                 lastError = cast(char *)error;
-                debug {stderr.writeln(" dlerror: ", lastError);}
+                debug {stderr.writeln(" dlerror: ", to!string(lastError));}
                 continue;
             }
 
