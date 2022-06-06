@@ -21,4 +21,17 @@ scope "gama" {
     assert $($x == 2)
 }
 
+# Scopes can't share procs:
+scope "delta" {
+    proc p () {
+        error "Scopes shouldn't share procs!"
+    }
+}
+scope "epsilo" {
+    proc p () {
+        print "ok: scopes are not sharing procs"
+    }
+    p
+}
+
 print "END"
