@@ -232,6 +232,19 @@ class Parser
 
     CommandCall consumeCommandCall()
     {
+        // inline transform/foreach:
+        if (currentChar == '{')
+        {
+            CommandCall nextCall = foreachInline();
+            if (!isEndOfLine)
+            {
+                // Whops! It's not a foreach.inline, but a transform.inline!
+                nextCall.name = "transform.inline";
+                consumeWhitespaces();
+            }
+            return nextCall;
+        }
+
         NameAtom commandName = cast(NameAtom)consumeAtom();
         Item[] arguments;
 
@@ -270,6 +283,10 @@ class Parser
         }
 
         return new CommandCall(commandName.toString(), arguments);
+    }
+    CommandCall foreachInline()
+    {
+        return new CommandCall("foreach.inline", [consumeSubList()]);
     }
 
     Item consumeItem()

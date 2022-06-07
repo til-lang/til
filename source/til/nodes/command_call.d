@@ -50,9 +50,11 @@ class CommandCall
                 /*
                 Well, we quit imediately:
                 */
+                debug {stderr.writeln("   FAILURE!");}
                 return context;
             }
 
+            debug {stderr.writeln("   += ", context.size);}
             realArgumentsCounter += context.size;
         }
         context.size = cast(int)realArgumentsCounter;
@@ -77,7 +79,7 @@ class CommandCall
         return cmd;
     }
 
-    Context run(Context context, uint inputSize=0)
+    Context run(Context context)
     {
         // evaluate arguments and set proper context.size:
         auto executionContext = this.evaluateArguments(context);
@@ -86,12 +88,16 @@ class CommandCall
             return executionContext;
         }
 
-        if (inputSize)
+        debug {stderr.writeln(name, ".executionContext.size:", executionContext.size);}
+        if (context.inputSize)
         {
+            debug {stderr.writeln(name, ".context.inputSize:", context.inputSize);}
             // `input`, when present, is always the last argument:
-            executionContext.size += inputSize;
-            executionContext.inputSize = inputSize;
+            executionContext.size += context.inputSize;
+            executionContext.inputSize = context.inputSize;
         }
+        debug {stderr.writeln(name, ".executionContext.size:", executionContext.size);}
+        debug {stderr.writeln(name, ".executionContext.inputSize:", executionContext.inputSize);}
 
         // The target is always the first argument:
         Item target = null;

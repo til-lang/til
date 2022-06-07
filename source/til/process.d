@@ -26,10 +26,12 @@ class Process
     {
         return run(subprogram, Context(this, escopo));
     }
-    Context run(SubProgram subprogram, Context context)
+    Context run(SubProgram subprogram, Context context, int inputSize=0)
     {
         foreach(pipeline; subprogram.pipelines)
         {
+            context.size = 0;
+            context.inputSize = inputSize;
             context = pipeline.run(context);
             debug {stderr.writeln("pipeline.run.exitCode: ", context.exitCode);}
 
@@ -39,8 +41,7 @@ class Process
                     throw new Exception(to!string(pipeline) ~ " returned Undefined");
 
                 case ExitCode.Success:
-                    // That is the expected result.
-                    // So we just proceed.
+                    // That is the expected result from Pipelines:
                     break;
 
                 // -----------------

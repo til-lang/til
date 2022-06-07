@@ -1,0 +1,25 @@
+scope "print integers with `consume`" {
+    set start <[to.ascii "a"] 0>
+    set end <[to.ascii "e"] 0>
+
+    range $start $end | foreach.inline { to.ascii | print }
+}
+scope "transform values and consume" {
+    set start <[to.ascii "f"] 0>
+    set end <[to.ascii "j"] 0>
+
+    range $start $end | transform.inline { to.ascii } | foreach.inline { print }
+}
+
+scope "syntax: print integers with `consume`" {
+    set start <[to.ascii "k"] 0>
+    set end <[to.ascii "o"] 0>
+
+    range $start $end | { to.ascii | print }
+}
+scope "syntax: transform values and consume" {
+    set start <[to.ascii "p"] 0>
+    set end <[to.ascii "t"] 0>
+
+    range $start $end | { to.ascii } | foreach.inline { print }
+}

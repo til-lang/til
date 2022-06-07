@@ -28,11 +28,12 @@ class Pipeline
     {
         debug {stderr.writeln("Running Pipeline: ", this);}
 
-        uint inputSize = 0;
         foreach(index, command; commandCalls)
         {
-            context = command.run(context, inputSize);
-            debug {stderr.writeln("command.run.exitCode: ", context.exitCode);}
+            debug {stderr.writeln(command.name, ">run:", context.size, "/", context.inputSize);}
+            context = command.run(context);
+            debug {stderr.writeln(command.name, ">run.exitCode:", context.exitCode);}
+            debug {stderr.writeln(command.name, ">context.size:", context.size);}
 
             final switch(context.exitCode)
             {
@@ -61,10 +62,7 @@ class Pipeline
 
                 // -----------------
                 case ExitCode.Success:
-                    if (context.size > 0)
-                    {
-                        inputSize = context.size;
-                    }
+                    context.inputSize = context.size;
                     break;
             }
         }

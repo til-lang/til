@@ -10,8 +10,7 @@ set list [
         return [prefixer "The name is" $x]
     } | foreach phrase {
         stack.push $phrase
-    }
-    return [list [stack]]
+    } | stack | list | return
 ]
 
 print "list: $list"

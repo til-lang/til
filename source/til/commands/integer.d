@@ -60,7 +60,7 @@ static this()
     {
         if (context.size != 1)
         {
-            auto msg = "`" ~ path ~ "` expects at least 1 argument";
+            auto msg = "`" ~ path ~ "` expects only 1 argument, not " ~ to!string(context.size);
             return context.error(msg, ErrorCode.InvalidArgument, "");
         }
 
