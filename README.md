@@ -79,6 +79,23 @@ range 1 5 | transform value {
 # 8
 # 10
 
+# Til values your comfort, so there's syntatic sugar for both
+# transform and foreach:
+range 97 99 | { to.ascii } | { print }
+# a
+# b
+# c
+# This is the same as:
+range 97 99
+    | transform x { return [to.ascii $x]}
+    | foreach x { print $x}
+# Or, using ".inline" commands:
+range 97 99
+    | transform.inline { to.ascii }
+    | foreach.inline { print }
+# (The sugar consists in calling both commands above, actually.
+# For all intents and purposes, both options are the same thing.)
+
 # We also have dictionaries!
 dict (a 1) (b 2) (c 3) | as d
 
