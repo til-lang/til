@@ -102,6 +102,32 @@ static this()
     });
 
     // ---------------------------------------------
+    subprogramCommands["run"] = new Command((string path, Context context)
+    {
+        auto body = context.pop!SubProgram();
+        auto escopo = new Escopo(context.escopo);
+
+        auto returnedContext = context.process.run(
+            body, context.next(escopo, 0)
+        );
+        debug {stderr.writeln("returnedContext.size:", returnedContext.size);}
+        returnedContext = context.process.closeCMs(returnedContext);
+        debug {stderr.writeln("                     ", returnedContext.size);}
+
+        context.size = returnedContext.size;
+        if (returnedContext.exitCode == ExitCode.Return)
+        {
+            // Contain the return chain reaction:
+            context.exitCode = ExitCode.Success;
+        }
+        else
+        {
+            context.exitCode = returnedContext.exitCode;
+        }
+
+        return context;
+    });
+
     stringCommands["eval"] = new Command((string path, Context context)
     {
         import til.grammar;
@@ -217,6 +243,42 @@ static this()
 
         return context;
     });
+    commands["when"] = new Command((string path, Context context)
+    {
+        auto isConditionTrue = context.pop!bool();
+        auto thenBody = context.pop!SubProgram();
+
+        if (isConditionTrue)
+        {
+            context = context.process.run(thenBody, context.next());
+            debug {stderr.writeln("when>returnedContext.size:", context.size);}
+
+            // Whatever the exitCode was (except Failure), we're going
+            // to force a return:
+            if (context.exitCode != ExitCode.Failure)
+            {
+                context.exitCode = ExitCode.Return;
+            }
+        }
+
+        return context;
+    });
+    commands["default"] = new Command((string path, Context context)
+    {
+        auto body = context.pop!SubProgram();
+
+        context = context.process.run(body, context.next());
+
+        // Whatever the exitCode was (except Failure), we're going
+        // to force a return:
+        if (context.exitCode != ExitCode.Failure)
+        {
+            context.exitCode = ExitCode.Return;
+        }
+
+        return context;
+    });
+    // Various ExitCodes:
     commands["break"] = new Command((string path, Context context)
     {
         context.exitCode = ExitCode.Break;

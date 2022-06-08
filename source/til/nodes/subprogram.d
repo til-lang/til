@@ -3,6 +3,9 @@ module til.nodes.subprogram;
 import til.nodes;
 
 
+CommandsMap subprogramCommands;
+
+
 class SubProgram : BaseList
 {
     Pipeline[] pipelines;
@@ -12,6 +15,7 @@ class SubProgram : BaseList
         this.pipelines = pipelines;
         this.type = ObjectType.SubProgram;
         this.typeName = "subprogram";
+        this.commands = subprogramCommands;
     }
 
     override string toString()

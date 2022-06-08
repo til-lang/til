@@ -1,0 +1,61 @@
+print "START"
+
+set x 1
+
+scope "test simple run" {
+    run {
+        set x 2
+    }
+    assert $($x == 1)
+}
+
+scope "test manual stack pushing (1)" {
+    run {
+        when $($x == 0) {
+            stack.push "zero"
+        }
+        when $($x == 1) {
+            stack.push "one"
+        }
+        default {
+            stack.push "not zero or one"
+        }
+        stack.push "totally wrong: we should never end up here"
+    } | as result
+    assert $($result == "one")
+}
+
+scope "test manual stack pushing (2)" {
+    set result [
+        when $($x == 0) {
+            stack.push "zero"
+        }
+        when $($x == 1) {
+            stack.push "one"
+        }
+        default {
+            stack.push "not zero or one"
+        }
+        stack.push "totally wrong: we should never end up here"
+    ]
+    assert $($result == "one")
+}
+
+scope "test `default`" {
+    set x 1234
+    set result [
+        when $($x == 0) {
+            stack.push "zero"
+        }
+        when $($x == 1) {
+            stack.push "one"
+        }
+        default {
+            stack.push "not zero or one"
+        }
+        stack.push "totally wrong: we should never end up here"
+    ]
+    assert $($result == "not zero or one")
+}
+
+print "END"
