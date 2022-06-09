@@ -1,5 +1,6 @@
 # Blog
 
+* [run, when and default](2022-06-08--run-when-and-default.md)
 * [The Second Great Simplification of Til](2022-06-03--the-second-great-simplification.md)
 * [autoclose and Processes I/O](2022-04-23--autoclose.md)
 * [About 0.12.0 - Context managers and NO MORE PRECEDENCE](2022-01-17.md)
