@@ -26,13 +26,19 @@ type context_manager {
 
 context_manager | as global_cm
 scope "context_manager test" {
-    stack.push $global_cm | autoclose | as cm
+    stack.push $global_cm | autoclose | as cm1
 
-    assert $($cm == 1)
-    print "okay, cm is 1"
+    assert $($cm1 == 1)
+    print "okay, cm1 is 1"
 }
 
 print "global_cm is $global_cm"
 assert $($global_cm == 0)
+
+scope "test autoclose in the middle of the pipeline" {
+    context_manager | autoclose | as cm2
+    print "cm2 is $cm2"
+    assert $($cm2 == 1)
+}
 
 print "END"

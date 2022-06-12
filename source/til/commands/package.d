@@ -295,6 +295,10 @@ static this()
         }
         escopo.contextManagers ~= contextManager;
 
+        // Make sure the stack is okay:
+        context.items();
+        context.push(contextManager);
+
         context.exitCode = ExitCode.Success;
         return context;
     });
