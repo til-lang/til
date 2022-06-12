@@ -10,7 +10,7 @@ import std.string : toStringz;
 import til.nodes;
 
 
-string[] packagesPath;
+string[] packagesPaths;
 
 
 static this()
@@ -22,7 +22,7 @@ static this()
     );
     foreach(p; til_path.split(":"))
     {
-        packagesPath ~= to!string(asAbsolutePath(
+        packagesPaths ~= to!string(asAbsolutePath(
             to!string(asNormalizedPath(p))
         ));
     }
@@ -63,7 +63,7 @@ CommandsMap importFromSharedLibrary(
 
     char* lastError;
 
-    foreach(path; packagesPath)
+    foreach(path; packagesPaths)
     {
         debug {stderr.writeln("path:",path);}
         // Scan directories recursively searching for a match
