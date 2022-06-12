@@ -12,24 +12,33 @@ range 0 5 | transform x {
         print "x:" [list $x]
         list $x | as (a b)
 
-        if $($a == 10) {
-            print "$b + $offset is ten"
-        } else if $($a == 11) {
-            print "$b + $offset is eleven"
-        } else {
-            print "a is $a, b is $b"
+        run {
+            when $($a == 10) {
+                print "$b + $offset is ten"
+            }
+            when $($a == 11) {
+                print "$b + $offset is eleven"
+            }
+            default {
+                print "a is $a, b is $b"
+            }
         }
     }
 
 range (x y z alfa beta gama) | foreach x {
-    if $($x == x) {
-        print "xis"
-    } else if $($x == y) {
-        print "ipsolon"
-    } else if $($x == z) {
-        print "zee"
-    } else {
-        print "other: $x"
+    run {
+        when $($x == x) {
+            print "xis"
+        }
+        when $($x == y) {
+            print "ipsolon"
+        }
+        when $($x == z) {
+            print "zee"
+        }
+        default {
+            print "other: $x"
+        }
     }
 }
 

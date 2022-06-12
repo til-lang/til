@@ -187,58 +187,35 @@ static this()
     // Flow control
     commands["if"] = new Command((string path, Context context)
     {
-        while(true)
+        auto isConditionTrue = context.pop!bool();
+        auto thenBody = context.pop!SubProgram();
+
+        if (isConditionTrue)
         {
-            auto isConditionTrue = context.pop!bool();
-            auto thenBody = context.pop!SubProgram();
+            // Get rid of eventual "else":
+            context.items();
+            // Run body:
+            context = context.process.run(thenBody, context.next());
+        }
+        // no else:
+        else if (context.size == 0)
+        {
+            context.exitCode = ExitCode.Success;
+        }
+        // else {...}
+        // else if {...}
+        else
+        {
+            auto elseWord = context.pop!string();
+            if (elseWord != "else" || context.size != 1)
+            {
+                auto msg = "Invalid format for if/then/else clause:"
+                           ~ " elseWord found was " ~ elseWord  ~ ".";
+                return context.error(msg, ErrorCode.InvalidSyntax, "");
+            }
 
-            if (isConditionTrue)
-            {
-                // Get rid of eventual "else":
-                context.items();
-                // Run body:
-                context = context.process.run(thenBody, context.next());
-                break;
-            }
-            // no else:
-            else if (context.size == 0)
-            {
-                context.exitCode = ExitCode.Success;
-                break;
-            }
-            // else {...}
-            // else if {...}
-            else
-            {
-                auto elseWord = context.pop!string();
-                if (elseWord != "else")
-                {
-                    auto msg = "Invalid format for if/then/else clause:"
-                               ~ " elseWord found was " ~ elseWord  ~ ".";
-                    return context.error(msg, ErrorCode.InvalidSyntax, "");
-                }
-
-                // If only one part is left, it's for sure the last "else":
-                if (context.size == 1)
-                {
-                    auto elseBody = context.pop!SubProgram();
-                    context = context.process.run(elseBody, context.next());
-                    break;
-                }
-                else
-                {
-                    auto ifWord = context.pop!string();
-                    if (ifWord != "if")
-                    {
-                        auto msg = "Invalid format for if/then/else clause"
-                                   ~ " ifWord found was " ~ ifWord;
-                        return context.error(msg, ErrorCode.InvalidSyntax, "");
-                    }
-                    // The next item is an "if", so we can
-                    // simply return to the beginning:
-                    continue;
-                }
-            }
+            auto elseBody = context.pop!SubProgram();
+            context = context.process.run(elseBody, context.next());
         }
 
         return context;
