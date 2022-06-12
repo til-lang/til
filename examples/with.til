@@ -1,0 +1,25 @@
+type class {
+    proc init () {
+        print "class.init"
+        return [dict (x 0)]
+    }
+    proc add (c n) {
+        print "Adding $n to " <$c x>
+        set $c (x $(<$c x> + $n))
+        print " results in " <$c x>
+    }
+}
+
+class | as object
+
+scope "simple test" {
+    add $object 1
+    assert $(<$object x> == 1)
+}
+scope "test with `with`" {
+    with $object {
+        add 2
+        print
+    }
+    assert $(<$object x> == 3)
+}

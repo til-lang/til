@@ -339,6 +339,8 @@ static this()
         context.exitCode = ExitCode.Return;
         return context;
     });
+
+    // Scope
     commands["scope"] = new Command((string path, Context context)
     {
         string name = context.pop!string();
@@ -356,7 +358,6 @@ static this()
         context.exitCode = returnedContext.exitCode;
         return context;
     });
-
     commands["autoclose"] = new Command((string path, Context context)
     {
         // context_manager 1 2 3 | autoclose | as cm
@@ -374,7 +375,6 @@ static this()
         context.exitCode = ExitCode.Success;
         return context;
     });
-
     commands["uplevel"] = new Command((string path, Context context)
     {
         /*
@@ -423,6 +423,21 @@ static this()
         {
             context.exitCode = ExitCode.Success;
         }
+        return context;
+    });
+    commands["with"] = new Command((string path, Context context)
+    {
+        auto target = context.pop();
+        auto body = context.pop!SubProgram();
+
+        foreach (pipeline; body.pipelines)
+        {
+            auto commandCall = pipeline.commandCalls.front;
+            commandCall.arguments = [target] ~ commandCall.arguments;
+        }
+
+        context = context.process.run(body, context.escopo);
+
         return context;
     });
 
