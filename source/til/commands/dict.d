@@ -72,7 +72,7 @@ static this()
             auto lContext = l.forceEvaluate(context);
             l = cast(SimpleList)lContext.pop();
 
-            auto lastKey = l.items.back;
+            key = l.items.back.toString();
             l.items.popBack();
 
             auto innerDict = dict.navigateTo(l.items, false);
