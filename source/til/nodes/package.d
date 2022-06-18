@@ -88,4 +88,5 @@ enum ObjectType
     Boolean,
     Numerical,
     Vector,
+    Range,
 }

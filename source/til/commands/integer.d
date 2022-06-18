@@ -136,6 +136,8 @@ static this()
             this(long limit)
             {
                 this.limit = limit;
+                this.type = ObjectType.Range;
+                this.typeName = "integer_range";
             }
             this(long start, long limit)
             {

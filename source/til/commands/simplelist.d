@@ -79,6 +79,8 @@ static this()
             {
                 this.list = list;
                 this._length = list.length;
+                this.type = ObjectType.Range;
+                this.typeName = "list_range";
             }
             override string toString()
             {
@@ -120,6 +122,8 @@ static this()
             {
                 this.list = list;
                 this._length = list.length;
+                this.type = ObjectType.Range;
+                this.typeName = "list_range_enumerate";
             }
             override string toString()
             {
