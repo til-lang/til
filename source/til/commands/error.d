@@ -27,6 +27,8 @@ static this()
                 return context.error(msg, ErrorCode.InvalidArgument, "");
         }
     });
+    errorCommands["."] = errorCommands["extract"];
+
     errorCommands["return"] = new Command((string path, Context context)
     {
         // Do not pop the error: we would stack it back, anyway...

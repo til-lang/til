@@ -96,7 +96,7 @@ class Item
 
         if (cmd is null && allowGlobal)
         {
-            cmd = context.escopo.getCommand(name);
+            cmd = context.program.getCommand(name);
         }
 
         if (cmd is null)

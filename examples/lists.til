@@ -1,43 +1,39 @@
 print "START"
 
-assert $([infix [
-    set a 1
-    set b 2
-    set c 3
-    eval ($a + $b * $c)
-    # This is the same as:
-    # list $a + $b * $c
-]] == 9)
+set lista (1 , 2 , 3)
+print $lista
 
-set x 10
-set y 20
-set terms ($x + $y)
-assert $([infix $terms] == 30)
+# Multi-line list definition:
+set listb (a , b , c ,
+           d , e , f)
+print $listb
+
+print "OLD TESTS"
 
 print "push and pop:"
-set lista (1 2)
+set lista (1 , 2)
 print "lista: $lista"
 push $lista 3
 print "lista after push: $lista"
-assert $([to.string $lista] == [to.string (1 2 3)])
+assert ([to.string $lista] == [to.string (1 , 2 , 3)])
 set item [pop $lista]
 print "lista after pop: $lista"
 print " popped item: $item"
-assert $([to.string $lista] == [to.string (1 2)])
+assert ([to.string $lista] == [to.string (1 , 2)])
 
 print "concatenation:"
-set list1 (1 2)
+set list1 (1 , 2)
 set item 3
-set list2 (4 5)
+set list2 (4 , 5)
 set lista [list [expand $list1] $item [expand $list2]]
 print "concatenated list: $lista"
 print " expected: 1 2 3 4 5"
-assert $([to.string $lista] == [to.string (1 2 3 4 5)])
+assert ([to.string $lista] == [to.string (1 , 2 , 3 , 4 , 5)])
 
 print "contains"
-set list3 (1 2 3 4)
+set list3 (1 , 2 , 3 , 4)
 set item 4
-assert $([contains $list3 $item])
+assert ([contains $list3 $item])
 print "list $list3 contains $item"
 
 print "END"

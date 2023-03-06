@@ -8,6 +8,7 @@ import til.nodes;
 
 struct Context
 {
+    Program program;
     Escopo escopo;
     Process process;
     ExitCode exitCode = ExitCode.Success;
@@ -24,6 +25,7 @@ struct Context
     {
         this.process = process;
         this.escopo = escopo;
+        this.program = escopo.program;
         this.size = size;
     }
 

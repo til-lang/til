@@ -7,6 +7,7 @@ import std.math : pow;
 import til.conv;
 import til.exceptions;
 import til.nodes;
+import til.procedures;
 
 
 const EOL = '\n';
@@ -50,24 +51,22 @@ class Parser
     }
 
     // --------------------------------------------
-    SubProgram run()
+    Program run()
     {
-        SubProgram sp;
         try
         {
-            sp = consumeSubProgram();
+            return consumeProgram();
         }
         catch(Exception ex)
         {
             throw new Exception(
                 "Error at line " ~
-                to!string(line) ~
+                line.to!string ~
                 ", column " ~
-                to!string(col) ~
-                ": " ~ to!string(ex)
+                col.to!string ~
+                ": " ~ ex.to!string
             );
         }
-        return sp;
     }
 
     char currentChar()
@@ -144,7 +143,7 @@ class Parser
         debug {
             if (counter)
             {
-                stderr.writeln("whitespaces (" ~ to!string(counter) ~ ")");
+                stderr.writeln("whitespaces (" ~ counter.to!string ~ ")");
             }
         }
     }
@@ -191,15 +190,209 @@ class Parser
 
     // --------------------------------------------
     // Nodes
+    Program consumeProgram()
+    {
+        auto p = new Program();
+
+        // There can't be any whitespaces before
+        // the first section!
+        auto section_path = consumeSectionHeader();
+        if (section_path.length != 1)
+        {
+            throw new Exception(
+                "Invalid syntax: expecting 'program' section header"
+            );
+        }
+        if (section_path[0].toString() != "program")
+        {
+            throw new Exception(
+                "Invalid syntax: expecting 'program' section header"
+            );
+        }
+        auto metadataSection = consumeSection();
+        p.full_name = metadataSection["full_name"].toString();
+        p.description = metadataSection["description"].toString();
+
+        consumeWhitespaces();
+
+        // Now read the other sections:
+        while (!eof)
+        {
+            section_path = consumeSectionHeader();
+            auto subDict = p.navigateTo(section_path[0..$-1]);
+            subDict[section_path[$-1].toString()] = consumeSection();
+            consumeWhitespaces();
+        }
+
+        return p;
+    }
+    Items consumeSectionHeader()
+    {
+        Items items;
+
+        debug {
+            stderr.writeln("   consumeSectionHeader: " ~ currentChar);
+        }
+
+        auto opener = consumeChar();
+        if (opener != '[')
+        {
+            throw new Exception(
+                "Invalid syntax: expecting section header"
+            );
+        }
+
+        string token;
+        while (currentChar != ']')
+        {
+            auto c = consumeChar();
+            if (c == '/')
+            {
+                if (token.length == 0)
+                {
+                    throw new Exception(
+                        "Invalid section header at line "
+                        ~ line.to!string
+                    );
+                }
+                items ~= new String(token);
+                token = "";
+            }
+            else
+            {
+                token ~= c;
+            }
+        }
+        if (token.length)
+        {
+            items ~= new String(token);
+        }
+
+        auto closer = consumeChar();
+        auto newline = consumeChar();
+
+        return items;
+    }
+    Dict consumeSection()
+    {
+
+        debug {
+            stderr.writeln("consumeSection");
+        }
+        // No whitespaces after the header!
+
+        // key simple_value
+        // key { document_dict }
+        auto dict = consumeSectionDict();
+
+        consumeWhitespaces();
+
+        debug {
+            stderr.writeln(" consumeSection: currentChar: " ~ currentChar);
+        }
+        // After a newline, it's
+        // i) another section header or
+        // ii) a SubProgram.
+        if (currentChar != '[')
+        {
+            auto subprogram = consumeSubProgram();
+            dict["subprogram"] = subprogram;
+        }
+
+        return dict;
+    }
+    Dict consumeSectionDict()
+    {
+        debug {
+            stderr.writeln("consumeSectionDict");
+        }
+        /*
+        section dict:
+        key value EOL
+        key value EOL
+        key value EOL
+        EOL  <-- this marks the end.
+        */
+        auto dict = new Dict();
+
+        while (currentChar != EOL)
+        {
+            // Dict content may be indented...
+            consumeWhitespaces();
+
+            if (currentChar == '}')
+            {
+                consumeChar(); // }
+                break;
+            }
+
+            auto key = consumeAtom();
+
+            consumeWhitespace();
+
+            debug {
+                stderr.writeln(" consumeSectionDict: key: " ~ key.toString());
+                stderr.writeln("             currentChar: " ~ currentChar);
+            }
+
+            Item value;
+            if (currentChar == '{')
+            {
+                consumeChar();
+                consumeWhitespaces();
+                value = consumeSectionDict();
+            }
+            else
+            {
+                value = consumeItem();
+            }
+            dict[key.toString()] = value;
+
+            auto newline = consumeChar();
+            if (newline != '\n')
+            {
+                throw new Exception(
+                    "Expecting newline after section dict entry, found "
+                    ~ newline
+                );
+            }
+        }
+
+        debug {
+            stderr.writeln(" consumeSectionDict: currentChar: " ~ currentChar);
+        }
+        return dict;
+    }
+
     SubProgram consumeSubProgram()
     {
         Pipeline[] pipelines;
+
+        debug {
+            stderr.writeln("consumeSubProgram: " ~ currentChar);
+        }
 
         consumeWhitespaces();
 
         while(!isStopper)
         {
+            // TODO: check if we are creating EMPTY Pipelines
+            // for each new empty line in the code...
             pipelines ~= consumePipeline();
+
+            /*
+            Pipelines can't begin with '['. If that's
+            the case, we just found a new section header.
+            (Besides, no need to consumeWhitespaces here,
+            since section headers always begin in col 0. We
+            only use it to consume empty lines.)
+            */
+            consumeWhitespaces();
+
+            if (currentChar == '[')
+            {
+                break;
+            }
         }
 
         return new SubProgram(pipelines);
@@ -208,6 +401,10 @@ class Parser
     Pipeline consumePipeline()
     {
         CommandCall[] commands;
+
+        debug {
+            stderr.writeln("   consumePipeline: ", currentChar);
+        }
 
         consumeWhitespaces();
 
@@ -232,15 +429,28 @@ class Parser
 
     CommandCall consumeCommandCall()
     {
+        debug {
+            stderr.writeln("   consumeCommandCall: ", currentChar);
+        }
+
         // inline transform/foreach:
         if (currentChar == '{')
         {
             CommandCall nextCall = foreachInline();
             if (!isEndOfLine)
             {
+                debug {
+                    stderr.writeln("     transform.inline");
+                }
                 // Whops! It's not a foreach.inline, but a transform.inline!
                 nextCall.name = "transform.inline";
                 consumeWhitespaces();
+            }
+            else
+            {
+                debug {
+                    stderr.writeln("     foreach.inline");
+                }
             }
             return nextCall;
         }
@@ -292,8 +502,7 @@ class Parser
     Item consumeItem()
     {
         debug {
-            stderr.writeln("   consumeItem");
-            stderr.writeln("    - currentChar: '", currentChar, "'");
+            stderr.writeln("   consumeItem: ", currentChar);
         }
         switch(currentChar)
         {
@@ -304,6 +513,7 @@ class Parser
             case '(':
                 return consumeSimpleList();
             case '<':
+                // TODO: get rid of this.
                 return consumeExtraction();
             case '"':
             case '\'':
@@ -353,7 +563,7 @@ class Parser
                         }
                         while (token[end].among!(SPACE, TAB, EOL));
 
-                        return new String(to!string(token[0..end+1]));
+                        return new String(token[0..end+1].to!string);
                     }
                     else
                     {
@@ -413,7 +623,7 @@ class Parser
         }
         while (currentChar != ')')
         {
-            consumeSpace();
+            consumeWhitespaces();
             items ~= consumeItem();
         }
 
@@ -499,9 +709,9 @@ class Parser
                 {
                     throw new Exception(
                         "Invalid string: "
-                        ~ "parts:" ~  to!string(parts)
+                        ~ "parts:" ~  parts.to!string
                         ~ "; token:" ~ cast(string)token
-                        ~ "; length:" ~ to!string(token.length)
+                        ~ "; length:" ~ token.length.to!string
                     );
                 }
                 token = new char[0];
@@ -585,6 +795,7 @@ class Parser
             // Do NOT add `$` to the SubstAtom.
             consumeChar();
         }
+        // -2
         else if (currentChar == '-')
         {
             token ~= consumeChar();
@@ -600,12 +811,14 @@ class Parser
             {
                 dotCounter++;
             }
+            /*
             else if (currentChar == '(')
             {
                 // $(1 + 2 + 4)
                 SimpleList list = consumeSimpleList();
                 return list.infixProgram();
             }
+            */
             else if (currentChar >= 'A' && currentChar <= 'Z')
             {
                 uint* p = (currentChar in units);
@@ -614,7 +827,7 @@ class Parser
                     throw new Exception(
                         "Invalid character in name: "
                         ~ cast(string)token
-                        ~ to!string(currentChar)
+                        ~ currentChar.to!string
                     );
                 }
                 else
@@ -639,9 +852,16 @@ class Parser
         string s = cast(string)token;
         debug {stderr.writeln(" s: ", s);}
 
+        // 123
+        // .2
         if (isNumber)
         {
-            if (s == "-")
+
+            // .
+            // (a dot, alone)
+            // -
+            // (a dash, alone)
+            if (s == "-" || s == ".")
             {
                 return new NameAtom(s);
             }
@@ -668,12 +888,12 @@ class Parser
                         "new IntegerAtom: <", s, "> * ", multiplier
                     );
                 }
-                return new IntegerAtom(to!long(s) * multiplier);
+                return new IntegerAtom(s.to!int * multiplier);
             }
             else if (dotCounter == 1)
             {
                 debug {stderr.writeln("new FloatAtom: ", s);}
-                return new FloatAtom(to!float(s));
+                return new FloatAtom(s.to!float);
             }
             else
             {

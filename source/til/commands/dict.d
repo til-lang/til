@@ -14,8 +14,6 @@ static this()
         foreach(argument; context.items)
         {
             SimpleList l = cast(SimpleList)argument;
-            auto lContext = l.forceEvaluate(context);
-            l = cast(SimpleList)lContext.pop();
 
             Item value = l.items.back;
             l.items.popBack();
@@ -35,8 +33,6 @@ static this()
         foreach(argument; context.items)
         {
             SimpleList l = cast(SimpleList)argument;
-            auto lContext = l.forceEvaluate(context);
-            l = cast(SimpleList)lContext.pop();
 
             if (l.items.length < 2)
             {
@@ -69,8 +65,6 @@ static this()
             }
 
             SimpleList l = cast(SimpleList)argument;
-            auto lContext = l.forceEvaluate(context);
-            l = cast(SimpleList)lContext.pop();
 
             key = l.items.back.toString();
             l.items.popBack();
@@ -78,7 +72,7 @@ static this()
             auto innerDict = dict.navigateTo(l.items, false);
             if (innerDict !is null)
             {
-                innerDict.values.remove(key);
+                innerDict.remove(key);
             }
         }
 
@@ -109,4 +103,5 @@ static this()
             return context.error(ex.msg, ErrorCode.NotFound, "dict");
         }
     });
+    dictCommands["."] = dictCommands["extract"];
 }

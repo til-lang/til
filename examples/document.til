@@ -1,0 +1,55 @@
+[program]
+full_name "Til Document Example"
+description "Show how the document syntax works"
+
+[configuration/hello]
+salute_word {
+    type string
+    default "Hello"
+}
+
+[procedures/hello]
+parameters {
+    name {
+        type string
+        description "The name of whoever is going to be saluted"
+    }
+    times {
+        type int
+        description "How many times the procedure should salute"
+        default 1
+    }
+}
+
+
+# Configuration variables are global, so you only
+# need to specify the full "path" when really needed:
+# print ($configuration . hello . salute_word) ", $name!"
+print "procedures/hello: name=$name times=$times salute_word=$salute_word"
+print "                  hello.salute_word: $hello.salute_word"
+range.silent 1 $times | {
+    print "$salute_word, $name!"
+}
+
+[commands/hello]
+parameters {
+    # Some stuff seems repetitive, but this is just
+    # because we are declaring another procedure,
+    # which in real life would be unnecessary.
+    name {
+        type string
+        description "The name of whoever is going to be saluted"
+        default "World"
+    }
+    salute_word {
+        type string
+        description "The word used to salute"
+        default "Hello"
+    }
+}
+
+print "commands/hello: name=$name salute_word=$salute_word"
+
+hello $name
+hello $name (salute_word = "Hi")
+hello $name (times = 3) (salute_word = "hi")

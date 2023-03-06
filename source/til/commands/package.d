@@ -80,7 +80,7 @@ static this()
             return context.error(msg, ErrorCode.NotFound, "");
         }
         auto parser = new Parser(code);
-        auto program = parser.run();
+        auto program = parser.consumeSubProgram();
         if (program is null)
         {
             auto msg = "Program in " ~ filePath ~ " is invalid";
@@ -109,7 +109,7 @@ static this()
             newName = context.pop!string();
         }
 
-        if (!context.escopo.importModule(packagePath, newName))
+        if (!importModule(context.program, packagePath, newName))
         {
             auto msg = "Module not found: " ~ packagePath;
             return context.error(msg, ErrorCode.NotFound, "");
@@ -152,7 +152,7 @@ static this()
         auto code = context.pop!string();
 
         auto parser = new Parser(code);
-        SubProgram subprogram = parser.run();
+        SubProgram subprogram = parser.consumeSubProgram();
 
         context = context.process.run(subprogram, context.next());
         return context;
@@ -220,6 +220,8 @@ static this()
 
     // ---------------------------------------------
     // Procedures-related
+    /*
+    TODO: re-implement it
     nameCommands["alias"] = new Command((string path, Context context)
     {
         string origin = context.pop!string();
@@ -234,28 +236,7 @@ static this()
         commands[target] = command;
         return context;
     });
-    nameCommands["proc"] = new Command((string path, Context context)
-    {
-        // proc name (parameters) {body}
-        string name = context.pop!string();
-
-        string[] parameters = context.pop!SimpleList()
-            .items
-            .map!(x => x.toString())
-            .array;
-        auto body = context.pop!SubProgram();
-
-        auto proc = new Procedure(
-            name,
-            parameters,
-            body
-        );
-
-        context.escopo.commands[name] = proc;
-
-        return context;
-    });
-    stringCommands["proc"] = nameCommands["proc"];
+    */
 
     commands["return"] = new Command((string path, Context context)
     {
@@ -511,28 +492,6 @@ static this()
         return context;
     });
 
-    // ---------------------------------------
-    // Information about escopo/process
-    commands["cmds"] = new Command((string path, Context context)
-    {
-        auto process = context.escopo;
-        auto cmdsList = new SimpleList([]);
-
-        do
-        {
-            auto list = new SimpleList([]);
-            foreach (cmdName; process.commands.byKey)
-            {
-                list.items ~= new String(cmdName);
-            }
-            cmdsList.items ~= list;
-
-            process = process.parent;
-        }
-        while (process !is null);
-
-        return context.push(cmdsList);
-    });
     commands["vars"] = new Command((string path, Context context)
     {
         auto process = context.escopo;

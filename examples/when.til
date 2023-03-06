@@ -9,6 +9,22 @@ scope "test simple run" {
     assert $($x == 1)
 }
 
+scope "test manual return" {
+    run {
+        when $($x == 0) {
+            return "zero"
+        }
+        when $($x == 1) {
+            return "one"
+        }
+        default {
+            return "not zero or one"
+        }
+        return "totally wrong: we should never end up here"
+    } | as result
+    assert $($result == "one")
+}
+
 scope "test manual stack pushing (1)" {
     run {
         when $($x == 0) {

@@ -55,11 +55,12 @@ class Process
                 case ExitCode.Failure:
                     /*
                     Error handling:
-                    1- Call **local** procedure `on.error`, if
-                       it exists and analyse ITS exitCode.
-                    2- Or, if it doesn't exist, return `context`
-                       as we would already do.
+                    1- Call "$procedure_name.on_error";
+                    2- if it doesn't exist, return `context`
+                       as we would do normally.
                     */
+                    /*
+                    TODO: re-implement this.
                     Command* errorHandlerPtr = ("on.error" in context.escopo.commands);
                     if (errorHandlerPtr !is null)
                     {
@@ -71,14 +72,15 @@ class Process
                         }
                         context = errorHandler.run("on.error", context);
                         debug {stderr.writeln(" returned context:", context);}
-                        /*
+                        *
                         errorHandler can simply "rethrow"
                         the Error or even return a new
                         one. That's ok. We aren't
                         trying to do anything
                         much fancy, here.
-                        */
+                        *
                     }
+                    */
                     /*
                     Wheter we called errorHandler or not,
                     we ARE going to exit the current

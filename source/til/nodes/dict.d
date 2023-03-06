@@ -1,5 +1,8 @@
 module til.nodes.dict;
 
+import std.algorithm.iteration : filter;
+import std.array : array;
+
 import til.nodes;
 
 
@@ -9,6 +12,7 @@ CommandsMap dictCommands;
 class Dict : Item
 {
     Item[string] values;
+    string[] order;
 
     this()
     {
@@ -20,6 +24,7 @@ class Dict : Item
     {
         this();
         this.values = values;
+        order ~= values.keys;
     }
 
     // ------------------
@@ -49,6 +54,7 @@ class Dict : Item
     {
         debug {stderr.writeln(" dict[", k, "] = ", to!string(v));}
         values[k] = v;
+        order ~= k;
     }
 
     Dict navigateTo(Items items, bool autoCreate=true)
@@ -78,5 +84,11 @@ class Dict : Item
             }
         }
         return pivot;
+    }
+
+    void remove(string key)
+    {
+        values.remove(key);
+        this.order = this.order.filter!(x => x != key).array;
     }
 }

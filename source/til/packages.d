@@ -29,16 +29,16 @@ static this()
 }
 
 
-bool importModule(Escopo escopo, string packagePath)
+bool importModule(Program program, string packagePath)
 {
-    return importModule(escopo, packagePath, packagePath);
+    return importModule(program, packagePath, packagePath);
 }
-bool importModule(Escopo escopo, string packagePath, string prefix)
+bool importModule(Program program, string packagePath, string prefix)
 {
     CommandsMap source;
 
     try {
-        source = importFromSharedLibrary(escopo, packagePath, prefix);
+        source = importFromSharedLibrary(program, packagePath, prefix);
     }
     catch(Exception ex)
     {
@@ -47,13 +47,13 @@ bool importModule(Escopo escopo, string packagePath, string prefix)
     }
 
     // Save on cache:
-    escopo.importNamesFrom(source, prefix);
+    importNamesFrom(program, source, prefix);
     return true;
 }
 
 // Import commands from a .so:
 CommandsMap importFromSharedLibrary(
-    Escopo escopo, string libraryPath, string packageAlias
+    Program program, string libraryPath, string packageAlias
 )
 {
     // We don't want users informing the library preffix and suffix:
@@ -87,7 +87,7 @@ CommandsMap importFromSharedLibrary(
             }
 
             // Get the commands from inside the shared object:
-            auto getCommands = cast(CommandsMap function(Escopo))dlsym(
+            auto getCommands = cast(CommandsMap function(Program))dlsym(
                 lh, "getCommands"
             );
 
@@ -96,7 +96,7 @@ CommandsMap importFromSharedLibrary(
             {
                 throw new Exception("dlsym error: " ~ to!string(error));
             }
-            auto libraryCommands = getCommands(escopo);
+            auto libraryCommands = getCommands(program);
 
             return libraryCommands;
         }
@@ -105,7 +105,7 @@ CommandsMap importFromSharedLibrary(
 };
 
 
-void importNamesFrom(Escopo escopo, CommandsMap source, string prefix)
+void importNamesFrom(Program program, CommandsMap source, string prefix)
 {
     foreach(name, command; source)
     {
@@ -119,6 +119,6 @@ void importNamesFrom(Escopo escopo, CommandsMap source, string prefix)
             cmdPath = prefix ~ "." ~ name;
         }
         debug {stderr.writeln("cmdPath:", cmdPath);}
-        escopo.commands[cmdPath] = command;
+        program.procedures[cmdPath] = command;
     }
 }

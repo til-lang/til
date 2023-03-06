@@ -48,6 +48,8 @@ static this()
 
         return context.push(target.repr[start..end]);
     });
+    stringCommands["."] = stringCommands["extract"];
+
     stringCommands["length"] = new Command((string path, Context context)
     {
         foreach (item; context.items)

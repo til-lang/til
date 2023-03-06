@@ -3,6 +3,7 @@ module til.commands.integer;
 import til.nodes;
 
 
+// Operators
 template CreateOperator(string cmdName, string operator)
 {
     const string CreateOperator = "
@@ -50,6 +51,65 @@ template CreateComparisonOperator(string cmdName, string operator)
         integerCommands[\"" ~ operator ~ "\"] = integerCommands[\"" ~ cmdName ~ "\"];
         ";
 }
+
+
+// Ranges
+class IntegerRange : Item
+{
+    long start = 0;
+    long limit = 0;
+    long step = 1;
+    long current = 0;
+    bool silent = false;
+
+    this(long limit)
+    {
+        this.limit = limit;
+        this.type = ObjectType.Range;
+        this.typeName = "integer_range";
+    }
+    this(long start, long limit)
+    {
+        this(limit);
+        this.current = start;
+        this.start = start;
+    }
+    this(long start, long limit, long step)
+    {
+        this(start, limit);
+        this.step = step;
+    }
+
+    override string toString()
+    {
+        return
+            "range("
+            ~ to!string(start)
+            ~ ","
+            ~ to!string(limit)
+            ~ ")";
+    }
+
+    override Context next(Context context)
+    {
+        long value = current;
+        if (value > limit)
+        {
+            context.exitCode = ExitCode.Break;
+        }
+        else
+        {
+            if (!silent)
+            {
+                context.push(value);
+            }
+            context.exitCode = ExitCode.Continue;
+        }
+        current += step;
+        return context;
+    }
+}
+
 
 
 // Commands:
@@ -114,7 +174,7 @@ static this()
             limit = start;
             start = 0;
         }
-        if (limit <= start)
+        if (start > limit)
         {
             auto msg = "Invalid range";
             return context.error(msg, ErrorCode.InvalidArgument, "");
@@ -126,61 +186,13 @@ static this()
             step = context.pop!long();
         }
 
-        class IntegerRange : Item
-        {
-            long start = 0;
-            long limit = 0;
-            long step = 1;
-            long current = 0;
-
-            this(long limit)
-            {
-                this.limit = limit;
-                this.type = ObjectType.Range;
-                this.typeName = "integer_range";
-            }
-            this(long start, long limit)
-            {
-                this(limit);
-                this.current = start;
-                this.start = start;
-            }
-            this(long start, long limit, long step)
-            {
-                this(start, limit);
-                this.step = step;
-            }
-
-            override string toString()
-            {
-                return
-                    "range("
-                    ~ to!string(start)
-                    ~ ","
-                    ~ to!string(limit)
-                    ~ ")";
-            }
-
-            override Context next(Context context)
-            {
-                long value = current;
-                if (value > limit)
-                {
-                    context.exitCode = ExitCode.Break;
-                }
-                else
-                {
-                    context.push(value);
-                    context.exitCode = ExitCode.Continue;
-                }
-                current += step;
-                return context;
-            }
-        }
-
         auto range = new IntegerRange(start, limit, step);
+        range.silent = (path == "range.silent");
+
         return context.push(range);
     });
+    integerCommands["range.silent"] = integerCommands["range"];
+
     integerCommands["to.char"] = new Command((string path, Context context)
     {
         foreach (item; context.items)

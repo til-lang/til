@@ -1,5 +1,7 @@
 module til.commands.type;
 
+/*
+TODO: re-implement it
 import til.commands;
 import til.procedures;
 import til.nodes;
@@ -140,3 +142,4 @@ static this()
         return context;
     });
 }
+*/

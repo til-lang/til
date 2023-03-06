@@ -1,0 +1,18 @@
+type generator {
+    proc init () {
+        return 0
+    }
+    proc next ($x) {
+        print "next($x)"
+        incr $x
+        if $($x == 2) {
+            error "something wrong happened!"
+        }
+        continue $x
+    }
+}
+
+generator | transform x {
+    print "x: $x"
+    return $x
+    } | foreach x { print "=> $x" }

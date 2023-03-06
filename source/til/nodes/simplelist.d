@@ -36,42 +36,11 @@ class SimpleList : BaseList
             .join(" ")) ~ ")";
     }
 
-    override Context evaluate(Context context, bool force)
-    {
-        if (!force)
-        {
-            return this.evaluate(context);
-        }
-        else
-        {
-            return this.forceEvaluate(context);
-        }
-    }
     override Context evaluate(Context context)
     {
-        return context.push(this);
+        return this.runAsInfixProgram(context);
     }
-    Context forceEvaluate(Context context)
-    {
-        long listSize = 0;
-        foreach(item; this.items.retro)
-        {
-            context = item.evaluate(context.next());
-            listSize += context.size;
-        }
 
-        /*
-        What resides in the stack, at the end, is not
-        the items inside the original SimpleList,
-        but a new SimpleList with its original
-        items already evaluated. We are only
-        using the stack as temporary space.
-        */
-        auto newList = new SimpleList(context.pop(listSize));
-        context = context.next();
-        context.push(newList);
-        return context;
-    }
     ExecList infixProgram()
     {
         string[] commandNames;
@@ -105,7 +74,6 @@ class SimpleList : BaseList
             }
         }
 
-        string lastCommandName = null;
         auto argumentsIndex = 0;
         auto commandsIndex = 0;
         ExecList execList = null;
@@ -156,10 +124,11 @@ class SimpleList : BaseList
                 {
                     /*
                     Example:
-                        if (true)
+                        if $(true)
                     Becomes:
                         if ([push true])
                     */
+                    // XXX: what???
                     auto commandCalls = [new CommandCall("stack.push", arguments)];
                     auto pipeline = new Pipeline(commandCalls);
                     auto subprogram = new SubProgram([pipeline]);

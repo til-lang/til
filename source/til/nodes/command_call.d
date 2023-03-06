@@ -61,7 +61,7 @@ class CommandCall
         return context;
     }
 
-    Command getCommand(Escopo escopo, Item target)
+    Command getCommand(Program program, Item target)
     {
         Command cmd;
 
@@ -71,7 +71,7 @@ class CommandCall
             if (cmd !is null) return cmd;
         }
 
-        cmd = escopo.getCommand(name);
+        cmd = program.getCommand(name);
         if (cmd !is null && target !is null)
         {
             target.commands[name] = cmd;
@@ -79,6 +79,8 @@ class CommandCall
         return cmd;
     }
 
+    // XXX: when calling procedures, the escopo should
+    // be a clean one (without any parent).
     Context run(Context context)
     {
         // evaluate arguments and set proper context.size:
@@ -106,7 +108,7 @@ class CommandCall
             target = executionContext.peek();
         }
 
-        auto cmd = getCommand(context.escopo, target);
+        auto cmd = this.getCommand(context.program, target);
         debug {stderr.writeln(name, ".cmd:", cmd);}
         if (cmd is null)
         {

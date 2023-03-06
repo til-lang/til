@@ -14,10 +14,13 @@ import editline;
 
 int repl(Dict envVars, SimpleList argumentsList)
 {
-    auto escopo = new Escopo();
+    auto program = new Program();
+    // program.initialize(commands, envVars);
+    program.commands = commands;
+
+    auto escopo = new Escopo(program);
     escopo["args"] = argumentsList;
     escopo["env"] = envVars;
-    escopo.commands = commands;
 
     auto process = new Process("repl");
 

@@ -15,10 +15,24 @@ static this()
     {
         /*
         set l [list 1 2 3 4]
-        # l = (1 2 3 4)
+        # l = (1 , 2 , 3 , 4)
         */
         return context.push(new SimpleList(context.items));
     });
+
+    // set lista (a , b , c , d)
+    // -> set lista [, a b c d]
+    // --> set lista [list a b c d]
+    commands[","] = commands["list"];
+
+    // set pair (a = b)
+    // -> set pair [= a b]
+    // --> set pairt [list a b]
+    // TODO: limit this to only two items!
+    // We don't want people writing this kind of stuff:
+    // set lista (a = b = c = d)
+    commands["="] = commands["list"];
+
     simpleListCommands["set"] = new Command((string path, Context context)
     {
         string[] names;
@@ -35,7 +49,7 @@ static this()
         names = l1.items.map!(x => to!string(x)).array;
 
         Items values;
-        context = l2.forceEvaluate(context);
+        // context = l2.forceEvaluate(context);
         values = l2.items;
 
         if (values.length < names.length)
@@ -180,15 +194,8 @@ static this()
         // slice:
         return context.push(new SimpleList(l.items[start..end]));
     });
-    simpleListCommands["eval"] = new Command((string path, Context context)
-    {
-        auto list = context.pop();
+    simpleListCommands["."] = simpleListCommands["extract"];
 
-        // Force evaluation:
-        auto newContext = list.evaluate(context, true);
-
-        return newContext;
-    });
     simpleListCommands["infix"] = new Command((string path, Context context)
     {
         SimpleList list = context.pop!SimpleList();

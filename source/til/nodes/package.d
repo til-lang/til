@@ -28,6 +28,7 @@ public import til.nodes.vectors;
 
 public import til.nodes.error;
 
+public import til.nodes.program;
 public import til.nodes.subprogram;
 public import til.nodes.pipeline;
 public import til.nodes.command_call;
@@ -89,4 +90,5 @@ enum ObjectType
     Numerical,
     Vector,
     Range,
+    Program,
 }
