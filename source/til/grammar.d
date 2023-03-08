@@ -512,9 +512,6 @@ class Parser
                 return consumeExecList();
             case '(':
                 return consumeSimpleList();
-            case '<':
-                // TODO: get rid of this.
-                return consumeExtraction();
             case '"':
             case '\'':
                 return consumeString();
@@ -631,33 +628,6 @@ class Parser
         assert(close == ')');
 
         return new SimpleList(items);
-    }
-
-    Item consumeExtraction()
-    {
-        Item[] items;
-        auto open = consumeChar();
-        assert(open == '<');
-
-        // if (x < 10)
-        // The above statement can be confounded
-        // with the start of an Extraction.
-        if (currentChar == SPACE)
-        {
-            return new String("<");
-        }
-
-        do
-        {
-            items ~= consumeItem();
-            consumeWhitespaces();
-        }
-        while (currentChar != '>');
-
-        auto close = consumeChar();
-        assert(close == '>');
-
-        return new Extraction(items);
     }
 
     String consumeString()
