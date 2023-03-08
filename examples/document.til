@@ -31,12 +31,13 @@ range.silent 1 $times | {
     print "$salute_word, $name!"
 }
 
-error "Test error"
+error "Test error" 123 "generic-error"
+print "POST ERROR: we should never reach this command."
 
+[procedures/hello/on.error]
 
-[procedures/hello/on_error]
-
-print "Error: $error"
+stack.pop | as error
+print "Error $error"
 
 
 [commands/hello]

@@ -16,6 +16,7 @@ class Escopo
     Items[string] variables;
     Items contextManagers;
     string description;
+    Command rootCommand;
 
     this(Program program, string description=null)
     {
@@ -27,6 +28,7 @@ class Escopo
     {
         this.parent = parent;
         this.program = parent.program;
+        this.rootCommand = parent.rootCommand;
         this.description = description;
     }
 

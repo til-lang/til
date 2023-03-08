@@ -1,5 +1,7 @@
 module til.nodes.program;
 
+import std.algorithm : each;
+import std.algorithm.iteration : filter;
 import std.array : join, split;
 import std.uni : toUpper;
 
@@ -101,6 +103,18 @@ class Program : Dict {
                     cast(Dict)(info["parameters"]),
                     cast(SubProgram)(info["subprogram"])
                 );
+
+                // Event handlers:
+                /*
+                [procedures/f/on.error]
+
+                return
+                */
+                info.values.keys.filter!(x => (x[0..3] == "on.")).each!((k) {
+                    auto v = cast(Dict)(info[k]);
+                    proc.eventHandlers[k] = cast(SubProgram)(v["subprogram"]);
+                });
+
                 this.procedures[name] = proc;
             }
         }

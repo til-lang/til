@@ -53,34 +53,31 @@ class Process
                     return context;
 
                 case ExitCode.Failure:
-                    /*
-                    Error handling:
-                    1- Call "$procedure_name.on_error";
-                    2- if it doesn't exist, return `context`
-                       as we would do normally.
-                    */
-                    /*
-                    TODO: re-implement this.
-                    Command* errorHandlerPtr = ("on.error" in context.escopo.commands);
-                    if (errorHandlerPtr !is null)
+                    if (context.escopo.rootCommand !is null)
                     {
-                        auto errorHandler = *errorHandlerPtr;
-                        debug {
-                            stderr.writeln("Calling on.error");
-                            stderr.writeln(" context: ", context);
-                            stderr.writeln(" ...");
+                        auto escopo = context.escopo;
+                        auto rootCommand = escopo.rootCommand;
+                        if (auto errorHandlerPtr = ("on.error" in rootCommand.eventHandlers))
+                        {
+                            auto errorHandler = *errorHandlerPtr;
+                            debug {
+                                stderr.writeln("Calling on.error");
+                                stderr.writeln(" context: ", context);
+                                stderr.writeln(" ...");
+                            }
+                            /*
+                            Event handlers are not procedures or
+                            commands, but simple SubProgram.
+                            */
+                            auto newScope = new Escopo(escopo);
+                            // Avoid calling on.error recursively:
+                            newScope.rootCommand = null;
+                            auto newContext = Context(this, newScope);
+
+                            context = this.run(errorHandler, newContext);
+                            debug {stderr.writeln(" returned context:", context);}
                         }
-                        context = errorHandler.run("on.error", context);
-                        debug {stderr.writeln(" returned context:", context);}
-                        *
-                        errorHandler can simply "rethrow"
-                        the Error or even return a new
-                        one. That's ok. We aren't
-                        trying to do anything
-                        much fancy, here.
-                        *
                     }
-                    */
                     /*
                     Wheter we called errorHandler or not,
                     we ARE going to exit the current

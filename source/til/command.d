@@ -14,6 +14,7 @@ class Command
 {
     private CommandHandler _handler;
     bool isDeprecated = false;
+    SubProgram[string] eventHandlers;
 
     this(CommandHandler handler)
     {

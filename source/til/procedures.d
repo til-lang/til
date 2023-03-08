@@ -23,6 +23,9 @@ class Procedure : Command
     override Context run(string name, Context context)
     {
         auto newScope = new Escopo(context.escopo);
+        // Procedures are always top-level:
+        newScope.parent = null;
+        newScope.rootCommand = this;
         newScope.description = name;
 
         string[] parametersAlreadySet;
