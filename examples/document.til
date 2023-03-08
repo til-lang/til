@@ -8,6 +8,9 @@ salute_word {
     default "Hello"
 }
 
+[constants/math]
+pi 3.1415
+
 [procedures/hello]
 parameters {
     name {
@@ -70,6 +73,8 @@ description "Say hey to someone."
 parameters {}
 
 print "hey!"
+print "pi is $pi"
+print "math.pi is $math.pi"
 
 [commands/hi]
 parameters {

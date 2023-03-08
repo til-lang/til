@@ -41,7 +41,7 @@ class Program : Dict {
         }
         /*
         About [configuration]:
-        - It must always follow the format "configuration/key";
+        - It must always follow the format "configuration/:key";
         - No sub-keys are allowed;
         - No "direct" configuration is allowed.
         */
@@ -81,6 +81,30 @@ class Program : Dict {
                     globals[full_name] = envValue;
                     globals[envName] = envValue;
                 }
+            }
+        }
+
+        debug {
+            stderr.writeln("Adjusting constants");
+        }
+        /*
+        About [constants]:
+        - It must always follow the format "constants/:key";
+        - No sub-keys are allowed;
+        - No "direct" configuration is allowed.
+        */
+        Dict constants = cast(Dict)(values["constants"]);
+        foreach (sectionName, section; constants.values)
+        {
+            auto d = cast(Dict)section;
+            foreach (name, value; d.values)
+            {
+                auto full_name = sectionName ~ "." ~ name;
+
+                // pi = 3.1415
+                globals[name] = value;
+                // math.pi = 3.1415
+                globals[full_name] = value;
             }
         }
 
