@@ -31,6 +31,14 @@ range.silent 1 $times | {
     print "$salute_word, $name!"
 }
 
+error "Test error"
+
+
+[procedures/hello/on_error]
+
+print "Error: $error"
+
+
 [commands/hello]
 parameters {
     # Some stuff seems repetitive, but this is just
@@ -53,3 +61,9 @@ print "commands/hello: name=$name salute_word=$salute_word"
 hello $name
 hello $name (salute_word = "Hi")
 hello $name (times = 3) (salute_word = "hi")
+
+
+[commands/hey]
+parameters {}
+
+print "hey!"

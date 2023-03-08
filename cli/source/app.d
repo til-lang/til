@@ -1,3 +1,4 @@
+import std.algorithm.searching : canFind;
 import std.array : array, join, split;
 import std.datetime.stopwatch;
 import std.file;
@@ -42,26 +43,29 @@ int main(string[] args)
         return repl(envVars, argumentsList);
     }
 
-    auto filename = args[1];
-    if (filename == "-")
+    auto filepath = args[1];
+    string subCommandName = null;
+    Command subCommand = null;
+
+    if (filepath.canFind(":"))
     {
-        parser = new Parser(stdin.byLine.join("\n").to!string);
+        auto parts = filepath.split(":");
+        filepath = parts[0];
+        subCommandName = parts[1..$].join(":");
     }
-    else
+
+    try
     {
-        try
-        {
-            parser = new Parser(read(filename).to!string);
-        }
-        catch (FileException ex)
-        {
-            stderr.writeln(
-                "Error ",
-                ex.errno, ": ",
-                ex.msg
-            );
-            return ex.errno;
-        }
+        parser = new Parser(read(filepath).to!string);
+    }
+    catch (FileException ex)
+    {
+        stderr.writeln(
+            "Error ",
+            ex.errno, ": ",
+            ex.msg
+        );
+        return ex.errno;
     }
 
     debug
@@ -93,27 +97,35 @@ int main(string[] args)
     escopo["env"] = envVars;
 
     // The main command:
-    // TODO: allow the user to select commands!
-    Command subCommand;
-    string subCommandName = null;
 
-    auto subCommandPtr = ("default" in program.subCommands);
-    if (subCommandPtr !is null)
+    if (subCommandName !is null)
     {
-        subCommand = *subCommandPtr;
-        subCommandName = "default";
+        auto subCommandPtr = (subCommandName in program.subCommands);
+        if (subCommandPtr !is null)
+        {
+            subCommand = *subCommandPtr;
+        }
     }
     else
     {
-        foreach (name, sc; program.subCommands)
+        auto subCommandPtr = ("default" in program.subCommands);
+        if (subCommandPtr !is null)
         {
-            // Take the first one:
-            subCommand = sc;
-            subCommandName = name;
-            break;
+            subCommand = *subCommandPtr;
+            subCommandName = "default";
+        }
+        else
+        {
+            foreach (name, sc; program.subCommands)
+            {
+                // Take the first one:
+                subCommand = sc;
+                subCommandName = name;
+                break;
+            }
         }
     }
-    if (subCommandName is null)
+    if (subCommand is null)
     {
         stderr.writeln("No command found!");
         // XXX: is it the correct code for this situation???
