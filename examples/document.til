@@ -40,6 +40,7 @@ print "Error: $error"
 
 
 [commands/hello]
+description "Say hello to someone."
 parameters {
     # Some stuff seems repetitive, but this is just
     # because we are declaring another procedure,
@@ -64,6 +65,17 @@ hello $name (times = 3) (salute_word = "hi")
 
 
 [commands/hey]
+description "Say hey to someone."
 parameters {}
 
 print "hey!"
+
+[commands/hi]
+parameters {
+    name {
+        type string
+        default "world"
+    }
+}
+
+print "Hi, $name"

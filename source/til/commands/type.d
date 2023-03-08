@@ -1,7 +1,16 @@
 module til.commands.type;
 
 /*
-TODO: re-implement it
+TODO: re-implement it, like:
+[aliases/super-dict]
+command = dict
+
+[methods/super-dict/to_string]
+
+dict.to.string $self
+
+-----
+
 import til.commands;
 import til.procedures;
 import til.nodes;

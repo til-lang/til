@@ -63,9 +63,6 @@ class Program : Dict {
                     globals[full_name] = value;
                 }
 
-                // TODO: get values from environment variables
-                // and cli-subcommands!
-                // http/port -> HTTP_PORT
                 string envName = (configSectionName ~ "_" ~ name).toUpper;
                 debug {
                     stderr.writeln("envName:", envName);

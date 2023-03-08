@@ -221,7 +221,12 @@ static this()
     // ---------------------------------------------
     // Procedures-related
     /*
-    TODO: re-implement it
+    TODO: re-implement it, like:
+    [aliases/the-alias]
+    command = the-aliased-command
+
+    -----
+
     nameCommands["alias"] = new Command((string path, Context context)
     {
         string origin = context.pop!string();

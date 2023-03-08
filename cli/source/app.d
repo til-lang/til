@@ -1,5 +1,5 @@
 import std.algorithm.searching : canFind;
-import std.array : array, join, split;
+import std.array : array, join, replace, split;
 import std.datetime.stopwatch;
 import std.file;
 import std.process : environment;
@@ -118,7 +118,8 @@ int main(string[] args)
         {
             foreach (name, sc; program.subCommands)
             {
-                // Take the first one:
+                // Take any one...
+                // (hashmaps have no order!)
                 subCommand = sc;
                 subCommandName = name;
                 break;
@@ -160,9 +161,16 @@ int main(string[] args)
         {
             // TODO: add support to escaping, etc, etc.
             auto pair = arg[2..$].split("=");
-            auto key = pair[0];
+            // alfa-beta -> alfa_beta
+            auto key = pair[0].replace("-", "_");
+
+            if (key == "help")
+            {
+                return show_help_text(args, program);
+            }
+
+            // alfa-beta=1=2=3 -> alfa_beta = "1=2=3"
             auto value = pair[1..$].join("=");
-            // TODO: check for "--help"
 
             auto p = new Parser(value);
 
@@ -197,4 +205,47 @@ int main(string[] args)
     }
 
     return returnCode;
+}
+
+int show_help_text(string[] args, Program program)
+{
+    stdout.writeln(args[1]);
+
+    auto programDict = cast(Dict)program;
+    auto commands = cast(Dict)(programDict["commands"]);
+    foreach (commandName; program.subCommands.keys)
+    {
+        auto command = cast(Dict)(commands[commandName]);
+
+        if (auto descriptionPtr = ("description" in command.values))
+        {
+            auto description = *descriptionPtr;
+            stdout.writeln(" ", commandName, " - ", description.toString());
+        }
+        else
+        {
+            stdout.writeln(" ", commandName);
+        }
+
+        auto parameters = cast(Dict)(command["parameters"]);
+        foreach (parameter; parameters.order)
+        {
+            auto info = cast(Dict)(parameters[parameter]);
+            auto type = info["type"];
+            auto defaultPtr = ("default" in info.values);
+            string defaultStr = "";
+            if (defaultPtr !is null)
+            {
+                auto d = *defaultPtr;
+                defaultStr = " [" ~ d.toString() ~ "]";
+            }
+            stdout.writeln("    ", parameter, " : ", type, defaultStr);
+        }
+        if (parameters.order.length == 0)
+        {
+            stdout.writeln("    (no parameters)");
+        }
+    }
+
+    return 0;
 }
