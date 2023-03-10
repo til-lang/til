@@ -45,41 +45,45 @@ class Program : Dict {
         - No sub-keys are allowed;
         - No "direct" configuration is allowed.
         */
-        Dict config = cast(Dict)(values["configuration"]);
-        foreach (configSectionName, configSection; config.values)
+        auto configPtr = ("configuration" in values);
+        if (configPtr !is null)
         {
-            auto d = cast(Dict)configSection;
-            foreach (name, infoItem; d.values)
+            Dict config = cast(Dict)(*configPtr);
+            foreach (configSectionName, configSection; config.values)
             {
-                auto full_name = configSectionName ~ "." ~ name;
-
-                auto info = cast(Dict)infoItem;
-                Item* valuePtr = ("default" in info.values);
-                if (valuePtr !is null)
+                auto d = cast(Dict)configSection;
+                foreach (name, infoItem; d.values)
                 {
-                    Item value = *valuePtr;
+                    auto full_name = configSectionName ~ "." ~ name;
 
-                    // port = 5000
-                    globals[name] = value;
-                    // http.port = 5000
-                    globals[full_name] = value;
-                }
+                    auto info = cast(Dict)infoItem;
+                    Item* valuePtr = ("default" in info.values);
+                    if (valuePtr !is null)
+                    {
+                        Item value = *valuePtr;
 
-                string envName = (configSectionName ~ "_" ~ name).toUpper;
-                debug {
-                    stderr.writeln("envName:", envName);
-                }
-                Item *envValuePtr = (envName in environmentVariables.values);
-                if (envValuePtr !is null)
-                {
-
-                    String envValue = cast(String)(*envValuePtr);
-                    debug {
-                        stderr.writeln(" -->", envValue);
+                        // port = 5000
+                        globals[name] = value;
+                        // http.port = 5000
+                        globals[full_name] = value;
                     }
-                    globals[name] = envValue;
-                    globals[full_name] = envValue;
-                    globals[envName] = envValue;
+
+                    string envName = (configSectionName ~ "_" ~ name).toUpper;
+                    debug {
+                        stderr.writeln("envName:", envName);
+                    }
+                    Item *envValuePtr = (envName in environmentVariables.values);
+                    if (envValuePtr !is null)
+                    {
+
+                        String envValue = cast(String)(*envValuePtr);
+                        debug {
+                            stderr.writeln(" -->", envValue);
+                        }
+                        globals[name] = envValue;
+                        globals[full_name] = envValue;
+                        globals[envName] = envValue;
+                    }
                 }
             }
         }
@@ -93,18 +97,22 @@ class Program : Dict {
         - No sub-keys are allowed;
         - No "direct" configuration is allowed.
         */
-        Dict constants = cast(Dict)(values["constants"]);
-        foreach (sectionName, section; constants.values)
+        auto constantsPtr = ("constants" in values);
+        if (constantsPtr !is null)
         {
-            auto d = cast(Dict)section;
-            foreach (name, value; d.values)
+            Dict constants = cast(Dict)(*constantsPtr);
+            foreach (sectionName, section; constants.values)
             {
-                auto full_name = sectionName ~ "." ~ name;
+                auto d = cast(Dict)section;
+                foreach (name, value; d.values)
+                {
+                    auto full_name = sectionName ~ "." ~ name;
 
-                // pi = 3.1415
-                globals[name] = value;
-                // math.pi = 3.1415
-                globals[full_name] = value;
+                    // pi = 3.1415
+                    globals[name] = value;
+                    // math.pi = 3.1415
+                    globals[full_name] = value;
+                }
             }
         }
 

@@ -209,7 +209,9 @@ int main(string[] args)
 
 int show_help_text(string[] args, Program program)
 {
-    stdout.writeln(args[1]);
+    stdout.writeln(program.full_name);
+    stdout.writeln(program.description);
+    stdout.writeln();
 
     auto programDict = cast(Dict)program;
     auto commands = cast(Dict)(programDict["commands"]);
@@ -220,7 +222,7 @@ int show_help_text(string[] args, Program program)
         if (auto descriptionPtr = ("description" in command.values))
         {
             auto description = *descriptionPtr;
-            stdout.writeln(" ", commandName, " - ", description.toString());
+            stdout.writeln(" ", commandName, "    ", description.toString());
         }
         else
         {
@@ -237,13 +239,13 @@ int show_help_text(string[] args, Program program)
             if (defaultPtr !is null)
             {
                 auto d = *defaultPtr;
-                defaultStr = " [" ~ d.toString() ~ "]";
+                defaultStr = " = " ~ d.toString();
             }
             stdout.writeln("    ", parameter, " : ", type, defaultStr);
         }
         if (parameters.order.length == 0)
         {
-            stdout.writeln("    (no parameters)");
+            // stdout.writeln("    (no parameters)");
         }
     }
 

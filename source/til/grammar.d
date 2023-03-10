@@ -219,6 +219,22 @@ class Parser
         while (!eof)
         {
             section_path = consumeSectionHeader();
+            if (section_path[0].toString()[0] == '#')
+            {
+                // Consume the section ignoring it completely
+                while (true)
+                {
+                    auto c = consumeChar();
+                    if (c == EOL)
+                    {
+                        if (currentChar == '[')
+                        {
+                            break;
+                        }
+                    }
+                }
+                continue;
+            }
             auto subDict = p.navigateTo(section_path[0..$-1]);
             subDict[section_path[$-1].toString()] = consumeSection();
             consumeWhitespaces();
@@ -280,6 +296,16 @@ class Parser
             stderr.writeln("consumeSection");
         }
         // No whitespaces after the header!
+
+        /*
+        We can have comment lines immediately
+        after the section header and immediately
+        before the section dict:
+        */
+        while (currentChar == '#')
+        {
+            consumeLine();
+        }
 
         // key simple_value
         // key { document_dict }
@@ -349,11 +375,12 @@ class Parser
             dict[key.toString()] = value;
 
             auto newline = consumeChar();
-            if (newline != '\n')
+            if (newline != EOL)
             {
                 throw new Exception(
-                    "Expecting newline after section dict entry, found "
+                    "Expecting newline after section dict entry, found `"
                     ~ newline
+                    ~ "`"
                 );
             }
         }
@@ -361,6 +388,27 @@ class Parser
         debug {
             stderr.writeln(" consumeSectionDict: currentChar: " ~ currentChar);
         }
+        return dict;
+    }
+    Dict consumeInlineSectionDict()
+    {
+        /*
+             \ /
+              v
+        set d <{
+            key1 value1
+            key2 value2
+        }>
+        */
+        auto inlineOpener = consumeChar();
+        auto opener = consumeChar();
+        assert(opener == '{');
+        auto dict = consumeSectionDict();
+        /*
+        consumeSectionDict will already consume
+        both '}' and '>'
+        */
+
         return dict;
     }
 
@@ -512,6 +560,8 @@ class Parser
                 return consumeExecList();
             case '(':
                 return consumeSimpleList();
+            case '<':
+                return consumeInlineSectionDict();
             case '"':
             case '\'':
                 return consumeString();
@@ -585,7 +635,6 @@ class Parser
         }
     }
 
-    // Not used since consumeSubString:
     SubProgram consumeSubList()
     {
         auto open = consumeChar();

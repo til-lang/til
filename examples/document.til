@@ -2,6 +2,32 @@
 full_name "Til Document Example"
 description "Show how the document syntax works"
 
+[build]
+dir "${env.home}/.til/document-example"
+
+[build/packages/build]
+# Packages needed to build this program
+
+
+[build/packages/run]
+# Packages needed to run this program
+http {
+    source "https://github.com/til-lang/til-http.git"
+    branch master
+}
+
+[# Document format inside code]
+# This is a comment section.
+
+set d <{
+    alfa 1
+    beta 2
+}>
+
+range 10 | foreach i {
+    print $i
+}
+
 [configuration/hello]
 salute_word {
     type string
@@ -10,6 +36,16 @@ salute_word {
 
 [constants/math]
 pi 3.1415
+
+[system_commands/compose]
+command "docker compose"
+which "docker compose -h"
+parameters {
+    command {
+        type string
+    }
+}
+
 
 [procedures/hello]
 parameters {
@@ -76,6 +112,7 @@ print "hey!"
 print "pi is $pi"
 print "math.pi is $math.pi"
 
+
 [commands/hi]
 parameters {
     name {
@@ -85,3 +122,10 @@ parameters {
 }
 
 print "Hi, $name"
+
+
+[commands/run]
+description "Run the project using `docker compose`"
+parameters {}
+
+composer up
