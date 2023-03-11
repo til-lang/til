@@ -96,6 +96,7 @@ class Dict : Item
 
 class SectionDict : Dict
 {
+    bool isNumeric = true;
     this()
     {
         super();
@@ -110,6 +111,18 @@ class SectionDict : Dict
         debug {
             stderr.writeln("Evaluating SectionDict: ", this);
         }
+        if (values.length > 0 && isNumeric)
+        {
+            return evaluateAsList(context);
+        }
+        else
+        {
+            return evaluateAsDict(context);
+        }
+    }
+
+    Context evaluateAsDict(Context context)
+    {
         auto d = new Dict();
         foreach (key, value; values)
         {
@@ -130,5 +143,23 @@ class SectionDict : Dict
         }
         context.push(d);
         return context;
+    }
+    Context evaluateAsList(Context context)
+    {
+        context.push(new SimpleList(values.values.array));
+        return context;
+    }
+
+    override void opIndexAssign(Item v, string k)
+    {
+        if (k == "-")
+        {
+            k = this.order.length.to!string;
+        }
+        else
+        {
+            isNumeric = false;
+        }
+        super.opIndexAssign(v, k);
     }
 }
