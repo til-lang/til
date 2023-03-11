@@ -57,26 +57,7 @@ class Process
                     {
                         auto escopo = context.escopo;
                         auto rootCommand = escopo.rootCommand;
-                        if (auto errorHandlerPtr = ("on.error" in rootCommand.eventHandlers))
-                        {
-                            auto errorHandler = *errorHandlerPtr;
-                            debug {
-                                stderr.writeln("Calling on.error");
-                                stderr.writeln(" context: ", context);
-                                stderr.writeln(" ...");
-                            }
-                            /*
-                            Event handlers are not procedures or
-                            commands, but simple SubProgram.
-                            */
-                            auto newScope = new Escopo(escopo);
-                            // Avoid calling on.error recursively:
-                            newScope.rootCommand = null;
-                            auto newContext = Context(this, newScope);
-
-                            context = this.run(errorHandler, newContext);
-                            debug {stderr.writeln(" returned context:", context);}
-                        }
+                        context = rootCommand.handleEvent(context, "on.error");
                     }
                     /*
                     Wheter we called errorHandler or not,

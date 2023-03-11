@@ -92,3 +92,43 @@ class Dict : Item
         this.order = this.order.filter!(x => x != key).array;
     }
 }
+
+
+class SectionDict : Dict
+{
+    this()
+    {
+        super();
+    }
+    this(Item[string] values)
+    {
+        super(values);
+    }
+
+    override Context evaluate(Context context)
+    {
+        debug {
+            stderr.writeln("Evaluating SectionDict: ", this);
+        }
+        auto d = new Dict();
+        foreach (key, value; values)
+        {
+            auto newContext = context.next();
+            newContext = value.evaluate(newContext);
+            if (newContext.exitCode == ExitCode.Failure)
+            {
+                return newContext;
+            }
+            // XXX: but what if an item evaluates to a sequence?
+            d[key] = newContext.pop();
+            debug {
+                stderr.writeln("  d[", key, "] = ", d[key]);
+            }
+        }
+        debug {
+            stderr.writeln("    Result:", d);
+        }
+        context.push(d);
+        return context;
+    }
+}

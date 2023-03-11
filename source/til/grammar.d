@@ -327,7 +327,7 @@ class Parser
 
         return dict;
     }
-    Dict consumeSectionDict()
+    SectionDict consumeSectionDict()
     {
         debug {
             stderr.writeln("consumeSectionDict");
@@ -339,7 +339,7 @@ class Parser
         key value EOL
         EOL  <-- this marks the end.
         */
-        auto dict = new Dict();
+        auto dict = new SectionDict();
 
         while (currentChar != EOL)
         {
@@ -386,11 +386,11 @@ class Parser
         }
 
         debug {
-            stderr.writeln(" consumeSectionDict: currentChar: " ~ currentChar);
+            stderr.writeln(" /consumeSectionDict: currentChar: " ~ currentChar);
         }
         return dict;
     }
-    Dict consumeInlineSectionDict()
+    SectionDict consumeInlineSectionDict()
     {
         /*
              \ /
@@ -400,14 +400,19 @@ class Parser
             key2 value2
         }>
         */
+        debug {
+            stderr.writeln("consumeInlineSectionDict: " ~ currentChar);
+        }
         auto inlineOpener = consumeChar();
         auto opener = consumeChar();
         assert(opener == '{');
+        consumeWhitespaces();
         auto dict = consumeSectionDict();
         /*
-        consumeSectionDict will already consume
-        both '}' and '>'
+        consumeSectionDict will already consume the closing '}'
         */
+        // XXX: this consumeSectionDict function is kinda weird...
+        auto inlineCloser = consumeChar();
 
         return dict;
     }
