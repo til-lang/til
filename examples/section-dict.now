@@ -1,0 +1,27 @@
+[program]
+full_name "Inline SectionDicts Exploration"
+description "Explore the workings of inline SectionDicts"
+
+
+[commands/run]
+parameters {}
+
+set x 1
+set y 2
+set d <{
+    a 1
+    b 2
+    x "$x"
+    y "$y"
+}>
+
+print "x:" ($d . x)
+print "y:" ($d . y)
+
+
+set nd <{
+    - alfa
+    - beta
+    - gama
+}>
+print "numeric dict: $nd / " [typeof $nd]

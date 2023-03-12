@@ -50,16 +50,121 @@ class Dict : Item
         }
         return v;
     }
+    // d[["a", "b", "c"]]
+    Item opIndex(string[] keys)
+    {
+        auto pivot = this;
+        foreach (key; keys)
+        {
+            auto nextDict = (key in pivot.values);
+            if (nextDict is null)
+            {
+                return null;
+            }
+            else
+            {
+                pivot = cast(Dict)pivot[key];
+            }
+        }
+        return pivot;
+    }
     void opIndexAssign(Item v, string k)
     {
         debug {stderr.writeln(" dict[", k, "] = ", to!string(v));}
         values[k] = v;
         order ~= k;
     }
+    void opIndexAssign(Item v, string[] keys)
+    {
+        auto pivot = this;
+        foreach (key; keys[0..$-1])
+        {
+            auto nextDictPtr = (key in pivot.values);
+            if (nextDictPtr is null)
+            {
+                auto nextDict = new Dict();
+                pivot[key] = nextDict;
+                pivot = nextDict;
+            }
+            else
+            {
+                pivot = cast(Dict)(*nextDictPtr);
+            }
+        }
+        pivot[keys[$-1]] = v;
+    }
+
+    template get(T)
+    {
+        T get(string key, T delegate(Dict) defaultValue)
+        {
+            auto valuePtr = (key in values);
+            if (valuePtr !is null)
+            {
+                Item value = *valuePtr;
+                return cast(T)value;
+            }
+            else
+            {
+                return defaultValue(this);
+            }
+        }
+        T get(string[] keys, T delegate(Dict) defaultValue)
+        {
+            Dict pivot = this;
+            foreach (key; keys[0..$-1])
+            {
+                auto pivotPtr = (key in pivot.values);
+                if (pivotPtr !is null)
+                {
+                    auto item = *pivotPtr;
+                    if (item.type != ObjectType.Dict)
+                    {
+                        throw new Exception(
+                            "Cannot index "
+                            ~ item.type.to!string
+                            ~ " (" ~ item.toString() ~ ")"
+                            ~ " on key " ~ key
+                        );
+                    }
+                    pivot = cast(Dict)item;
+                }
+                else
+                {
+                    return defaultValue(this);
+                }
+            }
+            return cast(T)(pivot[keys[$-1]]);
+        }
+    }
+
+    template getOrCreate(T)
+    {
+        T getOrCreate(string key)
+        {
+            return this.get!T(
+                key,
+                delegate (Dict d) {
+                    auto newItem = new T();
+                    d[key] = newItem;
+                    return newItem;
+                }
+            );
+        }
+        T getOrCreate(string[] keys)
+        {
+            Dict pivot = this;
+            foreach (key; keys)
+            {
+                pivot = pivot.getOrCreate!T(key);
+            }
+            return pivot;
+        }
+    }
 
     Dict navigateTo(Items items, bool autoCreate=true)
     {
-        debug {stderr.writeln("navigateTo:", items, "/", autoCreate);}
+        // debug {stderr.writeln("navigateTo:", items, "/", autoCreate);}
         auto pivot = this;
         foreach (item; items)
         {

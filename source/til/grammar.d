@@ -210,8 +210,6 @@ class Parser
             );
         }
         auto metadataSection = consumeSection();
-        p.full_name = metadataSection["full_name"].toString();
-        p.description = metadataSection["description"].toString();
 
         consumeWhitespaces();
 

@@ -1,0 +1,31 @@
+[program]
+full_name "Makefile Example"
+description "Shows how Til can be used as a Makefile replacement in some simple cases"
+
+[system_commands/python]
+command "python3.11"
+which "$command --version"
+
+[system_commands/compose]
+command "docker compose"
+which "$compose -h"
+
+[constants/app]
+name "myapp"
+
+[commands/run]
+
+compose run $app.name
+
+[commands/build]
+
+compose build --no-cache
+
+[commands/test]
+
+compose run $app.name --entrypoint poetry "run pytest"
+
+
+[commands/shell]
+
+compose run $app.name --entrypoint "/bin/bash"

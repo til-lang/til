@@ -209,8 +209,8 @@ int main(string[] args)
 
 int show_help_text(string[] args, Program program)
 {
-    stdout.writeln(program.full_name);
-    stdout.writeln(program.description);
+    stdout.writeln(program["name"].toString());
+    stdout.writeln(program["description"].toString());
     stdout.writeln();
 
     auto programDict = cast(Dict)program;

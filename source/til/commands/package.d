@@ -2,7 +2,6 @@ module til.commands;
 
 import std.array;
 import std.file : read;
-import std.path : buildPath;
 import std.stdio;
 import std.string : toLower, stripRight;
 
@@ -63,17 +62,8 @@ static this()
         string filePath = context.pop!string();
         debug {stderr.writeln("include.filePath:", filePath);}
 
-        string code;
-        foreach (fspath; packagesPaths) {
-            try
-            {
-                code = to!string(read(buildPath(fspath, filePath)));
-            }
-            catch (FileException)
-            {
-                continue;
-            }
-        }
+        string code = to!string(read(filePath));
+
         if (code is null)
         {
             auto msg = "Program not found in " ~ filePath;
@@ -99,17 +89,10 @@ static this()
     });
     nameCommands["import"] = new Command((string path, Context context)
     {
-        // import std.io
+        // import http
         auto packagePath = context.pop!string();
-        string newName = packagePath;
 
-        // import std.io x
-        if (context.size)
-        {
-            newName = context.pop!string();
-        }
-
-        if (!importModule(context.program, packagePath, newName))
+        if (!importModule(context.program, packagePath))
         {
             auto msg = "Module not found: " ~ packagePath;
             return context.error(msg, ErrorCode.NotFound, "");

@@ -11,9 +11,6 @@ import til.procedures;
 
 
 class Program : Dict {
-    string name;
-    string full_name;
-    string description;
     Dict globals;
 
     // CLI commands
@@ -45,45 +42,41 @@ class Program : Dict {
         - No sub-keys are allowed;
         - No "direct" configuration is allowed.
         */
-        auto configPtr = ("configuration" in values);
-        if (configPtr !is null)
+        auto config = this.getOrCreate!Dict("configuration");
+        foreach (configSectionName, configSection; config.values)
         {
-            Dict config = cast(Dict)(*configPtr);
-            foreach (configSectionName, configSection; config.values)
+            auto d = cast(Dict)configSection;
+            foreach (name, infoItem; d.values)
             {
-                auto d = cast(Dict)configSection;
-                foreach (name, infoItem; d.values)
+                auto full_name = configSectionName ~ "." ~ name;
+
+                auto info = cast(Dict)infoItem;
+                Item* valuePtr = ("default" in info.values);
+                if (valuePtr !is null)
                 {
-                    auto full_name = configSectionName ~ "." ~ name;
+                    Item value = *valuePtr;
 
-                    auto info = cast(Dict)infoItem;
-                    Item* valuePtr = ("default" in info.values);
-                    if (valuePtr !is null)
-                    {
-                        Item value = *valuePtr;
+                    // port = 5000
+                    globals[name] = value;
+                    // http.port = 5000
+                    globals[full_name] = value;
+                }
 
-                        // port = 5000
-                        globals[name] = value;
-                        // http.port = 5000
-                        globals[full_name] = value;
-                    }
+                string envName = (configSectionName ~ "_" ~ name).toUpper;
+                debug {
+                    stderr.writeln("envName:", envName);
+                }
+                Item *envValuePtr = (envName in environmentVariables.values);
+                if (envValuePtr !is null)
+                {
 
-                    string envName = (configSectionName ~ "_" ~ name).toUpper;
+                    String envValue = cast(String)(*envValuePtr);
                     debug {
-                        stderr.writeln("envName:", envName);
+                        stderr.writeln(" -->", envValue);
                     }
-                    Item *envValuePtr = (envName in environmentVariables.values);
-                    if (envValuePtr !is null)
-                    {
-
-                        String envValue = cast(String)(*envValuePtr);
-                        debug {
-                            stderr.writeln(" -->", envValue);
-                        }
-                        globals[name] = envValue;
-                        globals[full_name] = envValue;
-                        globals[envName] = envValue;
-                    }
+                    globals[name] = envValue;
+                    globals[full_name] = envValue;
+                    globals[envName] = envValue;
                 }
             }
         }
@@ -97,22 +90,18 @@ class Program : Dict {
         - No sub-keys are allowed;
         - No "direct" configuration is allowed.
         */
-        auto constantsPtr = ("constants" in values);
-        if (constantsPtr !is null)
+        auto constants = this.getOrCreate!Dict("constants");
+        foreach (sectionName, section; constants.values)
         {
-            Dict constants = cast(Dict)(*constantsPtr);
-            foreach (sectionName, section; constants.values)
+            auto d = cast(Dict)section;
+            foreach (name, value; d.values)
             {
-                auto d = cast(Dict)section;
-                foreach (name, value; d.values)
-                {
-                    auto full_name = sectionName ~ "." ~ name;
+                auto full_name = sectionName ~ "." ~ name;
 
-                    // pi = 3.1415
-                    globals[name] = value;
-                    // math.pi = 3.1415
-                    globals[full_name] = value;
-                }
+                // pi = 3.1415
+                globals[name] = value;
+                // math.pi = 3.1415
+                globals[full_name] = value;
             }
         }
 
@@ -122,68 +111,70 @@ class Program : Dict {
 
         // The program dict is loaded, now
         // act accordingly on each different section.
-        Item *proceduresPtr = ("procedures" in values);
-        if (proceduresPtr !is null)
+        auto procedures = this.getOrCreate!Dict("procedures");
+        Dict proceduresDict = cast(Dict)procedures;
+        foreach (name, infoItem; proceduresDict.values)
         {
-            Item procedures = *proceduresPtr;
-            Dict proceduresDict = cast(Dict)procedures;
-            foreach (name, infoItem; proceduresDict.values)
-            {
-                auto info = cast(Dict)infoItem;
-                auto proc = new Procedure(
-                    name,
-                    cast(Dict)(info["parameters"]),
-                    cast(SubProgram)(info["subprogram"])
-                );
+            auto info = cast(Dict)infoItem;
+            auto proc = new Procedure(
+                name,
+                info.getOrCreate!Dict("parameters"),
+                cast(SubProgram)(info["subprogram"])
+            );
 
-                // Event handlers:
-                /*
-                [procedures/f/on.error]
+            // Event handlers:
+            /*
+            [procedures/f/on.error]
 
-                return
-                */
-                info.values.keys.filter!(x => (x[0..3] == "on.")).each!((k) {
-                    auto v = cast(Dict)(info[k]);
-                    proc.eventHandlers[k] = cast(SubProgram)(v["subprogram"]);
-                });
+            return
+            */
+            info.values.keys.filter!(x => (x[0..3] == "on.")).each!((k) {
+                auto v = cast(Dict)(info[k]);
+                proc.eventHandlers[k] = cast(SubProgram)(v["subprogram"]);
+            });
 
-                this.procedures[name] = proc;
-            }
+            this.procedures[name] = proc;
         }
 
         debug {
             stderr.writeln("Adjusting commands");
         }
 
-        Item *commandsPtr = ("commands" in values);
-        if (commandsPtr !is null)
+        auto commandsDict = this.getOrCreate!Dict("commands");
+        foreach (name, infoItem; commandsDict.values)
         {
-            Item cmds = *commandsPtr;
-            Dict commandsDict = cast(Dict)cmds;
-            foreach (name, infoItem; commandsDict.values)
-            {
-                auto info = cast(Dict)infoItem;
-                auto proc = new Procedure(
-                    name,
-                    cast(Dict)(info["parameters"]),
-                    cast(SubProgram)(info["subprogram"])
-                );
-                subCommands[name] = proc;
-            }
+            auto info = cast(Dict)infoItem;
+            auto proc = new Procedure(
+                name,
+                info.getOrCreate!Dict("parameters"),
+                cast(SubProgram)(info["subprogram"])
+            );
+            subCommands[name] = proc;
+        }
+
+        debug {
+            stderr.writeln("Importing external packages");
+        }
+
+        auto packages = this.getOrCreate!Dict(["dependencies","packages"]);
+        foreach (packageName, packageInfo; packages.values)
+        {
+            /*
+            We're not installing any packages here.
+            */
+            this.importModule(packageName);
         }
     }
 
     // Conversions
     override string toString()
     {
-        return "program " ~ name;
+        return "program " ~ this["name"].toString();
     }
 
     // Commands and procedures
     override Command getCommand(string name)
     {
-        Command cmd;
-
         // If it's a procedure:
         auto cmdPtr = (name in this.procedures);
         if (cmdPtr !is null) return *cmdPtr;
@@ -192,40 +183,23 @@ class Program : Dict {
         cmdPtr = (name in this.commands);
         if (cmdPtr !is null) return *cmdPtr;
 
-        // If the command is present in an external package:
-        bool success = {
-            // exec -> exec
-            if (importModule(this, name, name)) return true;
+        /*
+        Do NOT try to call from subCommands!
+        They are supposed to be called from command line only.
+        */
 
-            // http.client.get -> http.client
-            string packagePath = to!string(name.split(".")[0..$-1].join("."));
-            if (this.importModule(packagePath)) return true;
+        return null;
+    }
 
-            // http.client.get -> http
-            packagePath = to!string(name.split(".")[0]);
-            if (this.importModule(packagePath)) return true;
+    // Packages
+    string[] getDependenciesPath()
+    {
+        // TODO: the correct is $program_dir/.now!
 
-            return false;
-        }();
+        // For now...
+        // $current_dir/.now
+        return [".now"];
 
-        if (success) {
-            // We imported the package, but we're not sure if this
-            // name actually exists inside it:
-            // (Important: do NOT call this method recursively!)
-            cmdPtr = (name in this.procedures);
-            if (cmdPtr !is null)
-            {
-                procedures[name] = *cmdPtr;
-                cmd = *cmdPtr;
-            }
-        }
-        else
-        {
-            debug {stderr.writeln("importModule failed");}
-            debug {stderr.writeln("cmd:", cmd);}
-        }
-
-        // If such command doesn't seem to exist, `cmd` will be null:
-        return cmd;
+        // TODO: check for $program . dependencies . path
     }
 }

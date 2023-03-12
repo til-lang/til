@@ -2,7 +2,7 @@ module til.packages;
 
 import std.array : split;
 import std.file : dirEntries, SpanMode;
-import std.path : asAbsolutePath, asNormalizedPath;
+import std.path : asAbsolutePath, asNormalizedPath, buildPath;
 import std.process : environment;
 import core.sys.posix.dlfcn;
 import std.string : toStringz;
@@ -10,62 +10,36 @@ import std.string : toStringz;
 import til.nodes;
 
 
-string[] packagesPaths;
+/*
+*/
 
 
-static this()
+bool importModule(Program program, string packageName)
 {
-    string home = environment["HOME"];
-    string til_path = environment.get(
-        "TIL_PATH",
-        home ~ "/.til/packages"
-    );
-    foreach(p; til_path.split(":"))
-    {
-        packagesPaths ~= to!string(asAbsolutePath(
-            to!string(asNormalizedPath(p))
-        ));
-    }
-}
-
-
-bool importModule(Program program, string packagePath)
-{
-    return importModule(program, packagePath, packagePath);
-}
-bool importModule(Program program, string packagePath, string prefix)
-{
-    CommandsMap source;
-
-    try {
-        source = importFromSharedLibrary(program, packagePath, prefix);
-    }
-    catch(Exception ex)
-    {
-        // debug {stderr.writeln(ex);}
-        return false;
-    }
-
-    // Save on cache:
-    importNamesFrom(program, source, prefix);
-    return true;
+    return importFromSharedLibrary(program, packageName);
 }
 
 // Import commands from a .so:
-CommandsMap importFromSharedLibrary(
-    Program program, string libraryPath, string packageAlias
+bool importFromSharedLibrary(
+    Program program, string packageName
 )
 {
     // We don't want users informing the library preffix and suffix:
-    libraryPath = "libtil_" ~ libraryPath ~ ".so";
+    auto libraryPath = "libnow_" ~ packageName ~ ".so";
     debug {stderr.writeln("libraryPath:", libraryPath);}
-    // (Like `libtil_vectors.so`)
+    // (Like `libnow_vectors.so`)
 
     char* lastError;
 
-    foreach(path; packagesPaths)
+    foreach(path; program.getDependenciesPath())
     {
-        debug {stderr.writeln("path:",path);}
+        debug {stderr.writeln("path:", path);}
+        auto packagesPath = asAbsolutePath(
+            asNormalizedPath(buildPath(path, "packages")).to!string
+        ).to!string;
+
+        debug {stderr.writeln(" packagesPath:", packagesPath);}
+
         // Scan directories recursively searching for a match
         // with libraryPath:
         foreach(dirEntry; path.dirEntries(libraryPath, SpanMode.shallow, true))
@@ -87,8 +61,8 @@ CommandsMap importFromSharedLibrary(
             }
 
             // Get the commands from inside the shared object:
-            auto getCommands = cast(CommandsMap function(Program))dlsym(
-                lh, "getCommands"
+            auto initModule = cast(void function(Program))dlsym(
+                lh, "init"
             );
 
             error = dlerror();
@@ -96,29 +70,9 @@ CommandsMap importFromSharedLibrary(
             {
                 throw new Exception("dlsym error: " ~ to!string(error));
             }
-            auto libraryCommands = getCommands(program);
-
-            return libraryCommands;
+            initModule(program);
+            return true;
         }
     }
-    throw new Exception("dlopen error: " ~ to!string(lastError));
+    return false;
 };
-
-
-void importNamesFrom(Program program, CommandsMap source, string prefix)
-{
-    foreach(name, command; source)
-    {
-        string cmdPath;
-        if (name is null)
-        {
-            cmdPath = prefix;
-        }
-        else
-        {
-            cmdPath = prefix ~ "." ~ name;
-        }
-        debug {stderr.writeln("cmdPath:", cmdPath);}
-        program.procedures[cmdPath] = command;
-    }
-}

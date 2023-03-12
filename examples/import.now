@@ -1,0 +1,27 @@
+[program]
+name "Import Example"
+description "Shows how package importing works"
+
+[dependencies]
+# If not set, path will be "$current_dir/.now"
+path {
+    - "$env.home/.now"
+}
+
+[dependencies/packages/queue]
+source {
+    git_url "https://github.com/til-lang/til-queue.git"
+    branch master
+}
+
+[# commands/run]
+
+set q queue
+push $q 1
+push $q 2
+print [pop $q]
+print [pop $q]
+
+[commands/safe]
+
+print "OK"
