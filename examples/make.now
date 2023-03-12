@@ -1,6 +1,6 @@
 [program]
 full_name "Makefile Example"
-description "Shows how Til can be used as a Makefile replacement in some simple cases"
+description "Shows how Now can be used as a Makefile replacement in some simple cases"
 
 [system_commands/python]
 command "python3.11"

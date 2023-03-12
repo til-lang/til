@@ -1,9 +1,0 @@
-print "START"
-
-set next_x 0
-stack.push [range 2] [range 3 5] | foreach x {
-    assert $($x == $next_x)
-    incr $next_x
-}
-
-print "END"

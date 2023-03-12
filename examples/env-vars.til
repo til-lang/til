@@ -1,6 +1,0 @@
-print "START"
-
-print "HOME:" <$env "HOME">
-assert $([length <$env "HOME">] > 0)
-
-print "END"

@@ -1,7 +1,0 @@
-proc e () {
-    error "Test error"
-}
-
-print "Calling procedure `e`..."
-e
-print "Procedure `e` was called."

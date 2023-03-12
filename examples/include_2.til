@@ -1,7 +1,0 @@
-proc hello (origin) {
-    print "Hello, World! -- $origin"
-    return "hello!"
-}
-
-print "Inclusion is execution!"
-hello "include_2"

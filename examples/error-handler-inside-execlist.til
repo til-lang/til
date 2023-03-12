@@ -1,9 +1,0 @@
-set x [
-    proc on.error (e) {
-        print "e: $e"
-        return "boom"
-    }
-    invalidcommand
-]
-print "x: $x"
-assert $($x == "boom")

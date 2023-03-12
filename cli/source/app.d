@@ -6,12 +6,12 @@ import std.process : environment;
 import std.range : retro;
 import std.stdio;
 
-import til.commands;
-import til.exceptions;
-import til.grammar;
-import til.nodes;
-import til.procedures;
-import til.process;
+import now.commands;
+import now.exceptions;
+import now.grammar;
+import now.nodes;
+import now.procedures;
+import now.process;
 
 import cli.repl;
 
@@ -152,7 +152,7 @@ int main(string[] args)
         }
     }
     ---
-    $ til program.til Fulano
+    $ now program.now Fulano
     Hello, Fulano!
     */
     foreach (arg; args[2..$].retro)

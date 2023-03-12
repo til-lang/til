@@ -1,13 +1,12 @@
 import std.stdio : writeln;
 
-import til.nodes;
+import now.nodes;
 
 
-extern (C) CommandsMap getCommands(Escopo escopo)
+extern (C) void init(Program program)
 {
-    CommandsMap commands;
-
-    commands["print"] = new Command((string path, Context context)
+    auto commands = program.commands;
+    commands["hello.print"] = new Command((string path, Context context)
     {
         Items arguments = context.items;
         foreach(arg; arguments)
@@ -17,6 +16,4 @@ extern (C) CommandsMap getCommands(Escopo escopo)
 
         return context;
     });
-
-    return commands;
 }

@@ -1,6 +1,0 @@
-print "START"
-
-read | as line
-print "line:$line"
-
-print "END"
