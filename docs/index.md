@@ -2,6 +2,10 @@
 
 ---
 
+**This project lives through its successor, [Now](https://github.com/now-run/now).**
+
+---
+
 ## A command language on top of D
 
 Til is a **command language**, like [Tcl](https://www.tcl.tk/), built
