@@ -1,3 +1,7 @@
+**This project lives through its successor, [Now](https://github.com/now-run/now).**
+
+---
+
 # Til
 
 A command language. 
